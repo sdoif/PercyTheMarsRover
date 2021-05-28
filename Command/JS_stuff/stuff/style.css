@@ -1,0 +1,60 @@
+body {
+    color: rgb(0, 0, 0);
+    background:rgb(161, 100, 25);
+    font-family: monospace;
+  }
+
+.main-sec {
+    width: % ;
+    height: 750px;
+    border: 10px solid rgb(109, 67, 15);
+    border-radius: 20px;
+    background: rgb(192, 120, 33);
+    margin: auto;
+    overflow: scroll;
+    box-sizing: border-box;
+    
+}  
+
+.sub-sec{
+    width: 32.3%;
+    height: 500px;
+    border-radius: 15px 30px;
+    background:rgb(221, 190, 103);
+    margin: 10px ;
+    box-sizing: border-box;
+    float: left;
+    display:grid ;
+    grid-template-columns: 1fr 1fr 1fr;
+    align-self: center;
+    padding: 100px; 
+    grid-gap: 10px 2em;
+    align-self: center;
+    overflow: scroll;
+
+
+}
+
+h1{
+    /*border: 1px solid red*/
+    font-size: 60px;
+    font-weight: 650;
+    text-align: left;
+    margin-left: 20px;
+    
+    
+}
+
+h2{
+    font-size: 30px;
+    font-weight: 50;
+    text-align: center;
+    width: 400px;
+    height: 40px;
+    vertical-align: text-top;
+
+}
+
+h2:hover{
+    color: cornflowerblue;
+}
