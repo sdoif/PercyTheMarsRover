@@ -6,9 +6,7 @@ void setup() {
 }
 
 void loop() {
-  if(Serial1.available() > 0){
     Serial.print("Data received: ");
     Serial.println(Serial1.readString());
     delay(200);
-  }
 }
