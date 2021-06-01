@@ -29,7 +29,7 @@ body {
     align-self: center;
     justify-content: center;    
     position: relative;
-    bottom: 50px;
+    bottom: 60px;
 
 }
 
@@ -38,9 +38,9 @@ h1{
     font-size: 60px;
     font-weight: 650;
     text-align: left;
-    margin-left: 20px;
+    margin-left: 2%;
     position: relative;
-    bottom: 20px;
+    bottom: 3%;
 }
 
 h2{
@@ -65,7 +65,7 @@ h2:hover{
 
 #stat-cont{
     position: relative;
-    left: 20px;
+    left: 1%;
 }
 
 #status{
@@ -135,12 +135,15 @@ table{
     width: 100%;
     font-size: 18px;
     table-layout: auto;
+    position: relative;
+    bottom: 13%;
 }
 
 td, th {
     border: 1px solid #999;
-    padding: 0.5rem;
+    padding: 0.7rem;
     text-align: left;
+    font-size: 21px;
 }
 
 #control{
@@ -193,8 +196,9 @@ label:after {
 	transition: 0.5s;
 }
 
-input:checked + label {
+input:checked + label{
 	background: #5be95b;
+    /*Make warning disappear*/
 }
 
 input:checked + label:after {
@@ -206,17 +210,27 @@ label:active:after {
 	width: 70px;
 }
 
-#switch-div{
+.switch-div{
     position: relative;
-    top: 0px;
     left: 4%;
+    bottom: 105%;
     font-size: 38px;
     font-weight: 50;
     text-align: left;
     vertical-align: text-top;
+    width: 40%;
 }
 
 .switch-label{
     position: relative;
     bottom: 25px;
+}
+
+#manual-warning{
+    font-size: 17px;
+    background: #ffebdb;
+    color: rgb(255, 49, 49);
+    width:74%;
+    border-radius: 3px;
+    bottom: 40%;
 }
