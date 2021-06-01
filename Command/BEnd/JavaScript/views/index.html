@@ -4,17 +4,27 @@
     <head>
         <title>Percy The Mars Rover</title>
         <link href='./style.css' rel='stylesheet'>
+        <link rel="stylesheet"
+            href="https://fonts.googleapis.com/css?family=Roboto+Mono">
+      <style>
+        body {
+          font-family: 'Roboto Mono', monospace;
+        }
+      </style>
     </head>
 
     <body>
 
         <section class = 'main-sec' id = "status"> 
             <h1>Rover Status</h1>
-
+            <div id = "stat-cont">
             <section class = 'sub-sec'> 
                 <h2>Energy Status</h2> 
                 <div class="battery">
-                    <!-- Enter Code Here for Battery stuff -->
+                    <div class="battery-shell"><div id="battery-level"></div></div>
+                    <div class="battery-lid"></div>
+                    <p id='battery-percent'> 100% </p>
+                    <p id='battery-ttl'> 50 mins remaining </p>
                 </div>
             </section>
             
@@ -24,16 +34,52 @@
 
             <section class = 'sub-sec'> 
                 <h2>Current Trip Details</h2> 
-            </section>
+                <table>
+                    <tr>
+                        <td>Distance Traveled</td> 
+                        <td>630m</td> 
+                    </tr>
 
+                    <tr>
+                        <td>Time of Current Trip</td>
+                        <td>13 mins</td>  
+                    </tr>
+
+                    <tr>
+                        <td>Current Gear</td>
+                        <td>D</td> 
+                    </tr>
+
+                    <tr>
+                        <td>Current Coordinates</td>
+                        <td>(-3, 7)</td> 
+                    </tr>
+                </table>
+            </section>
+            </div>
         </section>
-        <br>
+        <br/>
+        <div id="imag">
+            <br><br>
+        </div>
         <section class = 'main-sec' id = "control">
             <h1>Mission Control</h1>
             <!-- Current Status, Automatic, Manual, Target, Notification feed, minimap-->
 
-            <div>
-                <!-- MiniMap-->
+            <div class = 'bdiv' id='commands'>
+
+                <div class='switch-div'>
+                    <strong class = 'switch-label'> Manual</strong> 
+                    <input type="checkbox" id="switch" /><label for="switch"></label> 
+                    <strong class = 'switch-label'> Autonomous</strong>
+                    <p id='manual-warning'>WARNING: Rover may collide with obstacles in this mode</p>
+
+                </div>
+
+            </div>
+
+            <div class = 'bdiv' id='map'> 
+                <img src="/Source/CartesianPlane.png">
             </div>
 
 
