@@ -67,11 +67,11 @@ void setup()
   char _mode='n';
   bool STOP;
 
-char asciiart(int k)
-{
-  static char foo[] = "WX86*3I>!;~:,`. ";
-  return foo[k>>4];
-}
+//char asciiart(int k)
+//{
+//  static char foo[] = "WX86*3I>!;~:,`. ";
+//  return foo[k>>4];
+//}
 
 byte frame[ADNS3080_PIXELS_X * ADNS3080_PIXELS_Y];
 
@@ -124,7 +124,7 @@ void loop(){
     loopTrigger = 0;
   }
 
-  #if 0
+ // #if 0
 
 /*
     if(movementflag){
@@ -138,23 +138,23 @@ void loop(){
   */
   // if enabled this section grabs frames and outputs them as ascii art
   
-  if(mousecam_frame_capture(frame)==0)
-  {
-    int i,j,k;
-    for(i=0, k=0; i<ADNS3080_PIXELS_Y; i++) 
-    {
-      for(j=0; j<ADNS3080_PIXELS_X; j++, k++) 
-      {
-        Serial.print(asciiart(frame[k]));
-        Serial.print(' ');
-      }
-      Serial.println();
-    }
-  }
-  Serial.println();
-  delay(250);
+//  if(mousecam_frame_capture(frame)==0)
+//  {
+//    int i,j,k;
+//    for(i=0, k=0; i<ADNS3080_PIXELS_Y; i++) 
+//    {
+//      for(j=0; j<ADNS3080_PIXELS_X; j++, k++) 
+//      {
+//        Serial.print(asciiart(frame[k]));
+//        Serial.print(' ');
+//      }
+//      Serial.println();
+//    }
+//  }
+//  Serial.println();
+//  delay(250);
   
-  #else
+ // #else
   
   // if enabled this section produces a bar graph of the surface quality that can be used to focus the camera
   // also drawn is the average pixel value 0-63 and the shutter speed and the motion dx,dy.
@@ -317,7 +317,7 @@ Serial.println(actual_x);
 
   delay(100);
 
-  #endif
+  //#endif
    
   if (Serial.available() > 0) {
     // read the incoming byte:
@@ -332,9 +332,8 @@ Serial.println(actual_x);
   digitalWrite(DIRR, DIRRstate);
   digitalWrite(DIRL, DIRLstate); 
   //*********//
-
-  rover_mode(_mode, STOP);
-  //counter_y_abs = counter_y_abs +abs(counter_y);
+  rover_scan(STOP);
+  //rover_mode(_mode, STOP);
   prev_val_y = total_y;
   prev_val_x = total_x;
   

@@ -102,6 +102,7 @@ int y=0;
 int a=0;
 int b=0;
 
+int actual_x_scan = 0;
 int actual_y = 0;
 int actual_x = 0;
 
@@ -111,9 +112,9 @@ int distance_y=0;
 int initial_x = 0;
 int initial_y = 0;
 
-int set_yf = -200; //-ve
+int set_yf = -300; //-ve
 int set_yb = 300; //+ve
-int set_xr = -50; //-ve
+int set_xr = -300; //-ve
 int set_xl = 300; //+ve
 
 volatile byte movementflag=0;
@@ -121,13 +122,13 @@ volatile int xydat[2];
 
 int tdistance = 0;
 
-int convTwosComp(int b){
-  //Convert from 2's complement
-  if(b & 0x80){
-    b = -1 * ((b ^ 0xff) + 1);
-    }
-  return b;
-  }
+//int convTwosComp(int b){
+//  //Convert from 2's complement
+//  if(b & 0x80){
+//    b = -1 * ((b ^ 0xff) + 1);
+//    }
+//  return b;
+//  }
 
 void mousecam_write_reg(int reg, int val)
 {
@@ -196,49 +197,49 @@ void mousecam_read_motion(struct MD *p)
 
 // pdata must point to an array of size ADNS3080_PIXELS_X x ADNS3080_PIXELS_Y
 // you must call mousecam_reset() after this if you want to go back to normal operation
-int mousecam_frame_capture(byte *pdata)
-{
-  mousecam_write_reg(ADNS3080_FRAME_CAPTURE,0x83);
-  
-  digitalWrite(PIN_MOUSECAM_CS, LOW);
-  
-  SPI.transfer(ADNS3080_PIXEL_BURST);
-  delayMicroseconds(50);
-  
-  int pix;
-  byte started = 0;
-  int count;
-  int timeout = 0;
-  int ret = 0;
-  for(count = 0; count < ADNS3080_PIXELS_X * ADNS3080_PIXELS_Y; )
-  {
-    pix = SPI.transfer(0xff);
-    delayMicroseconds(10);
-    if(started==0)
-    {
-      if(pix&0x40)
-        started = 1;
-      else
-      {
-        timeout++;
-        if(timeout==100)
-        {
-          ret = -1;
-          break;
-        }
-      }
-    }
-    if(started==1)
-    {
-      pdata[count++] = (pix & 0x3f)<<2; // scale to normal grayscale byte range
-    }
-  }
-
-  digitalWrite(PIN_MOUSECAM_CS,HIGH); 
-  delayMicroseconds(14);
-  
-  return ret;
-}
+//int mousecam_frame_capture(byte *pdata)
+//{
+//  mousecam_write_reg(ADNS3080_FRAME_CAPTURE,0x83);
+//  
+//  digitalWrite(PIN_MOUSECAM_CS, LOW);
+//  
+//  SPI.transfer(ADNS3080_PIXEL_BURST);
+//  delayMicroseconds(50);
+//  
+//  int pix;
+//  byte started = 0;
+//  int count;
+//  int timeout = 0;
+//  int ret = 0;
+//  for(count = 0; count < ADNS3080_PIXELS_X * ADNS3080_PIXELS_Y; )
+//  {
+//    pix = SPI.transfer(0xff);
+//    delayMicroseconds(10);
+//    if(started==0)
+//    {
+//      if(pix&0x40)
+//        started = 1;
+//      else
+//      {
+//        timeout++;
+//        if(timeout==100)
+//        {
+//          ret = -1;
+//          break;
+//        }
+//      }
+//    }
+//    if(started==1)
+//    {
+//      pdata[count++] = (pix & 0x3f)<<2; // scale to normal grayscale byte range
+//    }
+//  }
+//
+//  digitalWrite(PIN_MOUSECAM_CS,HIGH); 
+//  delayMicroseconds(14);
+//  
+//  return ret;
+//}
 
 ISR(TCA0_CMP1_vect){
   TCA0.SINGLE.INTFLAGS |= TCA_SINGLE_CMP1_bm; //clear interrupt flag
@@ -352,15 +353,15 @@ void back(){
 }
 
 void left(){
-  analogWrite(pwmr, 80);
-  analogWrite(pwml, 80);
+  analogWrite(pwmr, 70);
+  analogWrite(pwml, 70);
   DIRRstate = LOW;
   DIRLstate = LOW;
 }
 
 void right(){
-  analogWrite(pwmr, 80);
-  analogWrite(pwml, 80);
+  analogWrite(pwmr, 70);
+  analogWrite(pwml, 70);
   DIRRstate = HIGH;
   DIRLstate = HIGH;
 }
@@ -416,6 +417,18 @@ void brake(){
 //}
 
 //**********************************//
+
+void rover_scan(bool STOP){
+  if(_iter = 0){
+    actual_x_scan = abs(actual_x);
+  }
+  if(abs(actual_x) >= 490+actual_x_scan){
+    brake();
+  }else{
+    right();
+    _iter = 1;
+  }
+}
 
 //void rover_scan(bool STOP){
 //  if(_iter==0){
