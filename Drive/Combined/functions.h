@@ -79,15 +79,18 @@ int pwml = 9;                     //pin to control left wheel speed using pwm
 
 unsigned long ref_time = 0;
 
+
 int prev_val_y = 0;
 int prev_val_x = 0;
 int min_y = 0;
 int min_x = 0;
 
+int found = 0;
+
 int search_x = 0;
 int search_y = 0;
 int _iter_scan = 0;
-int _iter_search = 0;
+int _iter_short = 0;
 int _iter = 0;
 
 int counter_x = 0;
@@ -108,13 +111,19 @@ int y=0;
 int a=0;
 int b=0;
 
-int actual_x_q = 0;
+int actual_x_short = 0;
 int actual_x_scan = 0;
 int actual_y = 0;
 int actual_x = 0;
 
-int distance_x=0;
-int distance_y=0;
+float distance_x=0;
+float distance_y=0;
+float distance_xx=0;
+float distance_yy=0;
+float prev_xx = 0;
+float prev_yy = 0;
+float angle_x = 0;
+float angle_y = 0;
 
 int set_yf = -300; //-ve
 int set_yb = 300; //+ve
@@ -125,14 +134,6 @@ volatile byte movementflag=0;
 volatile int xydat[2];
 
 int tdistance = 0;
-
-//int convTwosComp(int b){
-//  //Convert from 2's complement
-//  if(b & 0x80){
-//    b = -1 * ((b ^ 0xff) + 1);
-//    }
-//  return b;
-//  }
 
 void mousecam_write_reg(int reg, int val)
 {
@@ -149,12 +150,6 @@ int mousecam_init()
   pinMode(PIN_MOUSECAM_CS,OUTPUT);
   
   digitalWrite(PIN_MOUSECAM_CS,HIGH);
-  
-//  mousecam_reset();
-//  
-//  int pid = mousecam_read_reg(ADNS3080_PRODUCT_ID);
-//  if(pid != ADNS3080_PRODUCT_ID_VAL)
-//    return -1;
 
   // turn on sensitive mode
   mousecam_write_reg(ADNS3080_CONFIGURATION_BITS, 0x19);
@@ -198,52 +193,6 @@ void mousecam_read_motion(struct MD *p)
   digitalWrite(PIN_MOUSECAM_CS,HIGH); 
   delayMicroseconds(5);
 }
-
-// pdata must point to an array of size ADNS3080_PIXELS_X x ADNS3080_PIXELS_Y
-// you must call mousecam_reset() after this if you want to go back to normal operation
-//int mousecam_frame_capture(byte *pdata)
-//{
-//  mousecam_write_reg(ADNS3080_FRAME_CAPTURE,0x83);
-//  
-//  digitalWrite(PIN_MOUSECAM_CS, LOW);
-//  
-//  SPI.transfer(ADNS3080_PIXEL_BURST);
-//  delayMicroseconds(50);
-//  
-//  int pix;
-//  byte started = 0;
-//  int count;
-//  int timeout = 0;
-//  int ret = 0;
-//  for(count = 0; count < ADNS3080_PIXELS_X * ADNS3080_PIXELS_Y; )
-//  {
-//    pix = SPI.transfer(0xff);
-//    delayMicroseconds(10);
-//    if(started==0)
-//    {
-//      if(pix&0x40)
-//        started = 1;
-//      else
-//      {
-//        timeout++;
-//        if(timeout==100)
-//        {
-//          ret = -1;
-//          break;
-//        }
-//      }
-//    }
-//    if(started==1)
-//    {
-//      pdata[count++] = (pix & 0x3f)<<2; // scale to normal grayscale byte range
-//    }
-//  }
-//
-//  digitalWrite(PIN_MOUSECAM_CS,HIGH); 
-//  delayMicroseconds(14);
-//  
-//  return ret;
-//}
 
 ISR(TCA0_CMP1_vect){
   TCA0.SINGLE.INTFLAGS |= TCA_SINGLE_CMP1_bm; //clear interrupt flag
@@ -320,7 +269,7 @@ void sampling(){
   // Make the initial sampling operations for the circuit measurements
   
   sensorValue0 = analogRead(A0); //sample Vb
-  vref = 2.5;
+  vref = 1.7;
   sensorValue3 = analogRead(A3); //sample Vpd
   current_mA = ina219.getCurrent_mA(); // sample the inductor current (via the sensor chip)
 
@@ -383,108 +332,61 @@ void brake(){
 }
 
 //**********************************//
+float store_angle(float angle_x, float angle_y){
+    float angle = atan2(angle_y, angle_x)*(180.0/PI);
+    Serial.println("angle = "+String(angle));
+    return angle;
+}
 
-bool rover_scan(bool STOP, int turn_type){
-  if(_iter == 0){
-  ref_time = millis();
+bool rover_scan_short(char _mode){
+  if(_iter_short == 0){
+    actual_x_short = abs(actual_x);
   }
-  if(turn_type == 1){
-    if((millis() - ref_time)>=8010){
-      brake();
-      return true;
-    }else if(STOP){
-      brake();
-      delay(800);
-      ref_time += 800;
-      return false;
-    }else{
-      right();
-      _iter = 1;
-      return false;
+  if(abs(actual_x) >= 350+actual_x_short){
+    brake();
+    return true;
+  }else if(_mode == 's'){
+    brake();
+    if(_iter_short == 1){
+      ref_time = millis();
     }
-  }else if(turn_type == 2){
-    if((millis() - ref_time)>=4205){
-      Serial.println("brake");
+    _iter_short = 2;
+    Serial.println("ref_time = "+String(ref_time));
+    if((millis() - ref_time) >= 1000){
       brake();
-      return true;
+      _iter_short == 3;
     }else{
-      Serial.println("right");
-      right();
-      _iter = 1;
-      return false;
+      forward();
     }
+    if(_iter_short == 3){
+      if((millis() - ref_time) >= 2000){
+        brake();
+      }else{
+        back();
+    }
+    }
+  }else{
+    right();
+    _iter_short = 1;
+    return false;
   }
 }
 
-//bool rover_scan(bool STOP, int _version){
-//  Serial.print("_iter_scan = ");
-//  Serial.println(_iter_scan);
-//  if(_iter_scan == 0){
-//    actual_x_scan = abs(actual_x);
-//  }
-//  Serial.print("actual_x_scan = ");
-//  Serial.println(actual_x_scan);
-//  if(_version == 1){
-//    if(abs(actual_x) >= 400+actual_x_scan){
-//      brake();
-//      return true;
-//    }else{
-//      Serial.print("1ENTERS!");
-//      _iter_scan = 1;
-//      right();
-//      return false;
-//    }
-//  }else if(_version == 2){
-//    if(abs(actual_x) >= 120+actual_x_scan){
-//      brake();
-//      return true;
-//    }else{
-//      Serial.print("2ENTERS!");
-//      _iter_scan = 1;
-//      right();
-//      return false;
-//    }
-//  }
-//}
+bool rover_scan(char _mode){
+  if(_iter_scan == 0){
+    actual_x_scan = abs(actual_x);
+  }
+  if((abs(actual_x) >= 350+actual_x_scan)||(_mode == 's')){
+    brake();
+    store_angle(angle_x, angle_y);
+    return true;
+  }else{
+    right();
+    _iter_scan = 1;
+    return false;
+  }
+}
 
-//void rover_search(bool STOP){
-//  Serial.println("start of rover_search");
-//  if(_iter_search == 0){
-//    search_y = abs(actual_y);
-//    search_x = abs(actual_x);
-//  }
-//  
-//  Serial.print("search_y = ");
-//  Serial.println(search_y);
-//  
-//  if(abs(actual_y) >= 100+search_y){
-//    brake();
-//    rover_scan(STOP,1);
-//    
-//    if(rover_scan(STOP,1)){
-//      
-//      if((abs(actual_y) <= 5+search_y)&&(abs(actual_y) >= search_y-5)){
-//        brake();
-//        _iter_search = 2;
-//         Serial.println("set iter2");
-//      }else{
-//        back();
-//      }
-//    }
-//  }else{
-//    forward();
-//    _iter_search = 1;
-//  }
-//  if(_iter_search == 2){
-//    Serial.println("_iter 2 loop");
-//    rover_scan(STOP,2);
-//    if(rover_scan(STOP,2)){
-//      _iter_search = 0;
-//      rover_search(STOP);
-//    }
-//  }
-//}
-  
 
 void rover_manual(char _mode){
     if (_mode == 'w') {
@@ -519,16 +421,30 @@ void rover_manual(char _mode){
   } 
   if(_mode == 'x'){
   brake();}
-  if(_mode == 'z'){
-   digitalWrite(pwmr,HIGH);
-   digitalWrite(pwml,HIGH);
-  }
+}
+
+bool reach_forward(char _mode){
+    if(_mode == 'g'){
+      forward();
+      vref = 3;
+      return false;
+    }else if(_mode == 's'){
+        brake();
+        return true;
+    }else if(_mode == 'r'){
+        right();
+        vref = 1.7;
+        reach_forward('g');
+    }else if(_mode == 'l'){
+        left();
+        vref = 1.7;
+        reach_forward('g');
+    }
 }
 
 void rover_mode(char _mode, bool STOP){
   if (_mode == 'n'){
     //rover_scan(STOP);
-    //q_left();
   }else if(_mode == 'm'){
     rover_manual(_mode);
   }
