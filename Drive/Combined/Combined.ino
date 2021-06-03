@@ -26,8 +26,8 @@ void setup()
 
   // TimerA0 initialization for control-loop interrupt.
   
-  TCA0.SINGLE.PER = 255; //
-  TCA0.SINGLE.CMP1 = 255; 
+  TCA0.SINGLE.PER = 999; //255;
+  TCA0.SINGLE.CMP1 = 999; //255; 
   TCA0.SINGLE.CTRLA = TCA_SINGLE_CLKSEL_DIV64_gc | TCA_SINGLE_ENABLE_bm; //16 prescaler, 1M.
   TCA0.SINGLE.INTCTRL = TCA_SINGLE_CMP1_bm; 
 
@@ -65,7 +65,8 @@ void setup()
 
 }
   char _mode='n';
-  bool STOP;
+  bool STOP = false;
+  bool DONE;
 
 //char asciiart(int k)
 //{
@@ -238,19 +239,13 @@ total_y = 10*total_y1/157; //Conversion from counts per inch to mm (400 counts p
       actual_y = min_y + total_y;
     }else if(total_y<0){
       actual_y = min_y + (208+total_y);
-    }else{
-      //for completeness
-      actual_y = actual_y;
-     }  
+    }
   }else if(counter_y<0){
     if(total_y>0){
       actual_y = min_y - (208-total_y);
     }else if(total_y<0){
       actual_y = min_y + total_y;
-    }else{
-      //for completeness
-      actual_y = actual_y;
-     }
+    }
   }else{ 
     actual_y=total_y;
   }
@@ -279,22 +274,17 @@ total_y = 10*total_y1/157; //Conversion from counts per inch to mm (400 counts p
 
  Serial.print('\n');
 
+Serial.print("vref = " + String(vref));
+Serial.print("vb = " + String(vb));
+Serial.print('\n');
 
 Serial.println("Distance_x = " + String(total_x));
 Serial.println("Distance_y = " + String(total_y));
 Serial.print('\n');
 
-Serial.print("prev_val_x = ");
-Serial.println(prev_val_x);
-Serial.print('\n');
-
-//Serial.print("Counter x (neg) = ");
-//Serial.println(counter_x_neg);
+//Serial.print("prev_val_x = ");
+//Serial.println(prev_val_x);
 //Serial.print('\n');
-//Serial.print("Counter x (pos) = ");
-//Serial.println(counter_x_pos);
-//Serial.print('\n');
-//
 //Serial.print("flag = ");
 //Serial.println(flag);
 //
@@ -302,14 +292,16 @@ Serial.print('\n');
 //Serial.println(quarter_x);
 //Serial.print("_iter = ");
 //Serial.println(_iter);
-
+Serial.print("Counter y= ");
+Serial.println(counter_y);
+Serial.print('\n');
 Serial.print("Counter x= ");
 Serial.println(counter_x);
 Serial.print('\n');
 
-//Serial.print('\n');
-//Serial.print("Actual x = ");
-//Serial.println(actual_x);
+Serial.print('\n');
+Serial.print("Actual y = ");
+Serial.println(actual_y);
 
 Serial.print('\n');
 Serial.print("Actual x = ");
@@ -330,9 +322,14 @@ Serial.println(actual_x);
    }
 
   digitalWrite(DIRR, DIRRstate);
-  digitalWrite(DIRL, DIRLstate); 
+  digitalWrite(DIRL, DIRLstate);
   //*********//
-  rover_scan(STOP);
+  //rover_search(STOP);
+  if(vb >= vref - 0.2){
+     rover_scan(STOP,2);
+  }else{
+    brake();
+  }
   //rover_mode(_mode, STOP);
   prev_val_y = total_y;
   prev_val_x = total_x;

@@ -8,22 +8,40 @@
 
 //autonomous mode
 // received data is numerical values
- int getdistance(int rx [9]){ //input is actually rx[5:0] i don't know how to write that as input of this function
-  if(rx[8]==1 && rx[7]==0){
-    int distance = rx[6:0]; //in cm i hope comes from vision
+//String receiveddata(String rx){
+//  char rx8 = rx.charAt(9);
+//  char rx7 = rx.charAt(8);
+//  char rx6 = rx.charAt(7);
+//  char rx5 = rx.charAt(6);
+//  char rx4 = rx.charAt(5);
+//  char rx3 = rx.charAt(4);
+//  char rx2 = rx.charAt(3);
+//  char rx1 = rx.charAt(2);
+//  char rx0 = rx.charAt(1);
+//  char rxall[9] = {rx0, rx1, rx2, rx3, rx4, rx5, rx6, rx7, rx8};
+//  return rxall;
+//}
+ int getdistance(String rx){ //input is actually rx[5:0] i don't know how to write that as input of this function
+  //receiveddata(rx);
+  int distance;
+  if(rx.charAt(0)=='1' & rx.charAt(1)=='0'){
+    rx.remove(0,2);
+    int distance = rx.toInt();
+    return distance;
   }else{
    return 0;
   }
-  return distance
  }
  
-  int getangle(){ //another option is this, having no inputs to the function
-  if(rx[8]==1 && rx[7]==1){
-    int angle = rx[6:0]; // don't forget twos complement so actually the angle range is going to be 31 to -31
+  int getangle(String rx){ //another option is this, having no inputs to the function
+  int angle;
+  if(rx.charAt(0)=='1' & rx.charAt(1)=='1'){
+    rx.remove(0,2);
+    int angle = rx.toInt(); // don't forget twos complement so actually the angle range is going to be 31 to -31
+    return angle;
   }else{
     return 360;
   }
-  return angle;
   }
   
  int xcoordinatefinder(){

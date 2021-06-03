@@ -54,7 +54,7 @@ float vpd,vb,vref,iL,dutyref,current_mA; // Measurement Variables
 unsigned int sensorValue0,sensorValue1,sensorValue2,sensorValue3;  // ADC sample values declaration
 float ev=0,cv=0,ei=0,oc=0; //internal signals
 float Ts=0.0008; //1.25 kHz control frequency. It's better to design the control period as integral multiple of switching period.
-float kpv=0.05024,kiv=15.78,kdv=0; // voltage pid.
+float kpv=1.5,kiv=5.78,kdv=0; // voltage pid.
 float u0v,u1v,delta_uv,e0v,e1v,e2v; // u->output; e->error; 0->this time; 1->last time; 2->last last time
 float kpi=0.02512,kii=39.4,kdi=0; // current pid.
 float u0i,u1i,delta_ui,e0i,e1i,e2i; // Internal values for the current controller
@@ -77,11 +77,17 @@ int pwmr = 5;                     //pin to control right wheel speed using pwm
 int pwml = 9;                     //pin to control left wheel speed using pwm
 //*********//
 
+unsigned long ref_time = 0;
+
 int prev_val_y = 0;
 int prev_val_x = 0;
 int min_y = 0;
 int min_x = 0;
 
+int search_x = 0;
+int search_y = 0;
+int _iter_scan = 0;
+int _iter_search = 0;
 int _iter = 0;
 
 int counter_x = 0;
@@ -102,15 +108,13 @@ int y=0;
 int a=0;
 int b=0;
 
+int actual_x_q = 0;
 int actual_x_scan = 0;
 int actual_y = 0;
 int actual_x = 0;
 
 int distance_x=0;
 int distance_y=0;
-
-int initial_x = 0;
-int initial_y = 0;
 
 int set_yf = -300; //-ve
 int set_yb = 300; //+ve
@@ -316,7 +320,7 @@ void sampling(){
   // Make the initial sampling operations for the circuit measurements
   
   sensorValue0 = analogRead(A0); //sample Vb
-  vref = 4;
+  vref = 2.5;
   sensorValue3 = analogRead(A3); //sample Vpd
   current_mA = ina219.getCurrent_mA(); // sample the inductor current (via the sensor chip)
 
@@ -353,15 +357,15 @@ void back(){
 }
 
 void left(){
-  analogWrite(pwmr, 70);
-  analogWrite(pwml, 70);
+  digitalWrite(pwmr,HIGH);
+  digitalWrite(pwml,HIGH);
   DIRRstate = LOW;
   DIRLstate = LOW;
 }
 
 void right(){
-  analogWrite(pwmr, 70);
-  analogWrite(pwml, 70);
+  digitalWrite(pwmr,HIGH);
+  digitalWrite(pwml,HIGH);
   DIRRstate = HIGH;
   DIRLstate = HIGH;
 }
@@ -378,91 +382,109 @@ void brake(){
   digitalWrite(pwml,LOW);
 }
 
-//void q_right(){
-//  if(_iter==0){
-//      quarter = quarter_x;
-//  }
-//  Serial.print('\n');
-//  Serial.print("counter = ");
-//  Serial.println(counter);
-//  Serial.print('\n');
-//  Serial.print("right");
-//  if(quarter_x == quarter + 0.5){
-//    brake(); 
-//    _iter=0;
-//    delay(5000);
-//  }else{
-//    right();
-//    _iter = 1;
-//  }
-//}
-//
-//void q_left(){
-//  if(_iter==0){
-//      quarter = quarter_x;
-//  }
-//  Serial.print('\n');
-//  Serial.print("counter = ");
-//  Serial.println(counter);
-//  Serial.print('\n');
-//  Serial.print("right");
-//  if(quarter_x == quarter + 0.5){
-//    brake(); 
-//    _iter=0;
-//    delay(5000);
-//  }else{
-//    left();
-//    _iter = 1;
-//  }
-//}
-
 //**********************************//
 
-void rover_scan(bool STOP){
-  if(_iter = 0){
-    actual_x_scan = abs(actual_x);
+bool rover_scan(bool STOP, int turn_type){
+  if(_iter == 0){
+  ref_time = millis();
   }
-  if(abs(actual_x) >= 490+actual_x_scan){
-    brake();
-  }else{
-    right();
-    _iter = 1;
+  if(turn_type == 1){
+    if((millis() - ref_time)>=8010){
+      brake();
+      return true;
+    }else if(STOP){
+      brake();
+      delay(800);
+      ref_time += 800;
+      return false;
+    }else{
+      right();
+      _iter = 1;
+      return false;
+    }
+  }else if(turn_type == 2){
+    if((millis() - ref_time)>=4205){
+      Serial.println("brake");
+      brake();
+      return true;
+    }else{
+      Serial.println("right");
+      right();
+      _iter = 1;
+      return false;
+    }
   }
 }
 
-//void rover_scan(bool STOP){
-//  if(_iter==0){
-//    if(total_x < 0){
-//      counter = counter_x_neg;
-//    }else{
-//      counter = counter_x_pos;
-//    }
+//bool rover_scan(bool STOP, int _version){
+//  Serial.print("_iter_scan = ");
+//  Serial.println(_iter_scan);
+//  if(_iter_scan == 0){
+//    actual_x_scan = abs(actual_x);
 //  }
-//  Serial.print('\n');
-//  Serial.print("counter = ");
-//  Serial.println(counter);
-//  Serial.print('\n');
-//  Serial.print("right");
-//  if(total_x < 0){
-//    if(counter_x_neg == counter + 2){
-//      brake(); 
-//      _iter=0;
-//      delay(5000);
+//  Serial.print("actual_x_scan = ");
+//  Serial.println(actual_x_scan);
+//  if(_version == 1){
+//    if(abs(actual_x) >= 400+actual_x_scan){
+//      brake();
+//      return true;
 //    }else{
+//      Serial.print("1ENTERS!");
+//      _iter_scan = 1;
 //      right();
-//      _iter = 1;
+//      return false;
 //    }
-//  }else{
-//    if(counter_x_pos == counter + 2){
-//      brake(); 
-//      _iter=0;
-//      delay(5000);
+//  }else if(_version == 2){
+//    if(abs(actual_x) >= 120+actual_x_scan){
+//      brake();
+//      return true;
 //    }else{
+//      Serial.print("2ENTERS!");
+//      _iter_scan = 1;
 //      right();
-//      _iter = 1;
+//      return false;
 //    }
 //  }
 //}
+
+//void rover_search(bool STOP){
+//  Serial.println("start of rover_search");
+//  if(_iter_search == 0){
+//    search_y = abs(actual_y);
+//    search_x = abs(actual_x);
+//  }
+//  
+//  Serial.print("search_y = ");
+//  Serial.println(search_y);
+//  
+//  if(abs(actual_y) >= 100+search_y){
+//    brake();
+//    rover_scan(STOP,1);
+//    
+//    if(rover_scan(STOP,1)){
+//      
+//      if((abs(actual_y) <= 5+search_y)&&(abs(actual_y) >= search_y-5)){
+//        brake();
+//        _iter_search = 2;
+//         Serial.println("set iter2");
+//      }else{
+//        back();
+//      }
+//    }
+//  }else{
+//    forward();
+//    _iter_search = 1;
+//  }
+//  if(_iter_search == 2){
+//    Serial.println("_iter 2 loop");
+//    rover_scan(STOP,2);
+//    if(rover_scan(STOP,2)){
+//      _iter_search = 0;
+//      rover_search(STOP);
+//    }
+//  }
+//}
+  
 
 void rover_manual(char _mode){
     if (_mode == 'w') {
