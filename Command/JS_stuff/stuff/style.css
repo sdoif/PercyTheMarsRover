@@ -122,10 +122,11 @@ h2:hover{
     position: absolute;
     display: inline-block;
     top: 60%;
+    margin-bottom: 8%;
     }
 
   #battery-ttl{
-    top: 103%;  
+    top: 108%;  
     font-size: 20px;
     }
 
@@ -210,6 +211,11 @@ input:checked + label{
     /*Make warning disappear*/
 }
 
+input:checked ~ p{
+	display:none;
+    margin: 17px;
+}
+
 input:checked + label:after {
 	left: calc(100% - 2.5px);
 	transform: translateX(-100%);
@@ -278,7 +284,7 @@ button {
     position: relative;
     margin-bottom: -4%;
     margin-top: -4%;
-    margin-left: 30%;
+    margin-left: 32%;
 }
 
 #left-key{
