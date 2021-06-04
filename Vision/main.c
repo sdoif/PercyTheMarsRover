@@ -174,27 +174,48 @@ bool distance_check_z1(int distance){
 
 // TODO - move processing of x-coordinates into main since both distance and angle use it
 //		so you're basically processing the same information again
-int distance_calc(int topleft, int bottomright){
+int distance_calc(int topleft, int bottomright, int *array[], int index){
 	// x_min
-	float top_left_x = topleft && 0xffff0000; // extracting the top 16 bits
+	int top_left_x = (topleft & 0xffff0000)>>16; // extracting the top 16 bits
+	//printf("left x : %i\n", top_left_x);
 	// y_min
-	//int top_left_y = topleft && 0x0000ffff;
+	//int top_left_y = topleft & 0x0000ffff;
 	// x_max
-	float bottom_right_x = bottomright && 0xffff0000;
+	int bottom_right_x = (bottomright & 0xffff0000)>>16;
+	//printf("right x : %i\n", bottom_right_x);
 	// y_max
 	//int bottom_right_y = bottomright && 0x0000ffff;
 
 		// D = (W*F)/P
 	// W = diameter of the ball
-	float W = 3.95;
+	int W = 3.95;
 	// F = Focal length
-	float F = 700;
+	int F = 700;
 	// P = apparent width in pixels
-	float P = bottom_right_x - top_left_x;
+	int P = bottom_right_x - top_left_x;
 	// D = Distance from camera
-	float D = (W*F)/P;
-	int D_int = D;
-	return D_int;
+	int D = (W*F)/P;
+	int posD;
+
+	if(D >= 0){
+		posD = D;
+	}else{
+		posD = 0;
+	}
+
+	//		Moving Average Filter
+	// int *array[] stores the previous 10 results
+	// index - handled in int main - global index that iterates from main
+	//		which allows us to manage array index placement of all arrays
+	//		using a single variable and without having to move values
+	array[index] = posD;
+
+	// Finding the average
+	int sum = 0;
+	for (int i = 0; i < 10; i++){
+		sum += posD;
+	}
+	return (sum / 10);
 }
 
 int angle_calc(int topleft, int bottomright){
@@ -351,6 +372,14 @@ int main()
 	int r_topleft, g_topleft, b_topleft, v_topleft, y_topleft;
 	int r_bottomright, g_bottomright, b_bottomright, v_bottomright, y_bottomright;
 	int distance;
+
+	// Arrays for moving average filters
+	int r_d[10], g_d[10], b_d[10], v_d[10], y_d[10];
+	int *r_d_ptr = r_d;
+	int *g_d_ptr = g_d;
+	int *b_d_ptr = b_d;
+	int *v_d_ptr = v_d;
+	int *y_d_ptr = y_d;
 
 	// Other
 	int state; // or stage
