@@ -52,6 +52,8 @@
 #define MIPI_REG_FrmErrCnt		0x0080
 #define MIPI_REG_MDLErrCnt		0x0090
 
+	// Given functions
+
 void mipi_clear_error(void){
 	MipiBridgeRegWrite(MIPI_REG_CSIStatus,0x01FF); // clear error
 	MipiBridgeRegWrite(MIPI_REG_MDLSynErr,0x0000); // clear error
@@ -108,45 +110,91 @@ bool MIPI_Init(void){
 
     usleep(500*1000);
 
-//	bSuccess = oc_i2c_init_ex(I2C_OPENCORES_CAMERA_BASE, 50*1000*1000,400*1000); //I2C: 400K
-//	if (!bSuccess)
-//		printf("failed to init MIPI- Camera i2c\r\n");
-
     MipiCameraInit();
     MIPI_BIN_LEVEL(DEFAULT_LEVEL);
-//    OV8865_FOCUS_Move_to(340);
-
-//    oc_i2c_uninit(I2C_OPENCORES_CAMERA_BASE);  // Release I2C bus , due to two I2C master shared!
-
 
  	usleep(1000);
-
-
-//    oc_i2c_uninit(I2C_OPENCORES_MIPI_BASE);
 
 	return bSuccess;
 }
 
+	// Custom functions/classes
+typedef struct{
+	int distance, x_coord, y_coord;
+	bool seen1, seen2; // if see in the 1st or 2nd scan
+} Ball;
+
+bool is_ball(int topleft, int bottomright){
+		// x_min
+	int top_left_x = topleft && 0xffff0000; // extracting the top 16 bits
+		// y_min
+	int top_left_y = topleft && 0x0000ffff;
+		// x_max
+	int bottom_right_x = bottomright && 0xffff0000;
+		// y_max
+	int bottom_right_y = bottomright && 0x0000ffff;
+
+	int height = top_left_y - bottom_right_y;
+	int length = bottom_right_x - top_left_x;
+
+	// If the length is within 10% of the height, we can consider this as a proper box
+	if (length < height * 1.1 && length > height * 0.9){ // ADJUST PARAMETERS HERE
+		return TRUE;
+	}else{
+		return FALSE;
+	}
+}
+
+bool is_in_range(int topleft, int bottomright){
+		// x_min
+	int top_left_x = topleft && 0xffff0000; // extracting the top 16 bits
+		// y_min
+	//int top_left_y = topleft && 0x0000ffff;
+		// x_max
+	int bottom_right_x = bottomright && 0xffff0000;
+		// y_max
+	//int bottom_right_y = bottomright && 0x0000ffff;
+
+	int middle_x = (bottom_right_x - top_left_x) / 2;
+	// middle x-axis pixel = 320
+	if (middle_x < 400 && middle_x > 240){
+		return TRUE;
+	}else{
+		return FALSE;
+	}
+}
+
+bool distance_check_z1(int distance){
+	if (distance <= 100 && distance >= 20){
+		return TRUE;
+	}else{
+		return FALSE;
+	}
+}
+
+// TODO - move processing of x-coordinates into main since both distance and angle use it
+//		so you're basically processing the same information again
 int distance_calc(int topleft, int bottomright){
 	// x_min
-	int top_left_x = topleft && 0xffff0000; // extracting the top 16 bits
+	float top_left_x = topleft && 0xffff0000; // extracting the top 16 bits
 	// y_min
 	//int top_left_y = topleft && 0x0000ffff;
 	// x_max
-	int bottom_right_x = bottomright && 0xffff0000;
+	float bottom_right_x = bottomright && 0xffff0000;
 	// y_max
 	//int bottom_right_y = bottomright && 0x0000ffff;
 
 		// D = (W*F)/P
 	// W = diameter of the ball
-	int W = 3.95;
+	float W = 3.95;
 	// F = Focal length
-	int F = 700;
+	float F = 700;
 	// P = apparent width in pixels
-	int P = bottom_right_x - top_left_x;
+	float P = bottom_right_x - top_left_x;
 	// D = Distance from camera
-	int D = (W*F)/P;
-	return D;
+	float D = (W*F)/P;
+	int D_int = D;
+	return D_int;
 }
 
 int angle_calc(int topleft, int bottomright){
@@ -298,10 +346,14 @@ int main()
 	}
 	*/
 
-	// Declarations
+		// Declarations
+	// Measurement related
 	int r_topleft, g_topleft, b_topleft, v_topleft, y_topleft;
 	int r_bottomright, g_bottomright, b_bottomright, v_bottomright, y_bottomright;
 	int distance;
+
+	// Other
+	int state; // or stage
 
   	while(1){
         // touch KEY0 to trigger Auto focus
@@ -321,6 +373,9 @@ int main()
        	while ((IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_STATUS)>>8) & 0xff) { 	//Find out if there are words to read
            	//Get next word from message buffer
 			int word = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
+
+			// Decide what state we are in from here - assign value to the variable state
+
     	   	if (word == EEE_IMGPROC_MSG_START_R){ // If the incoming string == RBB
 				// Print on a newline
 				printf("\n");
