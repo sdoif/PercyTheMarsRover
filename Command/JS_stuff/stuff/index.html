@@ -17,7 +17,9 @@
 
         <section class = 'main-sec' id = "status"> 
             <h1>Rover Status</h1>
+
             <div id = "stat-cont">
+
             <section class = 'sub-sec'> 
                 <h2>Energy Status</h2> 
                 <div class="battery">
@@ -30,6 +32,7 @@
             
             <section class = 'sub-sec' id = 'speed'> 
                 <h2>Speedometer</h2> 
+                <div id="speedometer"> </div>
             </section>
 
             <section class = 'sub-sec'> 
@@ -58,10 +61,12 @@
             </section>
             </div>
         </section>
+
         <br/>
         <div id="imag">
             <br><br>
         </div>
+
         <section class = 'main-sec' id = "control">
             <h1>Mission Control</h1>
             <!-- Current Status, Automatic, Manual, Target, Notification feed, minimap-->
@@ -79,8 +84,9 @@
                 <div class = 'keypad'>
                     <button type="button" class = 'keypad-button alone-key' id = 'up-key'>&#8593;</button>
                     <div id="turn-key-div">
-                        <button type="button" class = 'keypad-button lr-key' id = 'left-key'>&#10226;</button>
-                        <button type="button" class = 'keypad-button lr-key' id = 'right-key'>&#10227;</button>
+                        <button type="button" class = 'keypad-button lrs-key' id = 'left-key'>&#10226;</button>
+                        <button type="button" class = 'keypad-button lrs-key' id = 'stop-key'>STOP</button>
+                        <button type="button" class = 'keypad-button lrs-key' id = 'right-key'>&#10227;</button>
                     </div>
                     <button type="button" class = 'keypad-button alone-key' id = 'down-key'>&#8595;</button>
                 </div>
@@ -88,7 +94,7 @@
             </div>
 
             <div class = 'bdiv' id='map'> 
-                <img src="/Source/CartesianPlane.png">
+                
             </div>
 
 
