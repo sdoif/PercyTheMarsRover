@@ -476,7 +476,7 @@ end
 //		what the actual minimum and maximum values
 
 //	Variable storing what message type we are sending to the processor
-reg [1:0] msg_state;
+reg [3:0] msg_state; // need 16 states overall for all 5 balls, should be 4 bits
 // storing the coordinates of the left, right, top and bottom positions of the boundary box in registers
 reg [10:0] r_left, r_right, r_top, r_bottom;
 reg [10:0] g_left, g_right, g_top, g_bottom;
@@ -519,13 +519,13 @@ always@(posedge clk) begin
 		frame_count <= frame_count - 1;
 		
 		if (frame_count == 0 && msg_buf_size < MESSAGE_BUF_MAX - 3) begin
-			msg_state <= 2'b01;
+			msg_state <= 2'b0001;
 			frame_count <= MSG_INTERVAL-1;
 		end
 	end
 	
 	//Cycle through message writer states once started
-	if (msg_state != 2'b00) msg_state <= msg_state + 2'b01;
+	if (msg_state != 2'b0000) msg_state <= msg_state + 2'b0001;
 
 end
 	
@@ -547,20 +547,68 @@ wire msg_buf_empty;
 
 always@(*) begin	//Write words to FIFO as state machine advances
 	case(msg_state)
-		2'b00: begin
+		2'b0000: begin
 			msg_buf_in = 32'b0;
 			msg_buf_wr = 1'b0;
 		end
-		2'b01: begin
+		2'b0001: begin
 			msg_buf_in = `RED_BOX_MSG_ID;	//Message ID
 			msg_buf_wr = 1'b1;
 		end
-		2'b10: begin
+		2'b0010: begin
 			msg_buf_in = {5'b0, r_xmin, 5'b0, r_ymin};	//Top left coordinate
 			msg_buf_wr = 1'b1;
 		end
-		2'b11: begin
+		2'b0011: begin
 			msg_buf_in = {5'b0, r_xmax, 5'b0, r_ymax}; //Bottom right coordinate
+			msg_buf_wr = 1'b1;
+		end
+		2'b0100: begin
+			msg_buf_in = `GREEN_BOX_MSG_ID;	//Message ID
+			msg_buf_wr = 1'b1;
+		end
+		2'b0101: begin
+			msg_buf_in = {5'b0, g_xmin, 5'b0, g_ymin};	//Top left coordinate
+			msg_buf_wr = 1'b1;
+		end
+		2'b0110: begin
+			msg_buf_in = {5'b0, g_xmax, 5'b0, g_ymax}; //Bottom right coordinate
+			msg_buf_wr = 1'b1;
+		end
+		2'b0111: begin
+			msg_buf_in = `BLUE_BOX_MSG_ID;	//Message ID
+			msg_buf_wr = 1'b1;
+		end
+		2'b1000: begin
+			msg_buf_in = {5'b0, b_xmin, 5'b0, b_ymin};	//Top left coordinate
+			msg_buf_wr = 1'b1;
+		end
+		2'b1001: begin
+			msg_buf_in = {5'b0, b_xmax, 5'b0, b_ymax}; //Bottom right coordinate
+			msg_buf_wr = 1'b1;
+		end
+		2'b1010: begin
+			msg_buf_in = `VIOLET_BOX_MSG_ID;	//Message ID
+			msg_buf_wr = 1'b1;
+		end
+		2'b1011: begin
+			msg_buf_in = {5'b0, v_xmin, 5'b0, v_ymin};	//Top left coordinate
+			msg_buf_wr = 1'b1;
+		end
+		2'b1100: begin
+			msg_buf_in = {5'b0, v_xmax, 5'b0, v_ymax}; //Bottom right coordinate
+			msg_buf_wr = 1'b1;
+		end
+		2'b1101: begin
+			msg_buf_in = `YELLOW_BOX_MSG_ID;	//Message ID
+			msg_buf_wr = 1'b1;
+		end
+		2'b1110: begin
+			msg_buf_in = {5'b0, y_xmin, 5'b0, y_ymin};	//Top left coordinate
+			msg_buf_wr = 1'b1;
+		end
+		2'b1111: begin
+			msg_buf_in = {5'b0, y_xmax, 5'b0, y_ymax}; //Bottom right coordinate
 			msg_buf_wr = 1'b1;
 		end
 	endcase
