@@ -64,15 +64,10 @@ void setup()
   mousecam_write_reg(26, 14);
 
 }
-  char _mode='n';
+  char _mode='g';
   bool STOP = false;
   bool DONE;
 
-//char asciiart(int k)
-//{
-//  static char foo[] = "WX86*3I>!;~:,`. ";
-//  return foo[k>>4];
-//}
 
 byte frame[ADNS3080_PIXELS_X * ADNS3080_PIXELS_Y];
 
@@ -124,38 +119,6 @@ void loop(){
     //digitalWrite(13, LOW);   // reset pin13.
     loopTrigger = 0;
   }
-
- // #if 0
-
-/*
-    if(movementflag){
- 
-    tdistance = tdistance + convTwosComp(xydat[0]);
-    Serial.println("Distance = " + String(tdistance));
-    movementflag=0;
-    delay(3);
-    }
-  
-  */
-  // if enabled this section grabs frames and outputs them as ascii art
-  
-//  if(mousecam_frame_capture(frame)==0)
-//  {
-//    int i,j,k;
-//    for(i=0, k=0; i<ADNS3080_PIXELS_Y; i++) 
-//    {
-//      for(j=0; j<ADNS3080_PIXELS_X; j++, k++) 
-//      {
-//        Serial.print(asciiart(frame[k]));
-//        Serial.print(' ');
-//      }
-//      Serial.println();
-//    }
-//  }
-//  Serial.println();
-//  delay(250);
-  
- // #else
   
   // if enabled this section produces a bar graph of the surface quality that can be used to focus the camera
   // also drawn is the average pixel value 0-63 and the shutter speed and the motion dx,dy.
@@ -179,6 +142,14 @@ void loop(){
     distance_x = md.dx; //convTwosComp(md.dx);
     distance_y = md.dy; //convTwosComp(md.dy);
 
+    distance_xx = 10*distance_x/157;
+    distance_yy = 10*distance_y/157;
+    Serial.println("distance_x = "+String(distance_x));
+    Serial.println("distance_y = "+String(distance_y));
+    Serial.println("distance_xx = "+String(distance_xx));
+    Serial.println("distance_yy = "+String(distance_yy));
+    
+
 total_x1 = (total_x1 + distance_x);
 total_y1 = (total_y1 + distance_y);
 
@@ -197,6 +168,19 @@ total_y = 10*total_y1/157; //Conversion from counts per inch to mm (400 counts p
 //Serial.println("Distance_y_total = " + String(total_y_distance));
 //Serial.print('\n');
 
+if((distance_xx == 0)&&(distance_yy == 0)){
+  if(_iter == 0){
+    angle_x = prev_xx;
+    angle_y = prev_yy;
+  }
+  _iter = 1;
+}
+
+if(md.motion != 1){
+  _iter = 0;
+}
+    Serial.println("angle_x = "+String(angle_x));
+    Serial.println("angle_y = "+String(angle_y));
   //counter stuff
   //min threshold for prev_val needs to be tested based on the maximum speed of the rover
   if(((200<=prev_val_y)&&(prev_val_y<=208))&&((-208<=total_y)&&(total_y<=-200))){
@@ -282,16 +266,6 @@ Serial.println("Distance_x = " + String(total_x));
 Serial.println("Distance_y = " + String(total_y));
 Serial.print('\n');
 
-//Serial.print("prev_val_x = ");
-//Serial.println(prev_val_x);
-//Serial.print('\n');
-//Serial.print("flag = ");
-//Serial.println(flag);
-//
-//Serial.print("quarter = ");
-//Serial.println(quarter_x);
-//Serial.print("_iter = ");
-//Serial.println(_iter);
 Serial.print("Counter y= ");
 Serial.println(counter_y);
 Serial.print('\n');
@@ -325,13 +299,55 @@ Serial.println(actual_x);
   digitalWrite(DIRL, DIRLstate);
   //*********//
   //rover_search(STOP);
+  
   if(vb >= vref - 0.2){
-     rover_scan(STOP,2);
+//    if(!rover_scan_short(_mode)){
+//      rover_scan_short(_mode);
+//    }
+
+     if(!rover_scan(_mode)){
+      rover_scan(_mode);
+     }
+    
+//   if(_mode == 0){
+//     if(!rover_scan_short(_mode)){
+//      rover_scan_short(_mode);}
+//     Serial1.println("s0 = true") 
+//
+//    }else if(_mode == 1){
+//    
+//    if(found != 5){
+//      
+//      if(!rover_scan(_mode)){
+//        rover_scan(_mode);}
+//        
+//    }else{
+//      brake();
+//     }
+//   }
+//       
+//   if(_mode == 2){
+//    
+//    if(!rover_scan(_mode)){
+//      rover_scan(_mode);}
+//      
+//    if(!reach_forward(_mode)){
+//      reach_forward(_mode);}
+//   }
+//
+//   if(found == 5){
+//    brake();
+//   }
+   
   }else{
-    brake();
-  }
+    brake();}
+    
   //rover_mode(_mode, STOP);
   prev_val_y = total_y;
   prev_val_x = total_x;
+  prev_xx = distance_xx;
+  prev_yy = distance_yy;
+  
+  
   
 }
