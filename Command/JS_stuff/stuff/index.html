@@ -11,6 +11,8 @@
           font-family: 'Roboto Mono', monospace;
         }
       </style>
+
+<script src="https://cdn.plot.ly/plotly-2.0.0-rc.3.min.js"></script>
     </head>
 
     <body>
@@ -40,12 +42,12 @@
                 <table>
                     <tr>
                         <td>Distance Traveled</td> 
-                        <td>630m</td> 
+                        <td>0m</td> 
                     </tr>
 
                     <tr>
                         <td>Time of Current Trip</td>
-                        <td>13 mins</td>  
+                        <td>0 mins</td>  
                     </tr>
 
                     <tr>
@@ -55,7 +57,7 @@
 
                     <tr>
                         <td>Current Coordinates</td>
-                        <td>(-3, 7)</td> 
+                        <td>(0, 0)</td> 
                     </tr>
                 </table>
             </section>
@@ -117,26 +119,74 @@
        <!--<script src="app.js" ></script> --> 
 
        <script>
-        const upKey = document.querySelector("#up-key");
-        const downKey = document.querySelector("#down-key");
-        const leftKey = document.querySelector("#left-key");
-        const rightKey = document.querySelector("#right-key");
-        const stopKey = document.querySelector("#stop-key");
-        const currGear = document.querySelector("#curr-gear");
+        //  updating current gear 
+            const upKey = document.querySelector("#up-key");
+            const downKey = document.querySelector("#down-key");
+            const leftKey = document.querySelector("#left-key");
+            const rightKey = document.querySelector("#right-key");
+            const stopKey = document.querySelector("#stop-key");
+            const currGear = document.querySelector("#curr-gear");
 
-        upKey.onclick = function(event){currGear.textContent='D';};
-        downKey.onclick = function(event){currGear.textContent='R';};
-        leftKey.onclick = function(event){currGear.textContent='RL';};
-        rightKey.onclick = function(event){currGear.textContent='RR';};
-        stopKey.onclick = function(event){currGear.textContent='P';};
+            upKey.onclick = function(event){currGear.textContent='D';};
+            downKey.onclick = function(event){currGear.textContent='R';};
+            leftKey.onclick = function(event){currGear.textContent='RL';};
+            rightKey.onclick = function(event){currGear.textContent='RR';};
+            stopKey.onclick = function(event){currGear.textContent='P';};
 
-        //    updating speed display
-           const displayCurrVal = document.querySelector('#curr-speed-val');
-           const inputVal = document.querySelector("#speed-slider");
+        //  updating speed display
+            const displayCurrVal = document.querySelector('#curr-speed-val');
+            const inputVal = document.querySelector("#speed-slider");
 
-           inputVal.oninput = ( ()=>{ displayCurrVal.textContent = inputVal.value;});
+            inputVal.oninput = ( ()=>{ displayCurrVal.textContent = inputVal.value;});
+        
+        //  graphing stuff
+            let plotDiv = document.getElementById('map')
+            
+            let rover ={
+                x:[0],
+                y:[0],
+                mode: 'markers',
+                marker: {
+                    size: 15
+                },
+                type: 'scatter',
+                name: 'Rover'
+            };
 
-       </script>
+            let redBall ={
+                x:[-4],
+                y:[-7],
+                mode: 'markers',
+                marker: {
+                    size: 15
+                },
+                type: 'scatter'
+            };
+
+            let blueBall ={
+                x:[6],
+                y:[8],
+                mode: 'markers',
+                marker: {
+                    size: 15
+                },
+                type: 'scatter'
+            };
+
+            let data = [rover, redBall, blueBall];
+
+            let layout = {
+                paper_bgcolor: "#ffebd9",
+                plot_bgcolor: "#ffebdb"
+            };
+
+            Plotly.newPlot( 
+                plotDiv, 
+                data,
+                layout
+                );
+
+        </script>
 
        <audio autoplay loop>
            <source src = "Source/FILTERED_HIGHLIGHTS_-_Sol16RoverDriveHighlights.mp3" type = "audio/mp3">
