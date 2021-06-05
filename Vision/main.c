@@ -124,18 +124,13 @@ typedef struct{
 	bool seen1, seen2; // if see in the 1st or 2nd scan
 } Ball;
 
-bool is_ball(int topleft, int bottomright){
-		// x_min
-	int top_left_x = topleft && 0xffff0000; // extracting the top 16 bits
-		// y_min
-	int top_left_y = topleft && 0x0000ffff;
-		// x_max
-	int bottom_right_x = bottomright && 0xffff0000;
-		// y_max
-	int bottom_right_y = bottomright && 0x0000ffff;
+// Analyses if the object is actually the ball or not
+bool is_ball(int topleft, int bottomright, int left_x, int right_x){
+	int left_y = (topleft & 0x0000ffff);
+	int right_y = (bottomright && 0x0000ffff);
 
-	int height = top_left_y - bottom_right_y;
-	int length = bottom_right_x - top_left_x;
+	int height = left_y - right_y;
+	int length = right_x - left_x;
 
 	// If the length is within 10% of the height, we can consider this as a proper box
 	if (length < height * 1.1 && length > height * 0.9){ // ADJUST PARAMETERS HERE
@@ -145,17 +140,9 @@ bool is_ball(int topleft, int bottomright){
 	}
 }
 
-bool is_in_range(int topleft, int bottomright){
-		// x_min
-	int top_left_x = topleft && 0xffff0000; // extracting the top 16 bits
-		// y_min
-	//int top_left_y = topleft && 0x0000ffff;
-		// x_max
-	int bottom_right_x = bottomright && 0xffff0000;
-		// y_max
-	//int bottom_right_y = bottomright && 0x0000ffff;
-
-	int middle_x = (bottom_right_x - top_left_x) / 2;
+// Analyses if the ball is close to the centre of the camera frame
+bool is_in_centre_range(int left_x, int right_x){
+	int middle_x = (right_x - left_x) / 2;
 	// middle x-axis pixel = 320
 	if (middle_x < 400 && middle_x > 240){
 		return TRUE;
@@ -164,6 +151,7 @@ bool is_in_range(int topleft, int bottomright){
 	}
 }
 
+// Check if the ball is within accurate distance measurements
 bool distance_check_z1(int distance){
 	if (distance <= 100 && distance >= 20){
 		return TRUE;
@@ -172,19 +160,9 @@ bool distance_check_z1(int distance){
 	}
 }
 
-// TODO - move processing of x-coordinates into main since both distance and angle use it
-//		so you're basically processing the same information again
-int distance_calc(int topleft, int bottomright, int *array[], int index){
-	// x_min
-	int top_left_x = (topleft & 0xffff0000)>>16; // extracting the top 16 bits
-	//printf("left x : %i\n", top_left_x);
-	// y_min
-	//int top_left_y = topleft & 0x0000ffff;
-	// x_max
-	int bottom_right_x = (bottomright & 0xffff0000)>>16;
-	//printf("right x : %i\n", bottom_right_x);
-	// y_max
-	//int bottom_right_y = bottomright && 0x0000ffff;
+// Function that returns the distance of the ball from the camera based on its boundary
+//		box coordinates
+int distance_calc(int left_x, int right_x, int *array[], int index){
 
 		// D = (W*F)/P
 	// W = diameter of the ball
@@ -192,7 +170,7 @@ int distance_calc(int topleft, int bottomright, int *array[], int index){
 	// F = Focal length
 	int F = 700;
 	// P = apparent width in pixels
-	int P = bottom_right_x - top_left_x;
+	int P = right_x - left_x;
 	// D = Distance from camera
 	int D = (W*F)/P;
 	int posD;
@@ -202,7 +180,8 @@ int distance_calc(int topleft, int bottomright, int *array[], int index){
 	}else{
 		posD = 0;
 	}
-
+	return posD;
+	/* Moving average filter has been moved to int main
 	//		Moving Average Filter
 	// int *array[] stores the previous 10 results
 	// index - handled in int main - global index that iterates from main
@@ -210,20 +189,22 @@ int distance_calc(int topleft, int bottomright, int *array[], int index){
 	//		using a single variable and without having to move values
 	array[index] = posD;
 
+	if (array[0] == 0){ // if we have not obtained enough distance values, dont average
+		return posD;
+	}
+
 	// Finding the average
 	int sum = 0;
 	for (int i = 0; i < 10; i++){
 		sum += posD;
 	}
+
 	return (sum / 10);
+	*/
 }
 
-int angle_calc(int topleft, int bottomright){
-	// x_min
-	int top_left_x = topleft && 0xffff0000;
-	// x_max
-	int bottom_right_x = bottomright && 0xffff0000;
-	int middle_x = bottom_right_x - top_left_x;
+int angle_calc(int left_x, int right_x){
+	int middle_x = right_x - left_x;
 
 	// resolution width = 640
 	// field of view (measured = 50 degrees)
@@ -302,26 +283,6 @@ int main()
     OV8865SetGain(gain);
     Focus_Init();
 
-	// 	Opening connection to UART preliminaries
-	printf("Opening connection to UART\n");
-	FILE* fp;
-	char prompt = 0;
-	int j = 0;
-
-	/* UART Connection while loop - not working
-	while(1){
-		fp = fopen("/dev/uart", "r+");
-		if(fp){
-			printf("Connection made\n");
-			fprintf(fp, "Test");
-			usleep(1000000);
-			fclose(fp);
-		}else{
-			printf("Unable to connect\n");
-		}
-	}
-	*/
-
 	/* Working UART Connection loop
 	while(1){
 		j++;
@@ -342,24 +303,6 @@ int main()
 	}
 	*/
 
-	/* Alternate UART Connection attempts
-	//alt_up_rs232_write();
-	////while(1){
-	//	IOWR(UART_BASE, 0, 0b000000101);
-	//	printf("Sent 101\n");
-	//	usleep(1000000);
-	//	IOWR(UART_BASE, 0, 0b000000110);
-	//	printf("Sent 110\n");
-	//	usleep(1000000);
-	//}
-	//fprintf(fp, "Test");
-	//printf("Test should have been printed");
-	//
-	//if(fp){
-	//	printf("Opened connection to UART");
-	//}
-	*/
-
 	/* Receiving test
 	while(1){
 		int test = IORD(UART_BASE,0);
@@ -367,23 +310,59 @@ int main()
 	}
 	*/
 
+	// while loop that means computation only begins once we've read
+	//		the character telling us to begin
+	while(1){
+		int word = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
+		if (word == 0){ // TODO - fill with char that tells us we've started
+			break;
+		}
+	}
+
+		//	Setting up connection to UART
+	// 	Opening connection to UART preliminaries
+	printf("Opening connection to UART\n");
+	// File pointer point to the UART connection
+	FILE* fp;
+
+	// Loop until we have connected to the UART
+	while(1){
+		fp = fopen("/dev/uart", "r+");
+		if(fp){
+			printf("Opened connection to UART\n");
+		}else{
+			printf("Unable to connect to UART\n");
+		}
+	}
+
 		// Declarations
-	// Measurement related
+	// Struct/class declarations
+	Ball redBall, greenBall, blueBall, violetBall, yellowBall;
+
+	// Measurement related (Base)
 	int r_topleft, g_topleft, b_topleft, v_topleft, y_topleft;
 	int r_bottomright, g_bottomright, b_bottomright, v_bottomright, y_bottomright;
+	
+	// Measurement related (Derived)
+	int r_left_x, g_left_x, b_left_x, v_left_x, y_left_x;
+	int r_right_x, g_right_x, b_right_x, v_right_x, y_right_x;
+	// Single variable to handle all of the distances
 	int distance;
 
-	// Arrays for moving average filters
-	int r_d[10], g_d[10], b_d[10], v_d[10], y_d[10];
+	// Moving average filters - arrays, their points and the index
+	int r_d[5], g_d[5], b_d[5], v_d[5], y_d[5];
 	int *r_d_ptr = r_d;
 	int *g_d_ptr = g_d;
 	int *b_d_ptr = b_d;
 	int *v_d_ptr = v_d;
 	int *y_d_ptr = y_d;
+	int index; // to handle all moving average filters in sync
 
 	// Other
-	int state; // or stage
+	int state = 0; // or stage
 
+	// In this loop, we look at what state we are in and perform
+	//		the desired actions
   	while(1){
         // touch KEY0 to trigger Auto focus
 	    if((IORD(KEY_BASE,0)&0x03) == 0x02){
@@ -400,58 +379,195 @@ int main()
 
        	//Read messages from the image processor and print them on the terminal
        	while ((IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_STATUS)>>8) & 0xff) { 	//Find out if there are words to read
-           	//Get next word from message buffer
+           	// Reset index
+			if (index == 4){
+				index = 0;
+			}else{
+				index++;
+			}
+			   
+			//Get next word from message buffer
 			int word = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
 
-			// Decide what state we are in from here - assign value to the variable state
-
+			// Analyse incoming information and verilog and make the proper variable assignments
     	   	if (word == EEE_IMGPROC_MSG_START_R){ // If the incoming string == RBB
 				// Print on a newline
 				printf("\n");
 				r_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (top left coordinate)
 				r_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (bottom right coordinate)
 
-				distance = distance_calc(r_topleft, r_bottomright);
-				printf("Red distance : %i cm", distance);
+				r_left_x = (r_topleft)>>16; // extracting the top 16 bits
+				r_right_x = (r_bottomright)>>16;
+
+				// distance = distance_calc(r_left_x, r_right_x, r_d_ptr, index);
+				//("Red distance : %i cm", distance);
     	   	} else if (word == EEE_IMGPROC_MSG_START_G){ // If the incoming string == GBB
 				printf("\n");
 				g_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
 				g_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
 
-				distance = distance_calc(g_topleft, g_bottomright);
-				printf("Green distance : %i cm", distance);
+				g_left_x = (g_topleft)>>16; // extracting the top 16 bits
+				g_right_x = (g_bottomright)>>16;
+
+				// distance = distance_calc(g_left_x, g_right_x, g_d_ptr, index);
+				//printf("Green distance : %i cm", distance);
     	   	} else if (word == EEE_IMGPROC_MSG_START_B){ // If the incoming string == BBB
 				printf("\n");
 				b_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
 				b_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
 
-				distance = distance_calc(b_topleft, b_bottomright);
+				b_left_x = (b_topleft)>>16; // extracting the top 16 bits
+				b_right_x = (b_bottomright)>>16;
+
+				// distance = distance_calc(b_left_x, b_right_x, b_d_ptr, index);
 				printf("Blue distance : %i cm", distance);
     	   	} else if (word == EEE_IMGPROC_MSG_START_V){ // If the incoming string == VBB
 				printf("\n");
 				v_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
 				v_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
 
-				distance = distance_calc(v_topleft, v_bottomright);
-				printf("Violet distance : %i cm", distance);
+				v_left_x = (v_topleft)>>16; // extracting the top 16 bits
+				v_right_x = (v_bottomright)>>16;
+
+				// distance = distance_calc(v_left_x, v_right_x, v_d_ptr, index);
+				//printf("Violet distance : %i cm", distance);
     	   	} else if (word == EEE_IMGPROC_MSG_START_Y){ // If the incoming string == YBB
 				printf("\n");
 				y_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
 				y_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
 
-				distance = distance_calc(y_topleft, y_bottomright);
-				printf("Yellow distance : %i cm", distance);
+				y_left_x = (y_topleft)>>16; // extracting the top 16 bits
+				y_right_x = (y_bottomright)>>16;
+
+				// distance = distance_calc(y_left_x, y_right_x, y_d_ptr, index);
+				//printf("Yellow distance : %i cm", distance);
     	   	}
     	   	//printf("%08x ",word);
 
-			/*
-			if (word == 5390914) // red box
-			if (word == 4670018) // green box
-			if (word == 4342338) // blue box
-			if (word == 5653058) // violet box
-			if (word == 5849666) // yellow box
-			*/
-    		}
+			// Variables from incoming verilog info have been assigned, data is ready
+
+			// Check incoming chars for state changes
+			if (word == 0){ // TODO - Update and complete once we've finalised the character selections
+				state = 1;
+			}//else if
+
+			// Check for state, perform operations based on state
+			if (state == 0){ // 1st scan
+				if (is_ball(r_topleft, r_bottomright, r_left_x, r_right_x) && is_in_centre_range(r_left_x, r_right_x)){
+					fprintf(fp, "S"); // tell the rover to stop
+
+					// Find average distance of the previous 5 results
+					int sum = 0;
+					int temp_d;
+					for (int i = 0; i < 5; i++){
+						temp_d = distance_calc(r_left_x, r_right_x, r_d_ptr, index);
+						r_d[i] = temp_d;
+						sum+= temp_d;
+					}
+					distance = temp_d / 5;
+
+					// Check what zone that distance corresponds to
+					if (distance_check_z1(distance) == 1){
+						redBall.distance = distance;
+						fprintf(fp, "D%i\n", distance);
+						redBall.seen1 = TRUE;
+					}else{
+						redBall.seen1 = FALSE;
+					}
+					fprintf(fp, "G");
+				} else if (is_ball(g_topleft, g_bottomright, g_left_x, g_right_x) && is_in_centre_range(g_left_x, g_right_x)){
+					fprintf(fp, "S"); // tell the rover to stop
+
+					// Find average distance of the previous 5 results
+					int sum = 0;
+					int temp_d;
+					for (int i = 0; i < 5; i++){
+						temp_d = distance_calc(g_left_x, g_right_x, g_d_ptr, index);
+						g_d[i] = temp_d;
+						sum+= temp_d;
+					}
+					distance = temp_d / 5;
+
+					// Check what zone that distance corresponds to
+					if (distance_check_z1(distance) == 1){
+						greenBall.distance = distance;
+						fprintf(fp, "D%i\n", distance);
+						greenBall.seen1 = TRUE;
+					}else{
+						greenBall.seen1 = FALSE;
+					}
+					fprintf(fp, "G");
+				} else if (is_ball(b_topleft, b_bottomright, b_left_x, b_right_x) && is_in_centre_range(b_left_x, b_right_x)){
+					fprintf(fp, "S"); // tell the rover to stop
+
+					// Find average distance of the previous 5 results
+					int sum = 0;
+					int temp_d;
+					for (int i = 0; i < 5; i++){
+						temp_d = distance_calc(b_left_x, b_right_x, b_d_ptr, index);
+						b_d[i] = temp_d;
+						sum+= temp_d;
+					}
+					distance = temp_d / 5;
+
+					// Check what zone that distance corresponds to
+					if (distance_check_z1(distance) == 1){
+						blueBall.distance = distance;
+						fprintf(fp, "D%i\n", distance);
+						blueBall.seen1 = TRUE;
+					}else{
+						blueBall.seen1 = FALSE;
+					}
+					fprintf(fp, "G");
+				} else if (is_ball(v_topleft, v_bottomright, v_left_x, v_right_x) && is_in_centre_range(v_left_x, v_right_x)){
+					fprintf(fp, "S"); // tell the rover to stop
+
+					// Find average distance of the previous 5 results
+					int sum = 0;
+					int temp_d;
+					for (int i = 0; i < 5; i++){
+						temp_d = distance_calc(v_left_x, v_right_x, v_d_ptr, index);
+						v_d[i] = temp_d;
+						sum+= temp_d;
+					}
+					distance = temp_d / 5;
+
+					// Check what zone that distance corresponds to
+					if (distance_check_z1(distance) == 1){
+						violetBall.distance = distance;
+						fprintf(fp, "D%i\n", distance);
+						violetBall.seen1 = TRUE;
+					}else{
+						violetBall.seen1 = FALSE;
+					}
+					fprintf(fp, "G");
+				} else if (is_ball(y_topleft, y_bottomright, y_left_x, y_right_x) && is_in_centre_range(y_left_x, y_right_x)){
+					fprintf(fp, "S"); // tell the rover to stop
+
+					// Find average distance of the previous 5 results
+					int sum = 0;
+					int temp_d;
+					for (int i = 0; i < 5; i++){
+						temp_d = distance_calc(y_left_x, y_right_x, y_d_ptr, index);
+						y_d[i] = temp_d;
+						sum+= temp_d;
+					}
+					distance = temp_d / 5;
+
+					// Check what zone that distance corresponds to
+					if (distance_check_z1(distance) == 1){
+						yellowBall.distance = distance;
+						fprintf(fp, "D%i\n", distance);
+						yellowBall.seen1 = TRUE;
+					}else{
+						yellowBall.seen1 = FALSE;
+					}
+					fprintf(fp, "G");
+				}
+			} else if(state == 1){
+				
+			}
+    	}
 
        //Update the bounding box colour
        boundingBoxColour = ((boundingBoxColour + 1) & 0xff);
