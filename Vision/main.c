@@ -15,12 +15,17 @@
 
 #include "sys/alt_irq.h"
 #include <stdlib.h>
+#include <stdarg.h>
 
 #include <fcntl.h>
 #include <unistd.h>
 
 //EEE_IMGPROC defines
-#define EEE_IMGPROC_MSG_START ('R'<<16 | 'B'<<8 | 'B')
+#define EEE_IMGPROC_MSG_START_R ('R'<<16 | 'B'<<8 | 'B')
+#define EEE_IMGPROC_MSG_START_G ('G'<<16 | 'B'<<8 | 'B')
+#define EEE_IMGPROC_MSG_START_B ('B'<<16 | 'B'<<8 | 'B')
+#define EEE_IMGPROC_MSG_START_V ('V'<<16 | 'B'<<8 | 'B')
+#define EEE_IMGPROC_MSG_START_Y ('Y'<<16 | 'B'<<8 | 'B')
 
 //offsets
 #define EEE_IMGPROC_STATUS 0
@@ -122,9 +127,45 @@ bool MIPI_Init(void){
 	return bSuccess;
 }
 
+int distance_calc(int topleft, int bottomright){
+	// x_min
+	int top_left_x = topleft && 0xffff0000; // extracting the top 16 bits
+	// y_min
+	//int top_left_y = topleft && 0x0000ffff;
+	// x_max
+	int bottom_right_x = bottomright && 0xffff0000;
+	// y_max
+	//int bottom_right_y = bottomright && 0x0000ffff;
+
+		// D = (W*F)/P
+	// W = diameter of the ball
+	int W = 3.95;
+	// F = Focal length
+	int F = 700;
+	// P = apparent width in pixels
+	int P = bottom_right_x - top_left_x;
+	// D = Distance from camera
+	int D = (W*F)/P;
+	return D;
+}
+
+int angle_calc(int topleft, int bottomright){
+	// x_min
+	int top_left_x = topleft && 0xffff0000;
+	// x_max
+	int bottom_right_x = bottomright && 0xffff0000;
+	int middle_x = bottom_right_x - top_left_x;
+
+	// resolution width = 640
+	// field of view (measured = 50 degrees)
+	float ang_per_pix = 50/640;
+	return ang_per_pix * (middle_x - 320); // difference in pixels of the object from the centre
+}
+
 int main()
 {
 	printf("\n");
+	/* Accelerometer code
 //	int x_read;
 //	int y_read;
 //	int z_read;
@@ -144,6 +185,7 @@ int main()
 //	    alt_up_accelerometer_spi_read_z_axis(acc_dev, &z_read);
 //	    printf("x : %i, y : %i, z : %i \n", x_read, y_read, z_read);
 //	}
+	*/
 
 	fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
 
@@ -157,10 +199,8 @@ int main()
 	usleep(2000);
 	IOWR(MIPI_RESET_N_BASE, 0x00, 0xFF);
 
-  	 // ADJUST ADDRESS OF EEE_IMGPROC ADDRESS VALUE HERE (FOUND IN QSYS)
 	printf("Image Processor ID: %x\n",IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_ID));
 	//printf("Image Processor ID: %x\n",IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_ID)); //Don't know why this doesn't work - definition is in system.h in BSP
-
 
 	usleep(2000);
 
@@ -174,100 +214,160 @@ int main()
 
 	usleep(2000);
 
-//   while(1){
- 	    mipi_clear_error();
-	 	usleep(50*1000);
- 	    mipi_clear_error();
-	 	usleep(1000*1000);
-	    mipi_show_error_info();
-//	    mipi_show_error_info_more();
-	    printf("\n");
-//   }
+ 	mipi_clear_error();
+	usleep(50*1000);
+ 	mipi_clear_error();
+	usleep(1000*1000);
+	mipi_show_error_info();
+	printf("\n");
 
     //////////////////////////////////////////////////////////
-        alt_u16 bin_level = DEFAULT_LEVEL;
-        alt_u8  manual_focus_step = 10;
-        alt_u16  current_focus = 300;
-    	int boundingBoxColour = 0;
-    	alt_u32 exposureTime = EXPOSURE_INIT;
-    	alt_u16 gain = GAIN_INIT;
+    alt_u16 bin_level = DEFAULT_LEVEL;
+    alt_u8  manual_focus_step = 10;
+    alt_u16  current_focus = 300;
+    int boundingBoxColour = 0;
+    alt_u32 exposureTime = EXPOSURE_INIT;
+    alt_u16 gain = GAIN_INIT;
 
-        OV8865SetExposure(exposureTime);
-        OV8865SetGain(gain);
-        Focus_Init();
+    OV8865SetExposure(exposureTime);
+    OV8865SetGain(gain);
+    Focus_Init();
 
-  // 	Opening connection to UART
-printf("Opening connection to UART\n");
-FILE* fp;
-char prompt = 0;
-while(1){
-//	IOWR(UART_BASE, 0, 0b000000101);
-	fp = fopen("/dev/uart", "r+");
-	if(fp){
-		printf("Opened connection to UART\n");
-		while(1){
-			fprintf(fp, "Test\n");
-			printf("Sent Test\n");
-	//		prompt = getc(fp);
-		usleep(1000000);
+	// 	Opening connection to UART preliminaries
+	printf("Opening connection to UART\n");
+	FILE* fp;
+	char prompt = 0;
+	int j = 0;
+
+	/* UART Connection while loop - not working
+	while(1){
+		fp = fopen("/dev/uart", "r+");
+		if(fp){
+			printf("Connection made\n");
+			fprintf(fp, "Test");
+			usleep(1000000);
+			fclose(fp);
+		}else{
+			printf("Unable to connect\n");
+		}
+	}
+	*/
+
+	/* Working UART Connection loop
+	while(1){
+		j++;
+		printf("Try No. %i\n", j);
+		fp = fopen("/dev/uart", "r+");
+		if(fp){
+			//printf("Opened connection to UART\n");
+			while(1){
+				fprintf(fp, "test");
+				printf("Sent test\n");
+			}
+			fclose(fp);
+		}else{
+			printf("Unable to connect to UART\n");
 		}
 		fclose(fp);
-	}else{
-		printf("Unable to connect to UART\n");
+	//	usleep(1000000);
 	}
-	usleep(1000000);
-}
-//while(1){
-//	IOWR(UART_BASE, 0, 0b000000101);
-//	printf("Sent 101\n");
-//	usleep(1000000);
-//	IOWR(UART_BASE, 0, 0b000000110);
-//	printf("Sent 110\n");
-//	usleep(1000000);
-//}
-//fprintf(fp, "Test");
-//printf("Test should have been printed");
-//
-//if(fp){
-//	printf("Opened connection to UART");
-//}
+	*/
 
-  while(1){
-	   return 0; // remove when not debugging
-       // touch KEY0 to trigger Auto focus
-	   if((IORD(KEY_BASE,0)&0x03) == 0x02){
+	/* Alternate UART Connection attempts
+	//alt_up_rs232_write();
+	////while(1){
+	//	IOWR(UART_BASE, 0, 0b000000101);
+	//	printf("Sent 101\n");
+	//	usleep(1000000);
+	//	IOWR(UART_BASE, 0, 0b000000110);
+	//	printf("Sent 110\n");
+	//	usleep(1000000);
+	//}
+	//fprintf(fp, "Test");
+	//printf("Test should have been printed");
+	//
+	//if(fp){
+	//	printf("Opened connection to UART");
+	//}
+	*/
 
-    	   current_focus = Focus_Window(320,240);
-       }
-	   // touch KEY1 to ZOOM
-	         if((IORD(KEY_BASE,0)&0x03) == 0x01){
-	      	   if(bin_level == 3 )bin_level = 1;
-	      	   else bin_level ++;
-	      	   printf("set bin level to %d\n",bin_level);
-	      	   MIPI_BIN_LEVEL(bin_level);
-	      	 	usleep(500000);
+	/* Receiving test
+	while(1){
+		int test = IORD(UART_BASE,0);
+		printf("Received %i\n", test);
+	}
+	*/
 
-	         }
+	// Declarations
+	int r_topleft, g_topleft, b_topleft, v_topleft, y_topleft;
+	int r_bottomright, g_bottomright, b_bottomright, v_bottomright, y_bottomright;
+	int distance;
 
-       //Read messages from the image processor and print them on the terminal
-       while ((IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_STATUS)>>8) & 0xff) { 	//Find out if there are words to read
-           int word = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); 			//Get next word from message buffer
-    	   if (word == EEE_IMGPROC_MSG_START){ 					//Newline on message identifier
-    		   printf("\n");
-    	   }
-    	   printf("%08x ",word);
+  	while(1){
+        // touch KEY0 to trigger Auto focus
+	    if((IORD(KEY_BASE,0)&0x03) == 0x02){
+    		current_focus = Focus_Window(320,240);
+        }
+	   	// touch KEY1 to ZOOM
+		if((IORD(KEY_BASE,0)&0x03) == 0x01){
+	      	if(bin_level == 3 )bin_level = 1;
+	      	else bin_level ++;
+	      	printf("set bin level to %d\n",bin_level);
+	      	MIPI_BIN_LEVEL(bin_level);
+	      	usleep(500000);
+	    }
 
-    	   // x_min
-//    	   int top_left_x = word && 0xffff0000; // extracting the top 16 bits
-//    	   // y_min
-//    	   int top_left_y = word && 0x0000ffff;
-//    	   // x_max
-//    	   int bottom_right_x = word && 0xffff0000;
-//    	   // y_max
-//    	   int bottom_right_y = word && 0x0000ffff;
+       	//Read messages from the image processor and print them on the terminal
+       	while ((IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_STATUS)>>8) & 0xff) { 	//Find out if there are words to read
+           	//Get next word from message buffer
+			int word = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
+    	   	if (word == EEE_IMGPROC_MSG_START_R){ // If the incoming string == RBB
+				// Print on a newline
+				printf("\n");
+				r_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (top left coordinate)
+				r_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (bottom right coordinate)
 
+				distance = distance_calc(r_topleft, r_bottomright);
+				printf("Red distance : %i cm", distance);
+    	   	} else if (word == EEE_IMGPROC_MSG_START_G){ // If the incoming string == GBB
+				printf("\n");
+				g_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
+				g_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
 
-       }
+				distance = distance_calc(g_topleft, g_bottomright);
+				printf("Green distance : %i cm", distance);
+    	   	} else if (word == EEE_IMGPROC_MSG_START_B){ // If the incoming string == BBB
+				printf("\n");
+				b_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
+				b_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
+
+				distance = distance_calc(b_topleft, b_bottomright);
+				printf("Blue distance : %i cm", distance);
+    	   	} else if (word == EEE_IMGPROC_MSG_START_V){ // If the incoming string == VBB
+				printf("\n");
+				v_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
+				v_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
+
+				distance = distance_calc(v_topleft, v_bottomright);
+				printf("Violet distance : %i cm", distance);
+    	   	} else if (word == EEE_IMGPROC_MSG_START_Y){ // If the incoming string == YBB
+				printf("\n");
+				y_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
+				y_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
+
+				distance = distance_calc(y_topleft, y_bottomright);
+				printf("Yellow distance : %i cm", distance);
+    	   	}
+    	   	//printf("%08x ",word);
+
+			/*
+			if (word == 5390914) // red box
+			if (word == 4670018) // green box
+			if (word == 4342338) // blue box
+			if (word == 5653058) // violet box
+			if (word == 5849666) // yellow box
+			*/
+    		}
 
        //Update the bounding box colour
        boundingBoxColour = ((boundingBoxColour + 1) & 0xff);

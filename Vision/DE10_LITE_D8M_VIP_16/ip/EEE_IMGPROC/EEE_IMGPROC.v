@@ -142,7 +142,7 @@ assign h_temp = (red == green && green == blue) ? 0
 assign h = h_temp *1/2; // H correction to fit colourmap
 // --------------------- Colour detection (HSV) ---------------------
 
-wire red_detect, green_detect, blue_detect, violet_detect, yellow_detect;
+wire red_detect, green_detect, blue_detect, violet_detect, yellow_detect, border_detect;
 
 // 	Original HSV ranges - based on images
 // red_ = (h > 12 && h < 48 && s > 42 && v > 40) ? 1 : 0;
@@ -156,11 +156,29 @@ wire red_detect, green_detect, blue_detect, violet_detect, yellow_detect;
 //	All have default limits stopping low s and high v values to stop picking up pure white - do the same for black
 //assign red_det = ((h > 165 && s > 10 && s < 150 && v > 10 && v < 245) || (h < 15 && s > 160 && v > 102 && v < 230)) ? 1 : 0; // good - acquire a better range, taking away the lower hue range to avoid overlap with purple
 
-assign red_detect = (h > 8 && h < 15 && s > 173 && s < 232 && v > 127 && v < 165) ? 1 : 0;
+// x, y - registers storing the current pixel coordinate
+//		Can set if parameters on these to trigger new conditions
+//	Width in pixels = 640; have the 210 pixels on the left and right as the special cases
+
+assign red_detect = (x >= 210 && x <= 430) && ((h > 170 || h < 25) && s > 149 && s < 232 && v > 125 && v <= 200) ? 1 // changed max v from 245 to 200
+						: ( (x < 210 || x > 430) && (h > 170 || h < 15) && s > 75 && s < 161 && v > 100 && v < 200) ? 1 // 235 -> 161
+						: 0;
+						
 assign blue_detect = (h > 90 && h < 120 && s > 76 && s < 195 && v > 25 && v < 128) ? 1 : 0; // good - check previous commits for recent values
 assign green_detect = (h > 60 && h < 80 && s > 75 && s < 200 && v > 50 && v < 128) ? 1 : 0; // good (h > 115 && h < 135 && s > 200 && v > 115 && v < 135)
-assign violet_detect =  ((h < 20  && s > 89 && s < 170 && v > 64 && v < 128) || (h > 160 && s > 10 && s < 115 && v > 154 && v < 245)) ? 1 : 0; // bad
+
+assign violet_detect =  (h < 15 && s > 80 && s < 150 && v > 75 && v <= 125) ? 1 : 0;
+								// (x >= 210 && x <= 430 && h < 15 && s > 80 && s < 150 && v > 75 && v <= 125) ? 1 // central third
+								//: ( (x < 210 || x > 430) && h > 9 && h < 17 && s > 160 && s < 235 && v > 88 && v < 200) ? 1 // left and right
+								// : (x < 210 || x > 430) ? 1 // set everything in the right and left side to violet
+								//: ( x > 430 && ) ? 1// right third
+								//: 0;
+
+// (h < 25 && s > 80 && s < 160 && v > 50 && v <= 125) ? 1 : 0;// ((h < 20  && s > 89 && s < 170 && v > 64 && v < 128) || (h > 160 && s > 10 && s < 115 && v > 154 && v < 245)) ? 1 : 0; // bad
+//assign violet_detect = 0;
 assign yellow_detect = (h > 25 && h < 45 && s > 100 && s < 153 && v > 102 && v <= 245) ? 1 : 0; // good - needs adjusting?
+
+assign border_detect = (x <= 20 || x >= 620) || (y <= 20 || y >= 460); 
 
 // works well for blue : ((h > 165 || h < 15) && s > 65) ? 1 : 0; for non-scaled h
 
@@ -189,7 +207,8 @@ assign yellow_high  =  {8'hed, 8'hff, 8'h6f};
 //	new_image - Output pixel variable that is either the pure output colour pixel or the box colour
 wire [23:0] new_image;
 
-assign new_image = red_detect ? red_high
+assign new_image = border_detect ? background
+						: red_detect ? red_high
 						: green_detect ? green_high
 						: blue_detect ? blue_high
 						: violet_detect ? violet_high
@@ -206,13 +225,13 @@ assign new_image = red_detect ? red_high
 //	Storing the previous 3 pixel values
 
 reg [23:0] pixels [0:2]; // array of 3 pixels, each of size 24 bits
-reg [7:0] pixels_hue [0:2];
+reg [15:0] pixels_hue [0:2];
 integer i, j;
 
-reg [7:0] smallest_hue, largest_hue;
+reg [15:0] smallest_hue, largest_hue;
 reg smallest_hue_index, largest_hue_index, median_hue_index;
 
-// reg [7:0] temp;
+reg [15:0] temp;
 reg [23:0] filtered_image; // variable to store the filtered pixel
 
 // update each term in the array at each clock edge
@@ -234,6 +253,7 @@ always@(posedge clk) begin
 	yellow_high  =  {8'hed, 8'hff, 8'h6f}; h = 68, 56.5, v = 100
 	black = 24'h0;
 */
+
 	// 		Calculate the median of the pixels - based on hue
 	// 	Finding the hue of each pixel
 	for (i = 0; i < 3; i = i+1) begin
@@ -249,15 +269,17 @@ always@(posedge clk) begin
 			pixels_hue[i] = 68;
 		end else if (pixels[i] == background) begin
 			pixels_hue[i] = 0;
+		end else begin
+			pixels_hue[i] = 0;
 		end
 	end
 	
-	/*
+/*
 	// 	Forming the sorted array based on the hue using bubble sort - very inefficient, was just for functionality
 	//	Can improve the sorting algorithm used in the future
-	for (i = 0; i < 3; i = i+1) begin
+	for (i = 0; i < 5; i = i+1) begin
 		// might be able to change j < 3 to j < 3 - i, check OneNote
-		for (j = 0; j < 2; j = j+1) begin
+		for (j = 0; j < 4; j = j+1) begin
 			if (pixels_hue[j] > pixels_hue[j+1]) begin
 				// swap them in the array
 				temp = pixels_hue[j];
@@ -267,7 +289,7 @@ always@(posedge clk) begin
 			end
 		end
 	end
-	*/
+*/
 
 	//		Forming the sorted array just by finding the smallest and largest values - much more efficient - O(n)
 
@@ -299,6 +321,7 @@ largest_hue_index <= 0;
 
 	//		Selecting the median value as the pixel and converting back to RGB
 	//	Replace median_hue_index with 1 if using bubble sort function
+	//median_hue_index = 1;
 	if (pixels_hue[median_hue_index] == 360) begin // select red
 		filtered_image = red_high;
 	end else if (pixels_hue[median_hue_index] == 120) begin // select green
@@ -481,7 +504,7 @@ always@(posedge clk) begin
 		b_top <= b_ymin;
 		b_bottom <= b_ymax;
 		
-		r_left <= v_xmin;
+		v_left <= v_xmin;
 		v_right <= v_xmax;
 		v_top <= v_ymin;
 		v_bottom <= v_ymax;

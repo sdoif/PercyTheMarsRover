@@ -4,6 +4,8 @@ const mqtt = require('mqtt');
 
 const app = express();
 
+app.use(express.urlencoded({extended: true}));
+
 const server = app.listen(3000, (err) => {
     if(err){
         console.log('Error listening :( ', err);
