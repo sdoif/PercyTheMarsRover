@@ -77,8 +77,7 @@
                     <strong class = 'switch-label'> Manual</strong> 
                     <input type="checkbox" id="switch" /><label for="switch"></label> 
                     <strong class = 'switch-label'> Autonomous</strong>
-                    <p id='manual-warning'>WARNING: Rover may collide with obstacles in this mode</p>
-
+                    <p id='manual-warning'><span id="manual-warning-text">WARNING: Rover may collide with obstacles in this mode</span> </p>
                 </div>
 
                 <div class = 'keypad'>
@@ -88,7 +87,20 @@
                         <button type="button" class = 'keypad-button lrs-key' id = 'stop-key'>STOP</button>
                         <button type="button" class = 'keypad-button lrs-key' id = 'right-key'>&#10227;</button>
                     </div>
-                    <button type="button" class = 'keypad-button alone-key' id = 'down-key'>&#8595;</button>
+                        <button type="button" class = 'keypad-button alone-key' id = 'down-key'>&#8595;</button> 
+                </div>
+
+                <br/>
+
+                <div class = 'speed-control'>
+                    <div class="slider" id="curr-val">
+                        <span>Speed (cm/s) : <span id="curr-speed-val">6.0</span></span>
+                    </div>
+                    <div class="slider" id="acc-slider">
+                        <div id="min-slider-val">6 </div>
+                        <input type="range" min="6.0" max="16.5" step="0.1" value="6.0" id = 'speed-slider'>
+                        <div id="max-slider-val"> 17</div>
+                    </div>
                 </div>
 
             </div>
@@ -103,6 +115,15 @@
 
 
        <!--<script src="app.js" ></script> --> 
+
+       <script>
+           const displayCurrVal = document.querySelector('#curr-speed-val');
+           const inputVal = document.querySelector("#speed-slider");
+           console.log(displayCurrVal);
+           console.log(inputVal.value);
+           inputVal.oninput = ( ()=>{ displayCurrVal.textContent = inputVal.value;});
+
+       </script>
 
        <audio autoplay loop>
            <source src = "Source/FILTERED_HIGHLIGHTS_-_Sol16RoverDriveHighlights.mp3" type = "audio/mp3">
