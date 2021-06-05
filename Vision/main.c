@@ -120,6 +120,7 @@ bool MIPI_Init(void){
 
 	// Custom functions/classes
 typedef struct{
+	char colour;
 	int distance, x_coord, y_coord;
 	bool seen1, seen2; // if see in the 1st or 2nd scan
 } Ball;
@@ -153,7 +154,15 @@ bool is_in_centre_range(int left_x, int right_x){
 
 // Check if the ball is within accurate distance measurements
 bool distance_check_z1(int distance){
-	if (distance <= 100 && distance >= 20){
+	if (distance >= 20 && distance <= 80){
+		return TRUE;
+	}else{
+		return FALSE;
+	}
+}
+
+bool distance_check_z2(int distance){
+	if (distance >= 80 && distance <= 200){
 		return TRUE;
 	}else{
 		return FALSE;
@@ -338,6 +347,11 @@ int main()
 		// Declarations
 	// Struct/class declarations
 	Ball redBall, greenBall, blueBall, violetBall, yellowBall;
+	redBall.colour = 'R';
+	greenBall.colour = 'G';
+	blueBall.colour = 'B';
+	violetBall.colour = 'V';
+	yellowBall.colour = 'Y';
 
 	// Measurement related (Base)
 	int r_topleft, g_topleft, b_topleft, v_topleft, y_topleft;
@@ -348,6 +362,11 @@ int main()
 	int r_right_x, g_right_x, b_right_x, v_right_x, y_right_x;
 	// Single variable to handle all of the distances
 	int distance;
+
+	// 2nd scan specific variables
+	int s2_balls_detected = 0;
+	Ball closestBall;
+	closestBall.distance = 500;
 
 	// Moving average filters - arrays, their points and the index
 	int r_d[5], g_d[5], b_d[5], v_d[5], y_d[5];
@@ -564,8 +583,174 @@ int main()
 					}
 					fprintf(fp, "G");
 				}
-			} else if(state == 1){
-				
+			} else if(state == 1){ // 2nd scan/vague distance
+				// If we've finished the full 360
+				if (word == 00){ // fill with char that we expect once the full 360 for stage 2 is done
+					if (s2_balls_detected == 0){ // no vague distances
+						s = 2; // advance to stage 2
+					}else{ // go to the closest ball
+						fprintf(fp, "i"); // trigger 2nd function causing us to go towards the first ball we stop at
+						if (closestBall == redBall){
+							if (is_ball(r_topleft, r_bottomright, r_left_x, r_right_x) && is_in_centre_range(r_left_x, r_right_x)){
+								fprintf(fp, "s");
+							}
+						}else if(closestBall == greenBall){
+							if (is_ball(g_topleft, g_bottomright, g_left_x, g_right_x) && is_in_centre_range(g_left_x, g_right_x)){
+								fprintf(fp, "s");
+							}
+						}else if(closestBall == blueBall){
+							if (is_ball(b_topleft, b_bottomright, b_left_x, b_right_x) && is_in_centre_range(b_left_x, b_right_x)){
+								fprintf(fp, "s");
+							}
+						}else if(closestBall == violetBall){
+							if (is_ball(v_topleft, v_bottomright, v_left_x, v_right_x) && is_in_centre_range(v_left_x, v_right_x)){
+								fprintf(fp, "s");
+							}
+						}else if(closestBall == yellowBall){
+							if (is_ball(y_topleft, y_bottomright, y_left_x, y_right_x) && is_in_centre_range(y_left_x, y_right_x)){
+								fprintf(fp, "s");
+							} // Stopped here : 5/6/21
+						}
+					}
+				}
+
+				if (is_ball(r_topleft, r_bottomright, r_left_x, r_right_x) && is_in_centre_range(r_left_x, r_right_x)){
+					fprintf(fp, "S"); // tell the rover to stop
+
+					// Find average distance of the previous 5 results
+					int sum = 0;
+					int temp_d;
+					for (int i = 0; i < 5; i++){
+						temp_d = distance_calc(r_left_x, r_right_x, r_d_ptr, index);
+						r_d[i] = temp_d;
+						sum+= temp_d;
+					}
+					distance = temp_d / 5;
+
+					// Check what zone that distance corresponds to
+					if (distance_check_z2(distance) == 1){
+						redBall.distance = distance;
+						redBall.seen2 = TRUE;
+						s2_balls_detected++;
+
+						if (distance < closestBall.distance){
+							closestBall = redBall;
+							//closestBall.distance = distance;
+						}
+					}else{
+						redBall.seen2 = FALSE;
+					}
+					fprintf(fp, "G");
+				} else if (is_ball(g_topleft, g_bottomright, g_left_x, g_right_x) && is_in_centre_range(g_left_x, g_right_x)){
+					fprintf(fp, "S"); // tell the rover to stop
+
+					// Find average distance of the previous 5 results
+					int sum = 0;
+					int temp_d;
+					for (int i = 0; i < 5; i++){
+						temp_d = distance_calc(g_left_x, g_right_x, g_d_ptr, index);
+						g_d[i] = temp_d;
+						sum+= temp_d;
+					}
+					distance = temp_d / 5;
+
+					// Check what zone that distance corresponds to
+					if (distance_check_z2(distance) == 1){
+						greenBall.distance = distance;
+						greenBall.seen2 = TRUE;
+						s2_balls_detected++;
+
+						if (distance < closestBall.distance){
+							closestBall = greenBall;
+							//closestBall.distance = distance;
+						}
+					}else{
+						greenBall.seen2 = FALSE;
+					}
+					fprintf(fp, "G");
+				} else if (is_ball(b_topleft, b_bottomright, b_left_x, b_right_x) && is_in_centre_range(b_left_x, b_right_x)){
+					fprintf(fp, "S"); // tell the rover to stop
+
+					// Find average distance of the previous 5 results
+					int sum = 0;
+					int temp_d;
+					for (int i = 0; i < 5; i++){
+						temp_d = distance_calc(b_left_x, b_right_x, b_d_ptr, index);
+						b_d[i] = temp_d;
+						sum+= temp_d;
+					}
+					distance = temp_d / 5;
+
+					// Check what zone that distance corresponds to
+					if (distance_check_z2(distance) == 1){
+						blueBall.distance = distance;
+						blueBall.seen2 = TRUE;
+						s2_balls_detected++;
+
+						if (distance < closestBall.distance){
+							closestBall = blueBall;
+							//closestBall.distance = distance;
+						}
+					}else{
+						blueBall.seen2 = FALSE;
+					}
+					fprintf(fp, "G");
+				} else if (is_ball(v_topleft, v_bottomright, v_left_x, v_right_x) && is_in_centre_range(v_left_x, v_right_x)){
+					fprintf(fp, "S"); // tell the rover to stop
+
+					// Find average distance of the previous 5 results
+					int sum = 0;
+					int temp_d;
+					for (int i = 0; i < 5; i++){
+						temp_d = distance_calc(v_left_x, v_right_x, v_d_ptr, index);
+						v_d[i] = temp_d;
+						sum+= temp_d;
+					}
+					distance = temp_d / 5;
+
+					// Check what zone that distance corresponds to
+					if (distance_check_z2(distance) == 1){
+						violetBall.distance = distance;
+						violetBall.seen2 = TRUE;
+						s2_balls_detected++;
+
+						if (distance < closestBall.distance){
+							closestBall = violetBall;
+							//closestBall.distance = distance;
+						}
+					}else{
+						violetBall.seen2 = FALSE;
+					}
+
+					fprintf(fp, "G");
+				} else if (is_ball(y_topleft, y_bottomright, y_left_x, y_right_x) && is_in_centre_range(y_left_x, y_right_x)){
+					fprintf(fp, "S"); // tell the rover to stop
+
+					// Find average distance of the previous 5 results
+					int sum = 0;
+					int temp_d;
+					for (int i = 0; i < 5; i++){
+						temp_d = distance_calc(y_left_x, y_right_x, y_d_ptr, index);
+						y_d[i] = temp_d;
+						sum+= temp_d;
+					}
+					distance = temp_d / 5;
+
+					// Check what zone that distance corresponds to
+					if (distance_check_z2(distance) == 1){
+						yellowBall.distance = distance;
+						yellowBall.seen2 = TRUE;
+						s2_balls_detected++;
+
+						if (distance < closestBall.distance){
+							closestBall = yellowBall;
+							//closestBall.distance = distance;
+						}
+					}else{
+						yellowBall.seen2 = FALSE;
+					}
+					fprintf(fp, "G");
+				}
 			}
     	}
 
