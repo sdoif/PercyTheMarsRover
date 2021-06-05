@@ -195,9 +195,10 @@ label{
 	cursor: grab;
 	width: 100px;
 	height: 50px;
-	background: rgb(110, 150, 236);
+	background: #35499b;
 	border-radius: 50px;
 	position: relative;
+    bottom: -2%;
     display: inline-block;
 }
 
@@ -275,7 +276,7 @@ label:active:after {
 .keypad{
     height: 80%;
     width: 55%;
-    position: relative;
+    position: flex;
     margin-top: 0;
     margin-left: 17%;
     border-width: 4px;
@@ -368,7 +369,7 @@ button:active {
 
 #speed-slider::-webkit-slider-thumb{
     -webkit-appearance: none;
-    background: rgb(110, 150, 236);
+    background: #35499b;
     height: 30px;
     width: 30px;
     border-radius: 30px;

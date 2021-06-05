@@ -50,7 +50,7 @@
 
                     <tr>
                         <td>Current Gear</td>
-                        <td>D</td> 
+                        <td id="curr-gear">P</td> 
                     </tr>
 
                     <tr>
@@ -117,10 +117,23 @@
        <!--<script src="app.js" ></script> --> 
 
        <script>
+        const upKey = document.querySelector("#up-key");
+        const downKey = document.querySelector("#down-key");
+        const leftKey = document.querySelector("#left-key");
+        const rightKey = document.querySelector("#right-key");
+        const stopKey = document.querySelector("#stop-key");
+        const currGear = document.querySelector("#curr-gear");
+
+        upKey.onclick = function(event){currGear.textContent='D';};
+        downKey.onclick = function(event){currGear.textContent='R';};
+        leftKey.onclick = function(event){currGear.textContent='RL';};
+        rightKey.onclick = function(event){currGear.textContent='RR';};
+        stopKey.onclick = function(event){currGear.textContent='P';};
+
+        //    updating speed display
            const displayCurrVal = document.querySelector('#curr-speed-val');
            const inputVal = document.querySelector("#speed-slider");
-           console.log(displayCurrVal);
-           console.log(inputVal.value);
+
            inputVal.oninput = ( ()=>{ displayCurrVal.textContent = inputVal.value;});
 
        </script>
