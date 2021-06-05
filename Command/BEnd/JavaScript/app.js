@@ -6,7 +6,7 @@ const app = express();
 
 app.use(express.urlencoded({extended: true}));
 
-const server = app.listen(3000, (err) => {
+const server = app.listen(9000, (err) => {
     if(err){
         console.log('Error listening :( ', err);
         return;
@@ -16,7 +16,7 @@ const server = app.listen(3000, (err) => {
 
 app.use( (req,res,next) =>{
     console.log('Request made ');
-    console.log('Host: ', req.host);
+    console.log('Host: ', req.hostname);
     console.log('Path; ', req.path);
     console.log('Method: ', req.method);
     next();

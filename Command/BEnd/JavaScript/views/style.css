@@ -2,11 +2,11 @@ body {
     color: #ffebdb;
     background:#ffebdb;
     font-size: 35px;
+    height: 2000px;
   }
 
 .main-sec {
     width: 100% ;
-    height: 1000px;
     /*border: 10px solid rgb(109, 67, 15);*/
     /*border-radius: 20px;*/
     background: rgb(192, 120, 33);
@@ -19,7 +19,7 @@ body {
 
 .sub-sec{
     width: 32%;
-    height: 350px;
+    height: 320px;
     border-radius: 15px 30px;
     background: #353561;
     margin: 8px ;
@@ -35,12 +35,16 @@ body {
 
 h1{
     /*border: 1px solid red*/
-    font-size: 60px;
+    font-size: 70px;
     font-weight: 650;
     text-align: left;
     margin-left: 2%;
+    margin-bottom: 3%;
     position: relative;
     bottom: 3%;
+    text-transform: uppercase;
+    font-weight: lighter;
+    transform: translateY(-7%);
 }
 
 h2{
@@ -61,7 +65,7 @@ h2:hover{
     position: relative;
     bottom: 5px;
 
-]}
+}
 
 #stat-cont{
     position: relative;
@@ -70,11 +74,11 @@ h2:hover{
 
 #status{
     background-color: #faa662;
-    height: 500px;
+    height: 25%;
 }
-
+/* ------------------------------ */
 /*ENERGY STATUS STUFF*/ 
-
+/* ------------------------------ */
 .battery {
     display: flex;
     flex-direction: row;
@@ -82,8 +86,8 @@ h2:hover{
     padding-right: auto;
     justify-content: center;
     position: relative;
-    bottom: 70%;
-    left: 2%;
+    bottom: 80%;
+    left: 1%;
   }
   
   .battery-shell {
@@ -117,14 +121,16 @@ h2:hover{
     position: absolute;
     display: inline-block;
     top: 60%;
+    margin-bottom: 8%;
     }
 
   #battery-ttl{
-    top: 103%;  
+    top: 108%;  
     font-size: 20px;
     }
-
+/* ------------------------------ */
 /*Current Trip Details*/
+/* ------------------------------ */
 table{
     border-spacing: 0.5rem;
     border-collapse:collapse;
@@ -136,7 +142,7 @@ table{
     font-size: 18px;
     table-layout: auto;
     position: relative;
-    bottom: 13%;
+    bottom: 11%;
 }
 
 td, th {
@@ -148,13 +154,17 @@ td, th {
 
 #control{
     background-color: #fb770d;
-    ;
+    height: 50%;
 }
 
 #imag{
     background: #ffebdb;
     width: 1800px ;
     height: 0px;
+}
+
+.bdiv{
+    width: 50%;
 }
 
 #map{
@@ -166,7 +176,9 @@ td, th {
     float: right;*/
     z-index: -4;
 }
-
+/* ------------------------------ */
+/* TOGGLE SWITCH */
+/* ------------------------------ */
 input[type=checkbox]{
 	height: 0;
 	width: 0;
@@ -175,7 +187,6 @@ input[type=checkbox]{
 
 label{
 	cursor: grab;
-	/*text-indent: -9999px;*/
 	width: 140px;
 	height: 70px;
 	background: rgb(110, 150, 236);
@@ -198,7 +209,11 @@ label:after {
 
 input:checked + label{
 	background: #5be95b;
-    /*Make warning disappear*/
+}
+
+input:checked ~ p{
+	display:none;
+    margin: 17px;
 }
 
 input:checked + label:after {
@@ -218,7 +233,9 @@ label:active:after {
     font-weight: 50;
     text-align: left;
     vertical-align: text-top;
-    width: 40%;
+    width: 80%;
+    transform: translateY(-30%);
+    margin-left: 11%;
 }
 
 .switch-label{
@@ -234,3 +251,53 @@ label:active:after {
     border-radius: 3px;
     bottom: 40%;
 }
+/* ------------------------------ */
+/* KEYPAD */
+/* ------------------------------ */
+.keypad{
+    height: 80%;
+    width: 55%;
+    position: relative;
+    margin-left: 17%;
+    border-width: 4px;
+    border-color:#ffebdb;
+    border-style: solid;
+    padding: 2% 0% 2% 0%;
+    border-radius: 2%;
+    text-align: center;
+    
+}
+
+button {
+    background-color: transparent;
+    border: 5px #ffebdb;
+    cursor:pointer;
+    color:#ffebdb;
+    font-size: 350%;
+    text-align: center;
+}
+
+.alone-key{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#turn-key-div{
+    padding: 0 auto;
+}
+
+#stop-key{
+    font-size: 100%;
+    border: 2px #ffebdb solid;
+    width: 26%;
+    border-radius: 50%;
+    padding: 9% 0;
+    vertical-align: middle;
+    transform: translateY(-10%);
+}
+
+button:active {
+    background-color: #3f3a3a46;
+    transform: translateY(4%);
+  }
