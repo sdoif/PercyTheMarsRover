@@ -801,31 +801,32 @@ int main()
 					}else{ // go to the closest ball
 						s2_balls_detected = 0; // reset counter
 						fprintf(fp, "i"); // trigger 2nd function causing us to go towards the first ball we stop at
+
 						if (closestBall->colour == 'R'){
 							if (is_ball(r_topleft, r_bottomright, r_left_x, r_right_x) && is_in_centre_range(r_left_x, r_right_x)){
 								fprintf(fp, "S");
 								// Rover then starts to go towards the ball; set off function that corrects the angle
-
-								// Have a while loop that just reads the boundary box coordinates for the ball we are going to
-								//		and updates just the distance of that ball. Angle calculations are made here too in this while loop.
-								//		End of the while loop is caused by the distance to the ball being within a specific range. Function returns true
-								//		After we've gotten to the ball (and measured/set distance for the final time), we update state to 0 to restart the loop
+								go_towards(fp, 'R');
 							}
 						}else if(closestBall->colour == 'G'){
 							if (is_ball(g_topleft, g_bottomright, g_left_x, g_right_x) && is_in_centre_range(g_left_x, g_right_x)){
 								fprintf(fp, "S");
+								go_towards(fp, 'G');
 							}
 						}else if(closestBall->colour == 'B'){
 							if (is_ball(b_topleft, b_bottomright, b_left_x, b_right_x) && is_in_centre_range(b_left_x, b_right_x)){
 								fprintf(fp, "S");
+								go_towards(fp, 'B');
 							}
 						}else if(closestBall->colour == 'V'){
 							if (is_ball(v_topleft, v_bottomright, v_left_x, v_right_x) && is_in_centre_range(v_left_x, v_right_x)){
 								fprintf(fp, "S");
+								go_towards(fp, 'V');
 							}
 						}else if(closestBall->colour == 'Y'){
 							if (is_ball(y_topleft, y_bottomright, y_left_x, y_right_x) && is_in_centre_range(y_left_x, y_right_x)){
 								fprintf(fp, "S");
+								go_towards(fp, 'Y');
 							}
 						}
 					}
@@ -975,128 +976,39 @@ int main()
 					fprintf(fp, "S"); // tell the rover to stop
 					fprintf(fp, "G");
 
-					// Find average distance of the previous 5 results
-					int sum = 0;
-					int temp_d;
-					for (int i = 0; i < 5; i++){
-						temp_d = distance_calc(r_left_x, r_right_x, r_d_ptr, index);
-						r_d[i] = temp_d;
-						sum+= temp_d;
+					if (go_towards('R', fp) == TRUE){
+						state = 0; // to repeat the 1st scan and loop back
 					}
-					
-					distance = temp_d / 5;
 
-					fprintf(fp, "G");
 				} else if (is_ball(g_topleft, g_bottomright, g_left_x, g_right_x) && is_in_centre_range(g_left_x, g_right_x)){
 					fprintf(fp, "S"); // tell the rover to stop
 					fprintf(fp, "G");
 
-					// Find average distance of the previous 5 results
-					int sum = 0;
-					int temp_d;
-					for (int i = 0; i < 5; i++){
-						temp_d = distance_calc(g_left_x, g_right_x, g_d_ptr, index);
-						g_d[i] = temp_d;
-						sum+= temp_d;
+					if (go_towards('G', fp) == TRUE){
+						state = 0; // to repeat the 1st scan and loop back
 					}
-					distance = temp_d / 5;
 
-					// Check what zone that distance corresponds to
-					if (distance_check_z2(distance) == 1){
-						greenBall.distance = distance;
-						greenBall.seen2 = TRUE;
-						s2_balls_detected++;
-
-						if (distance < closestBall->distance){
-							closestBall = &greenBall;
-							//closestBall.distance = distance;
-						}
-					}else{
-						greenBall.seen2 = FALSE;
-					}
-					fprintf(fp, "G");
 				} else if (is_ball(b_topleft, b_bottomright, b_left_x, b_right_x) && is_in_centre_range(b_left_x, b_right_x)){
 					fprintf(fp, "S"); // tell the rover to stop
-
-					// Find average distance of the previous 5 results
-					int sum = 0;
-					int temp_d;
-					for (int i = 0; i < 5; i++){
-						temp_d = distance_calc(b_left_x, b_right_x, b_d_ptr, index);
-						b_d[i] = temp_d;
-						sum+= temp_d;
-					}
-					distance = temp_d / 5;
-
-					// Check what zone that distance corresponds to
-					if (distance_check_z2(distance) == 1){
-						blueBall.distance = distance;
-						blueBall.seen2 = TRUE;
-						s2_balls_detected++;
-
-						if (distance < closestBall->distance){
-							closestBall = &blueBall;
-							//closestBall.distance = distance;
-						}
-					}else{
-						blueBall.seen2 = FALSE;
-					}
 					fprintf(fp, "G");
+
+					if (go_towards('B', fp) == TRUE){
+						state = 0; // to repeat the 1st scan and loop back
+					}
 				} else if (is_ball(v_topleft, v_bottomright, v_left_x, v_right_x) && is_in_centre_range(v_left_x, v_right_x)){
 					fprintf(fp, "S"); // tell the rover to stop
-
-					// Find average distance of the previous 5 results
-					int sum = 0;
-					int temp_d;
-					for (int i = 0; i < 5; i++){
-						temp_d = distance_calc(v_left_x, v_right_x, v_d_ptr, index);
-						v_d[i] = temp_d;
-						sum+= temp_d;
-					}
-					distance = temp_d / 5;
-
-					// Check what zone that distance corresponds to
-					if (distance_check_z2(distance) == 1){
-						violetBall.distance = distance;
-						violetBall.seen2 = TRUE;
-						s2_balls_detected++;
-
-						if (distance < closestBall->distance){
-							closestBall = &violetBall;
-							//closestBall.distance = distance;
-						}
-					}else{
-						violetBall.seen2 = FALSE;
-					}
-
 					fprintf(fp, "G");
+
+					if (go_towards('V', fp) == TRUE){
+						state = 0; // to repeat the 1st scan and loop back
+					}
 				} else if (is_ball(y_topleft, y_bottomright, y_left_x, y_right_x) && is_in_centre_range(y_left_x, y_right_x)){
 					fprintf(fp, "S"); // tell the rover to stop
+					fprintf(fp, "Y");
 
-					// Find average distance of the previous 5 results
-					int sum = 0;
-					int temp_d;
-					for (int i = 0; i < 5; i++){
-						temp_d = distance_calc(y_left_x, y_right_x, y_d_ptr, index);
-						y_d[i] = temp_d;
-						sum+= temp_d;
+					if (go_towards('Y', fp) == TRUE){
+						state = 0; // to repeat the 1st scan and loop back
 					}
-					distance = temp_d / 5;
-
-					// Check what zone that distance corresponds to
-					if (distance_check_z2(distance) == 1){
-						yellowBall.distance = distance;
-						yellowBall.seen2 = TRUE;
-						s2_balls_detected++;
-
-						if (distance < closestBall->distance){
-							closestBall = &yellowBall;
-							//closestBall.distance = distance;
-						}
-					}else{
-						yellowBall.seen2 = FALSE;
-					}
-					fprintf(fp, "G");	
 			}
     	}
 
