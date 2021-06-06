@@ -122,7 +122,7 @@ bool MIPI_Init(void){
 typedef struct{
 	char colour;
 	int distance, x_coord, y_coord;
-	bool seen1, seen2; // if see in the 1st or 2nd scan
+	bool seen, seen2; // if seen overall and if seen in the 2nd scan
 } Ball;
 
 // Analyses if the object is actually the ball or not
@@ -228,12 +228,12 @@ int angle_calc(int left_x, int right_x){
 
 // Function that corrects the angle as we drive towards the ball, returns TRUE once we've
 //		reached the ball
-bool go_towards(char colour, FILE* fp){
+bool go_towards(Ball *ball, FILE* fp){
 	int verilog_word;
 	int distance, avg_distance;
 	int sum = 0;
 
-	if(colour == 'R'){
+	if(ball->colour == 'R'){
 		int r_d[5];
 		while ((IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_STATUS)>>8) & 0xff) {
 
@@ -283,11 +283,15 @@ bool go_towards(char colour, FILE* fp){
 				}
 
 				if (avg_distance < 50 && avg_distance > 30){
+					// Update members
+					ball->distance = avg_distance;
+					ball->seen = TRUE;
+
 					return TRUE;
 				}
     	   	}
 		}
-	}else if(colour == 'G'){
+	}else if(ball->colour == 'G'){
 		int g_d[5];
 		while ((IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_STATUS)>>8) & 0xff) {
 
@@ -335,13 +339,18 @@ bool go_towards(char colour, FILE* fp){
 					g_d[4] = distance;
 					avg_distance = sum/5;
 				}
+				// Send distance measurement here
 
 				if (avg_distance < 50 && avg_distance > 30){
-					return TRUE;
+					// Update members
+					ball->distance = avg_distance;
+					ball->seen = TRUE;
+
+					return TRUE; // Exit function here
 				}
     	   	}
 		}
-	}else if(colour == 'B'){
+	}else if(ball->colour == 'B'){
 		int b_d[5];
 		while ((IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_STATUS)>>8) & 0xff) {
 
@@ -391,11 +400,15 @@ bool go_towards(char colour, FILE* fp){
 				}
 
 				if (avg_distance < 50 && avg_distance > 30){
+					// Update members
+					ball->distance = avg_distance;
+					ball->seen = TRUE;
+
 					return TRUE;
 				}
     	   	}
 		}
-	}else if(colour == 'V'){
+	}else if(ball->colour == 'V'){
 		int v_d[5];
 		while ((IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_STATUS)>>8) & 0xff) {
 
@@ -445,11 +458,15 @@ bool go_towards(char colour, FILE* fp){
 				}
 
 				if (avg_distance < 50 && avg_distance > 30){
+					// Update members
+					ball->distance = avg_distance;
+					ball->seen = TRUE;
+
 					return TRUE;
 				}
     	   	}
 		}
-	}else if(colour == 'Y'){
+	}else if(ball->colour == 'Y'){
 		int y_d[5];
 		while ((IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_STATUS)>>8) & 0xff) {
 
@@ -499,6 +516,10 @@ bool go_towards(char colour, FILE* fp){
 				}
 
 				if (avg_distance < 50 && avg_distance > 30){
+					// Update members
+					ball->distance = avg_distance;
+					ball->seen = TRUE;
+
 					return TRUE;
 				}
     	   	}
@@ -509,28 +530,6 @@ bool go_towards(char colour, FILE* fp){
 int main()
 {
 	printf("\n");
-	/* Accelerometer code
-//	int x_read;
-//	int y_read;
-//	int z_read;
-//	printf("Attempting to establish connection to accelerometer\n");
-//	alt_up_accelerometer_spi_dev * acc_dev;
-//	acc_dev = alt_up_accelerometer_spi_open_dev("/dev/accelerometer_spi");
-//
-////	if (acc_dev == NULL){
-////	    printf("Unable to open connection to accelerometer\n");
-////	    return 1;
-////	}
-//
-//	while (1) {
-//		usleep(1000000);
-//	    alt_up_accelerometer_spi_read_x_axis(acc_dev, &x_read);
-//	    alt_up_accelerometer_spi_read_y_axis(acc_dev, &y_read);
-//	    alt_up_accelerometer_spi_read_z_axis(acc_dev, &z_read);
-//	    printf("x : %i, y : %i, z : %i \n", x_read, y_read, z_read);
-//	}
-	*/
-
 	fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
 
 	printf("DE10-LITE D8M VGA Demo\n");
@@ -639,6 +638,8 @@ int main()
 	violetBall.colour = 'V';
 	yellowBall.colour = 'Y';
 
+	int balls_detected = 0;
+
 	// Measurement related (Base)
 	int r_topleft, g_topleft, b_topleft, v_topleft, y_topleft;
 	int r_bottomright, g_bottomright, b_bottomright, v_bottomright, y_bottomright;
@@ -690,11 +691,14 @@ int main()
 
        	//Read messages from the image processor and print them on the terminal
        	while ((IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_STATUS)>>8) & 0xff) { 	//Find out if there are words to read
-			   
 			//Get next word from message buffer (Verilog)
 			int word = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
-
 			int control_word = IORD(UART_BASE, 0);
+
+			if (balls_detected == 5 && (control_word == 1) && (control_word == 2)){ // TODO - Replace 1 and 2 with expected end of scan identifiers
+				// send signal which indicates that all 5 balls have been detected
+				fprintf(fp, "");
+			}			
 
 			// Analyse incoming BB information and verilog and make the proper variable assignments
     	   	if (word == EEE_IMGPROC_MSG_START_R){ // If the incoming string == RBB
@@ -776,6 +780,7 @@ int main()
 						redBall.distance = distance;
 						fprintf(fp, "D%i\n", distance);
 						redBall.seen1 = TRUE;
+						balls_detected++;
 					}else{
 						redBall.seen1 = FALSE;
 					}
@@ -798,6 +803,7 @@ int main()
 						greenBall.distance = distance;
 						fprintf(fp, "D%i\n", distance);
 						greenBall.seen1 = TRUE;
+						balls_detected++;
 					}else{
 						greenBall.seen1 = FALSE;
 					}
@@ -820,6 +826,7 @@ int main()
 						blueBall.distance = distance;
 						fprintf(fp, "D%i\n", distance);
 						blueBall.seen1 = TRUE;
+						balls_detected++;
 					}else{
 						blueBall.seen1 = FALSE;
 					}
@@ -842,6 +849,7 @@ int main()
 						violetBall.distance = distance;
 						fprintf(fp, "D%i\n", distance);
 						violetBall.seen1 = TRUE;
+						balls_detected++;
 					}else{
 						violetBall.seen1 = FALSE;
 					}
@@ -864,6 +872,7 @@ int main()
 						yellowBall.distance = distance;
 						fprintf(fp, "D%i\n", distance);
 						yellowBall.seen1 = TRUE;
+						balls_detected++;
 					}else{
 						yellowBall.seen1 = FALSE;
 					}
@@ -883,27 +892,37 @@ int main()
 							if (is_ball(r_topleft, r_bottomright, r_left_x, r_right_x) && is_in_centre_range(r_left_x, r_right_x)){
 								fprintf(fp, "S");
 								// Rover then starts to go towards the ball; set off function that corrects the angle
-								go_towards(fp, 'R');
+								if (go_towards(fp, 'R')){ // returns true if we've reached the ball and measured the distance
+									balls_detected++;
+								}
 							}
 						}else if(closestBall->colour == 'G'){
 							if (is_ball(g_topleft, g_bottomright, g_left_x, g_right_x) && is_in_centre_range(g_left_x, g_right_x)){
 								fprintf(fp, "S");
-								go_towards(fp, 'G');
+								if(go_towards(fp, 'G')){
+									balls_detected++;
+								}
 							}
 						}else if(closestBall->colour == 'B'){
 							if (is_ball(b_topleft, b_bottomright, b_left_x, b_right_x) && is_in_centre_range(b_left_x, b_right_x)){
 								fprintf(fp, "S");
-								go_towards(fp, 'B');
+								if(go_towards(fp, 'B')){
+									balls_detected++;
+								}
 							}
 						}else if(closestBall->colour == 'V'){
 							if (is_ball(v_topleft, v_bottomright, v_left_x, v_right_x) && is_in_centre_range(v_left_x, v_right_x)){
 								fprintf(fp, "S");
-								go_towards(fp, 'V');
+								if (go_towards(fp, 'V')){
+									balls_detected++;
+								}
 							}
 						}else if(closestBall->colour == 'Y'){
 							if (is_ball(y_topleft, y_bottomright, y_left_x, y_right_x) && is_in_centre_range(y_left_x, y_right_x)){
 								fprintf(fp, "S");
-								go_towards(fp, 'Y');
+								if(go_towards(fp, 'Y')){
+									balls_detected++:
+								}
 							}
 						}
 					}
@@ -1047,7 +1066,7 @@ int main()
 					}
 					fprintf(fp, "G");
 				}
-			}else if(state == 2){ // Scan until we see the first ball, TODO
+			}else if(state == 2){ // Scan until we see the first ball
 				fprintf(fp, "i");
 				if (is_ball(r_topleft, r_bottomright, r_left_x, r_right_x) && is_in_centre_range(r_left_x, r_right_x)){
 					fprintf(fp, "S"); // tell the rover to stop
@@ -1055,6 +1074,8 @@ int main()
 
 					if (go_towards('R', fp) == TRUE){
 						state = 0; // to repeat the 1st scan and loop back
+						// TODO - Find if we consider this ball as being found here or in the accurate distance scan.
+						// If in the 1st scan, increment balls_detected there instead of here
 					}
 
 				} else if (is_ball(g_topleft, g_bottomright, g_left_x, g_right_x) && is_in_centre_range(g_left_x, g_right_x)){
