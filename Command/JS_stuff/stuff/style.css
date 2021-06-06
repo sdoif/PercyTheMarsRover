@@ -384,15 +384,16 @@ button:active {
 
 #speed-slider::-webkit-slider-thumb{
     -webkit-appearance: none;
-    background: #35499b;
-    height: 30px;
-    width: 30px;
-    border-radius: 30px;
+    background: #ffebdb;
+    height: 35px;
+    width: 35px;
+    border: 3px rgb(141, 138, 138) solid;
+    border-radius: 35px;
     overflow: visible;
     cursor: grab;    
     vertical-align: middle;
     position: relative;
-    bottom: 9px;
+    bottom: 10px;
 }
 
 #curr-speed-val{
