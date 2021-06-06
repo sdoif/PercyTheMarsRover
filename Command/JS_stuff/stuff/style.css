@@ -137,9 +137,19 @@ h2:hover{
     vertical-align: center;
     width: 50%;
     position: relative;
-    bottom: 16%;
+    bottom: 13%;
 }
 
+#speed-units{
+    z-index: 3;
+    width: 100%;
+    position: relative;
+    left: 50%;
+    bottom: 25%;
+    text-align: center;
+    margin: 0 auto;
+
+}
 /* ------------------------------ */
 /*Current Trip Details*/
 /* ------------------------------ */
