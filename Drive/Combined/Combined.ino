@@ -53,6 +53,7 @@ void setup()
   SPI.setBitOrder(MSBFIRST);
   
   Serial.begin(38400);
+  Serial1.begin(9600);
 
   if(mousecam_init()==-1)
   {
@@ -64,8 +65,7 @@ void setup()
   mousecam_write_reg(26, 14);
 
 }
-  char _mode='g';
-  int scan_mode;
+
 
 byte frame[ADNS3080_PIXELS_X * ADNS3080_PIXELS_Y];
 
@@ -227,6 +227,9 @@ void loop(){
     actual_x=total_x;
   }
 
+  vector_add(calc_rad(abs(actual_x)), actual_y - rover_length);
+  cartesian(theta_total, r_total);
+
  Serial.print('\n');
 
 Serial.print("vref = " + String(vref));
@@ -260,7 +263,6 @@ Serial.print('\n');
 Serial.print("prev y = ");
 Serial.println(prev_val_y);
 
-
   delay(100);
 
   //#endif
@@ -268,14 +270,9 @@ Serial.println(prev_val_y);
   if (Serial.available() > 0) {
     // read the incoming byte:
      char _modenew = Serial.read();
-     //int scan_modenew = 0;
-     //scan_modenew = Serial.parseInt();
      if(_mode!=_modenew){
         _mode=_modenew;
-      }
-//      if(scan_mode!=scan_modenew){
-//        scan_mode=scan_modenew;
-//      }
+     }
    }
 
   digitalWrite(DIRR, DIRRstate);
@@ -283,27 +280,33 @@ Serial.println(prev_val_y);
   //*********//
   
   if(vb >= vref - 0.2){
-    if(scan_mode == 0){
+    if(_mode == 'o'){
+      if(!rover_scan_zero(_mode)){
+        rover_scan_zero(_mode);
+      }
+      Serial.println("s0 = "+String(rover_scan_zero(_mode)));
+    }else if(_mode == 'i'){
       if(!rover_scan_first(_mode)){
         rover_scan_first(_mode);
       }
-    }
-      Serial.println("s0 = "+String(rover_scan_first(_mode)));
-    
-//    else if(scan_mode == 1){
-//      _mode = 'g';
-//      if(!rover_scan_second(_mode)){
-//        rover_scan_second(_mode);
-//      }
-//      if(!reach_forward(_mode)){
-//        reach_forward(_mode);
-//      }  
-//      Serial.println("s1 = "+String(rover_scan_second(_mode))); 
-//     }
-     
+      if(!reach_forward(_mode)){
+        reach_forward(_mode);
+      }  
+      Serial.println("s1 = "+String(rover_scan_first(_mode)));
+    }else{
+      brake();
+    }  
   }else{
     brake();}
     
   prev_val_y = total_y;
   prev_val_x = total_x;
+
+for(int i = 0; i<6; i++){
+  Serial1.println(data_command[i]);
+}
+
+for(int i = 0; i<4; i++){
+  Serial1.println(data_vision[i]);
+}
 }
