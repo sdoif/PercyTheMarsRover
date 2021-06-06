@@ -625,7 +625,7 @@ int main()
 		if(fp){
 			printf("Opened connection to UART\n");
 		}else{
-			printf("Unable to connect to UART\n");
+			printf("Unable to connect to UART, trying again\n");
 		}
 	}
 
@@ -633,10 +633,19 @@ int main()
 	// Struct/class declarations
 	Ball redBall, greenBall, blueBall, violetBall, yellowBall;
 	redBall.colour = 'R';
+	redBall.seen = FALSE;
+
 	greenBall.colour = 'G';
+	greenBall.seen = FALSE;
+
 	blueBall.colour = 'B';
+	blueBall.seen = FALSE;
+
 	violetBall.colour = 'V';
+	violetBall.seen = FALSE;
+
 	yellowBall.colour = 'Y';
+	yellowBall.seen = FALSE;
 
 	int balls_detected = 0;
 
@@ -779,10 +788,10 @@ int main()
 					if (distance_check_z1(distance) == 1){
 						redBall.distance = distance;
 						fprintf(fp, "D%i\n", distance);
-						redBall.seen1 = TRUE;
+						redBall.seen = TRUE;
 						balls_detected++;
 					}else{
-						redBall.seen1 = FALSE;
+						redBall.seen = FALSE;
 					}
 					fprintf(fp, "G");
 				} else if (is_ball(g_topleft, g_bottomright, g_left_x, g_right_x) && is_in_centre_range(g_left_x, g_right_x)){
@@ -802,10 +811,10 @@ int main()
 					if (distance_check_z1(distance) == 1){
 						greenBall.distance = distance;
 						fprintf(fp, "D%i\n", distance);
-						greenBall.seen1 = TRUE;
+						greenBall.seen = TRUE;
 						balls_detected++;
 					}else{
-						greenBall.seen1 = FALSE;
+						greenBall.seen = FALSE;
 					}
 					fprintf(fp, "G");
 				} else if (is_ball(b_topleft, b_bottomright, b_left_x, b_right_x) && is_in_centre_range(b_left_x, b_right_x)){
@@ -825,10 +834,10 @@ int main()
 					if (distance_check_z1(distance) == 1){
 						blueBall.distance = distance;
 						fprintf(fp, "D%i\n", distance);
-						blueBall.seen1 = TRUE;
+						blueBall.seen = TRUE;
 						balls_detected++;
 					}else{
-						blueBall.seen1 = FALSE;
+						blueBall.seen = FALSE;
 					}
 					fprintf(fp, "G");
 				} else if (is_ball(v_topleft, v_bottomright, v_left_x, v_right_x) && is_in_centre_range(v_left_x, v_right_x)){
@@ -848,10 +857,10 @@ int main()
 					if (distance_check_z1(distance) == 1){
 						violetBall.distance = distance;
 						fprintf(fp, "D%i\n", distance);
-						violetBall.seen1 = TRUE;
+						violetBall.seen = TRUE;
 						balls_detected++;
 					}else{
-						violetBall.seen1 = FALSE;
+						violetBall.seen = FALSE;
 					}
 					fprintf(fp, "G");
 				} else if (is_ball(y_topleft, y_bottomright, y_left_x, y_right_x) && is_in_centre_range(y_left_x, y_right_x)){
@@ -871,10 +880,10 @@ int main()
 					if (distance_check_z1(distance) == 1){
 						yellowBall.distance = distance;
 						fprintf(fp, "D%i\n", distance);
-						yellowBall.seen1 = TRUE;
+						yellowBall.seen = TRUE;
 						balls_detected++;
 					}else{
-						yellowBall.seen1 = FALSE;
+						yellowBall.seen = FALSE;
 					}
 					fprintf(fp, "G");
 				}
@@ -885,43 +894,43 @@ int main()
 					if (s2_balls_detected == 0){ // no vague distances
 						state = 2; // advance to stage 2
 					}else{ // go to the closest ball
-						s2_balls_detected = 0; // reset counter
+						s2_balls_detected = 0; // reset counter for future 2nd scans
 						fprintf(fp, "i"); // trigger 2nd function causing us to go towards the first ball we stop at
 
 						if (closestBall->colour == 'R'){
 							if (is_ball(r_topleft, r_bottomright, r_left_x, r_right_x) && is_in_centre_range(r_left_x, r_right_x)){
 								fprintf(fp, "S");
 								// Rover then starts to go towards the ball; set off function that corrects the angle
-								if (go_towards(fp, 'R')){ // returns true if we've reached the ball and measured the distance
+								if (go_towards(closestBall, fp)){ // returns true if we've reached the ball and measured the distance
 									balls_detected++;
 								}
 							}
 						}else if(closestBall->colour == 'G'){
 							if (is_ball(g_topleft, g_bottomright, g_left_x, g_right_x) && is_in_centre_range(g_left_x, g_right_x)){
 								fprintf(fp, "S");
-								if(go_towards(fp, 'G')){
+								if(go_towards(closestBall, fp)){
 									balls_detected++;
 								}
 							}
 						}else if(closestBall->colour == 'B'){
 							if (is_ball(b_topleft, b_bottomright, b_left_x, b_right_x) && is_in_centre_range(b_left_x, b_right_x)){
 								fprintf(fp, "S");
-								if(go_towards(fp, 'B')){
+								if(go_towards(closestBall, fp)){
 									balls_detected++;
 								}
 							}
 						}else if(closestBall->colour == 'V'){
 							if (is_ball(v_topleft, v_bottomright, v_left_x, v_right_x) && is_in_centre_range(v_left_x, v_right_x)){
 								fprintf(fp, "S");
-								if (go_towards(fp, 'V')){
+								if (go_towards(closestBall, fp)){
 									balls_detected++;
 								}
 							}
 						}else if(closestBall->colour == 'Y'){
 							if (is_ball(y_topleft, y_bottomright, y_left_x, y_right_x) && is_in_centre_range(y_left_x, y_right_x)){
 								fprintf(fp, "S");
-								if(go_towards(fp, 'Y')){
-									balls_detected++:
+								if(go_towards(closestBall, fp)){
+									balls_detected++;
 								}
 							}
 						}
@@ -1073,9 +1082,8 @@ int main()
 					fprintf(fp, "G");
 
 					if (go_towards('R', fp) == TRUE){
+						balls_detected++;
 						state = 0; // to repeat the 1st scan and loop back
-						// TODO - Find if we consider this ball as being found here or in the accurate distance scan.
-						// If in the 1st scan, increment balls_detected there instead of here
 					}
 
 				} else if (is_ball(g_topleft, g_bottomright, g_left_x, g_right_x) && is_in_centre_range(g_left_x, g_right_x)){
@@ -1083,6 +1091,7 @@ int main()
 					fprintf(fp, "G");
 
 					if (go_towards('G', fp) == TRUE){
+						balls_detected++;
 						state = 0; // to repeat the 1st scan and loop back
 					}
 
@@ -1091,6 +1100,7 @@ int main()
 					fprintf(fp, "G");
 
 					if (go_towards('B', fp) == TRUE){
+						balls_detected++;
 						state = 0; // to repeat the 1st scan and loop back
 					}
 				} else if (is_ball(v_topleft, v_bottomright, v_left_x, v_right_x) && is_in_centre_range(v_left_x, v_right_x)){
@@ -1098,13 +1108,15 @@ int main()
 					fprintf(fp, "G");
 
 					if (go_towards('V', fp) == TRUE){
+						balls_detected++;
 						state = 0; // to repeat the 1st scan and loop back
 					}
 				} else if (is_ball(y_topleft, y_bottomright, y_left_x, y_right_x) && is_in_centre_range(y_left_x, y_right_x)){
 					fprintf(fp, "S"); // tell the rover to stop
-					fprintf(fp, "Y");
+					fprintf(fp, "G");
 
 					if (go_towards('Y', fp) == TRUE){
+						balls_detected++;
 						state = 0; // to repeat the 1st scan and loop back
 					}
 			}
