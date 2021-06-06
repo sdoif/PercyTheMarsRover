@@ -85,7 +85,7 @@
                     <p id='manual-warning'><span id="manual-warning-text">WARNING: Rover may collide with obstacles in this mode</span> </p>
                 </div>
 
-                <div class = 'keypad'>
+                <div class = 'keypad' id='keypad-id'>
                     <button type="button" class = 'keypad-button alone-key' id = 'up-key'>&#8593;</button>
                     <div id="turn-key-div">
                         <button type="button" class = 'keypad-button lrs-key' id = 'left-key'>&#10226;</button>
@@ -97,14 +97,14 @@
 
                 <br/>
 
-                <div class = 'speed-control'>
+                <div class = 'speed-control' id='speed-control-id'>
                     <div class="slider" id="curr-val">
-                        <span>Speed (cm/s) : <span id="curr-speed-val">6.0</span></span>
+                        <span id="curr-speed-text">Speed (cm/s) :&nbsp;<span id="curr-speed-val">6.0</span></span>
                     </div>
                     <div class="slider" id="acc-slider">
                         <div id="min-slider-val">6 </div>
                         <input type="range" min="6.0" max="16.5" step="0.1" value="6.0" id = 'speed-slider'>
-                        <div id="max-slider-val"> 17</div>
+                        <div id="max-slider-val"> 16.5</div>
                     </div>
                 </div>
 
@@ -118,11 +118,11 @@
 
         </section>
 
+        <script>
+            
+            let speed = 6;
 
-       <!--<script src="app.js" ></script> --> 
-
-       <script>
-           let speed = 6;
+        //TO-DO: Add an if manual condition!
         //  updating current gear 
             const upKey = document.querySelector("#up-key");
             const downKey = document.querySelector("#down-key");
@@ -130,39 +130,35 @@
             const rightKey = document.querySelector("#right-key");
             const stopKey = document.querySelector("#stop-key");
             const currGear = document.querySelector("#curr-gear");
-
+            console.log(upKey===document.getElementById('up-key'))
             upKey.onclick = function(event){currGear.textContent='D';};
             downKey.onclick = function(event){currGear.textContent='R';};
             leftKey.onclick = function(event){currGear.textContent='RL';};
             rightKey.onclick = function(event){currGear.textContent='RR';};
             stopKey.onclick = function(event){currGear.textContent='P';};
 
-        //  updating speed display
-            const displayCurrVal = document.querySelector('#curr-speed-val');
-            const inputVal = document.querySelector("#speed-slider");
-
-            inputVal.oninput = ( ()=>{ 
-                displayCurrVal.textContent, speed = inputVal.value;
-                
-            });
-        
         //  Speedometer 
             let data = [{
             domain: { x: [0, 1], y: [0, 1] },
-            value: 6,
+            value: speed,
             type: "indicator",
             mode: "gauge+number",
             gauge:{
-                axis: { range: [null, 20]},
-                bar: { color: "#73AD21" },
+                axis: { range: [null, 18]},
+                bar: { color: '#3BF014'},
                 borderwidth: 3,
                 bordercolor: "#ffebdb"
+                // steps: [
+                //         {'range': [0, 10], bar: {'color': 'green'}},
+                //         {'range': [10, 15.5], bar: {'color': 'yellow'}},
+                //         {'range': [15.5,18], bar: {'color': 'red'}}]
+
                 }
             }];
 
             let layout = { 
-                height: 250, 
-                width: 520, 
+                height: 275, 
+                width: 550, 
                 paper_bgcolor: "#35499b", 
                 margin: { t: 0, b: 0 }, 
                 font: { color: "#ffebdb", family: "Roboto Mono" }
@@ -215,12 +211,39 @@
                 data1,
                 layout1
                 );
+            
+            //  updating speed display
+            const displayCurrVal = document.querySelector('#curr-speed-val');
+            const inputVal = document.querySelector("#speed-slider");
+            //TO-DO: Add an if manual condition!
+            inputVal.oninput = ( ()=>{ 
+                displayCurrVal.textContent = inputVal.value;
+                speed = inputVal.value;
+                // console.log("Speed inputted is =", speed)
+                // data[0].value=speed;
+                // console.log("Value stored in gauge container is: ", data[0].value);
+
+                data = [{
+                    domain: { x: [0, 1], y: [0, 1] },
+                    value: speed,
+                    type: "indicator",
+                    mode: "gauge+number",
+                    gauge:{
+                        axis: { range: [null, 18]},
+                        bar: { color: (speed<10? '#3BF014' : speed<15? '#FFFF00' : '#FF0000')},
+                        borderwidth: 3,
+                        bordercolor: "#ffebdb"
+                        }
+                }];
+
+                Plotly.newPlot('speedometer', data, layout);
+            });
 
         </script>
 
-       <audio autoplay loop>
-           <source src = "Source/FILTERED_HIGHLIGHTS_-_Sol16RoverDriveHighlights.mp3" type = "audio/mp3">
-       </audio>
+        <audio autoplay loop>
+            <source src = "Source/FILTERED_HIGHLIGHTS_-_Sol16RoverDriveHighlights.mp3" type = "audio/mp3">
+        </audio>
 
 
     </body>
