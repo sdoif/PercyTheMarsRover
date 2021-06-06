@@ -11,13 +11,17 @@
           font-family: 'Roboto Mono', monospace;
         }
       </style>
+
+<script src="https://cdn.plot.ly/plotly-2.0.0-rc.3.min.js"></script>
     </head>
 
     <body>
 
         <section class = 'main-sec' id = "status"> 
             <h1>Rover Status</h1>
+
             <div id = "stat-cont">
+
             <section class = 'sub-sec'> 
                 <h2>Energy Status</h2> 
                 <div class="battery">
@@ -30,6 +34,10 @@
             
             <section class = 'sub-sec' id = 'speed'> 
                 <h2>Speedometer</h2> 
+                <div id="speedometer"> 
+                    <p id='speed-units'>cm/s</p>
+                </div>
+                
             </section>
 
             <section class = 'sub-sec'> 
@@ -37,31 +45,33 @@
                 <table>
                     <tr>
                         <td>Distance Traveled</td> 
-                        <td>630m</td> 
+                        <td>0m</td> 
                     </tr>
 
                     <tr>
                         <td>Time of Current Trip</td>
-                        <td>13 mins</td>  
+                        <td>0 mins</td>  
                     </tr>
 
                     <tr>
                         <td>Current Gear</td>
-                        <td>D</td> 
+                        <td id="curr-gear">P</td> 
                     </tr>
 
                     <tr>
                         <td>Current Coordinates</td>
-                        <td>(-3, 7)</td> 
+                        <td>(0, 0)</td> 
                     </tr>
                 </table>
             </section>
             </div>
         </section>
+
         <br/>
         <div id="imag">
             <br><br>
         </div>
+
         <section class = 'main-sec' id = "control">
             <h1>Mission Control</h1>
             <!-- Current Status, Automatic, Manual, Target, Notification feed, minimap-->
@@ -72,14 +82,36 @@
                     <strong class = 'switch-label'> Manual</strong> 
                     <input type="checkbox" id="switch" /><label for="switch"></label> 
                     <strong class = 'switch-label'> Autonomous</strong>
-                    <p id='manual-warning'>WARNING: Rover may collide with obstacles in this mode</p>
+                    <p id='manual-warning'><span id="manual-warning-text">WARNING: Rover may collide with obstacles in this mode</span> </p>
+                </div>
 
+                <div class = 'keypad'>
+                    <button type="button" class = 'keypad-button alone-key' id = 'up-key'>&#8593;</button>
+                    <div id="turn-key-div">
+                        <button type="button" class = 'keypad-button lrs-key' id = 'left-key'>&#10226;</button>
+                        <button type="button" class = 'keypad-button lrs-key' id = 'stop-key'>STOP</button>
+                        <button type="button" class = 'keypad-button lrs-key' id = 'right-key'>&#10227;</button>
+                    </div>
+                        <button type="button" class = 'keypad-button alone-key' id = 'down-key'>&#8595;</button> 
+                </div>
+
+                <br/>
+
+                <div class = 'speed-control'>
+                    <div class="slider" id="curr-val">
+                        <span>Speed (cm/s) : <span id="curr-speed-val">6.0</span></span>
+                    </div>
+                    <div class="slider" id="acc-slider">
+                        <div id="min-slider-val">6 </div>
+                        <input type="range" min="6.0" max="16.5" step="0.1" value="6.0" id = 'speed-slider'>
+                        <div id="max-slider-val"> 17</div>
+                    </div>
                 </div>
 
             </div>
 
             <div class = 'bdiv' id='map'> 
-                <img src="/Source/CartesianPlane.png">
+                
             </div>
 
 
@@ -88,6 +120,103 @@
 
 
        <!--<script src="app.js" ></script> --> 
+
+       <script>
+           let speed = 6;
+        //  updating current gear 
+            const upKey = document.querySelector("#up-key");
+            const downKey = document.querySelector("#down-key");
+            const leftKey = document.querySelector("#left-key");
+            const rightKey = document.querySelector("#right-key");
+            const stopKey = document.querySelector("#stop-key");
+            const currGear = document.querySelector("#curr-gear");
+
+            upKey.onclick = function(event){currGear.textContent='D';};
+            downKey.onclick = function(event){currGear.textContent='R';};
+            leftKey.onclick = function(event){currGear.textContent='RL';};
+            rightKey.onclick = function(event){currGear.textContent='RR';};
+            stopKey.onclick = function(event){currGear.textContent='P';};
+
+        //  updating speed display
+            const displayCurrVal = document.querySelector('#curr-speed-val');
+            const inputVal = document.querySelector("#speed-slider");
+
+            inputVal.oninput = ( ()=>{ 
+                displayCurrVal.textContent, speed = inputVal.value;
+                
+            });
+        
+        //  Speedometer 
+            let data = [{
+            domain: { x: [0, 1], y: [0, 1] },
+            value: 6,
+            type: "indicator",
+            mode: "gauge+number",
+            gauge:{
+                axis: { range: [null, 20]},
+                bar: { color: "#73AD21" },
+                borderwidth: 3,
+                bordercolor: "#ffebdb"
+                }
+            }];
+
+            let layout = { 
+                height: 250, 
+                width: 520, 
+                paper_bgcolor: "#35499b", 
+                margin: { t: 0, b: 0 }, 
+                font: { color: "#ffebdb", family: "Roboto Mono" }
+            };
+            Plotly.newPlot('speedometer', data, layout);
+
+        //  graphing stuff
+            let plotDiv = document.getElementById('map')
+            
+            let rover ={
+                x:[0],
+                y:[0],
+                mode: 'markers',
+                marker: {
+                    size: 15
+                },
+                type: 'scatter',
+                name: 'Rover'
+            };
+
+            let redBall ={
+                x:[-4],
+                y:[-7],
+                mode: 'markers',
+                marker: {
+                    size: 15
+                },
+                type: 'scatter'
+            };
+
+            let blueBall ={
+                x:[6],
+                y:[8],
+                mode: 'markers',
+                marker: {
+                    size: 15
+                },
+                type: 'scatter'
+            };
+
+            let data1 = [rover, redBall, blueBall];
+
+            let layout1 = {
+                paper_bgcolor: "#ffebd9",
+                plot_bgcolor: "#ffebdb"
+            };
+
+            Plotly.newPlot( 
+                plotDiv, 
+                data1,
+                layout1
+                );
+
+        </script>
 
        <audio autoplay loop>
            <source src = "Source/FILTERED_HIGHLIGHTS_-_Sol16RoverDriveHighlights.mp3" type = "audio/mp3">

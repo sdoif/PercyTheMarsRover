@@ -4,6 +4,14 @@
 #define RXD1 4
 #define TXD1 2
 
+int bytein = 0;
+char msg[45];
+
+void clearmsg(){
+  for(int i =0; i<45; i++){
+    msg[i] = NULL;
+  }
+}
 
 void setup(){
   Serial.begin(115200);
@@ -12,8 +20,14 @@ void setup(){
 }
 
 void loop(){
-    Serial.println("Data sent");
-    Serial2.println("100001011");
-    delay(1500);
-    //delayMicroseconds(10);
+    if(Serial2.available() > 44 ){
+      for(int i = 0; i<45; i++){
+      bytein = Serial2.read();
+      msg[i] = char(bytein);
+      }
+    }
+    Serial.println("Data received: ");
+    Serial.println(msg);
+    //clearmsg();
+    delay(80);
 }
