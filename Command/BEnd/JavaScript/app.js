@@ -4,9 +4,22 @@ const mqtt = require('mqtt');
 
 const app = express();
 const client = mqtt.connect('mqtt://54.221.168.26', {clientId:"node"});
-
-
 app.use(express.urlencoded({extended: true}));
+
+// placeholder for information stored
+let information = {
+    speed: 1,
+    battery: 1,
+    ttl: 1,
+    charging: 1,
+    distanceTravelled: 1,
+    gear: 1,
+    roverCoordinates: {x: 0, y: 0},
+    ballCoordinates: {},
+    targetBall: 1,
+    roverPath: {}
+
+}
 
 const server = app.listen(9000, (err) => {
     if(err){
