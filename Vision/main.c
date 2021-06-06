@@ -230,8 +230,11 @@ int angle_calc(int left_x, int right_x){
 //		reached the ball
 bool go_towards(char colour, FILE* fp){
 	int verilog_word;
-	int distance;
+	int distance, avg_distance;
+	int sum = 0;
+
 	if(colour == 'R'){
+		int r_d[5];
 		while ((IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_STATUS)>>8) & 0xff) {
 
 			// Update the boundary box co-ordinates
@@ -265,12 +268,27 @@ bool go_towards(char colour, FILE* fp){
 					distance = distance_calc(r_left_x, r_right_x);
 				}
 
-				if (distance < 50 && distance > 30){
+				// Initialise the array with the first distance value if empty
+				if (r_d[4] == 0){
+					for (int i = 0; i < 5; i++){
+						r_d[i] = distance;
+					}
+				}else{ // Else shift the values and update the last term if the distance and calculate the average
+					for(int i = 0; i < 4; i++){
+						r_d[i] = r_d[i+1];
+						sum+= r_d[i];
+					}
+					r_d[4] = distance;
+					avg_distance = sum/5;
+				}
+
+				if (avg_distance < 50 && avg_distance > 30){
 					return TRUE;
 				}
     	   	}
 		}
 	}else if(colour == 'G'){
+		int g_d[5];
 		while ((IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_STATUS)>>8) & 0xff) {
 
 			// Update the boundary box co-ordinates
@@ -304,12 +322,27 @@ bool go_towards(char colour, FILE* fp){
 					distance = distance_calc(g_left_x, g_right_x);
 				}
 
-				if (distance < 50 && distance > 30){
+				// Initialise the array with the first distance value if empty
+				if (g_d[4] == 0){
+					for (int i = 0; i < 5; i++){
+						g_d[i] = distance;
+					}
+				}else{ // Else shift the values and update the last term if the distance and calculate the average
+					for(int i = 0; i < 4; i++){
+						g_d[i] = g_d[i+1];
+						sum+= g_d[i];
+					}
+					g_d[4] = distance;
+					avg_distance = sum/5;
+				}
+
+				if (avg_distance < 50 && avg_distance > 30){
 					return TRUE;
 				}
     	   	}
 		}
 	}else if(colour == 'B'){
+		int b_d[5];
 		while ((IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_STATUS)>>8) & 0xff) {
 
 			// Update the boundary box co-ordinates
@@ -343,12 +376,27 @@ bool go_towards(char colour, FILE* fp){
 					distance = distance_calc(b_left_x, b_right_x);
 				}
 
-				if (distance < 50 && distance > 30){
+				// Initialise the array with the first distance value if empty
+				if (b_d[4] == 0){
+					for (int i = 0; i < 5; i++){
+						b_d[i] = distance;
+					}
+				}else{ // Else shift the values and update the last term if the distance and calculate the average
+					for(int i = 0; i < 4; i++){
+						b_d[i] = b_d[i+1];
+						sum+= b_d[i];
+					}
+					b_d[4] = distance;
+					avg_distance = sum/5;
+				}
+
+				if (avg_distance < 50 && avg_distance > 30){
 					return TRUE;
 				}
     	   	}
 		}
 	}else if(colour == 'V'){
+		int v_d[5];
 		while ((IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_STATUS)>>8) & 0xff) {
 
 			// Update the boundary box co-ordinates
@@ -382,12 +430,27 @@ bool go_towards(char colour, FILE* fp){
 					distance = distance_calc(v_left_x, v_right_x);
 				}
 
-				if (distance < 50 && distance > 30){
+				// Initialise the array with the first distance value if empty
+				if (v_d[4] == 0){
+					for (int i = 0; i < 5; i++){
+						v_d[i] = distance;
+					}
+				}else{ // Else shift the values and update the last term if the distance and calculate the average
+					for(int i = 0; i < 4; i++){
+						v_d[i] = v_d[i+1];
+						sum+= v_d[i];
+					}
+					v_d[4] = distance;
+					avg_distance = sum/5;
+				}
+
+				if (avg_distance < 50 && avg_distance > 30){
 					return TRUE;
 				}
     	   	}
 		}
 	}else if(colour == 'Y'){
+		int y_d[5];
 		while ((IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_STATUS)>>8) & 0xff) {
 
 			// Update the boundary box co-ordinates
@@ -421,7 +484,21 @@ bool go_towards(char colour, FILE* fp){
 					distance = distance_calc(y_left_x, y_right_x);
 				}
 
-				if (distance < 50 && distance > 30){
+				// Initialise the array with the first distance value if empty
+				if (y_d[4] == 0){
+					for (int i = 0; i < 5; i++){
+						y_d[i] = distance;
+					}
+				}else{ // Else shift the values and update the last term if the distance and calculate the average
+					for(int i = 0; i < 4; i++){
+						y_d[i] = y_d[i+1];
+						sum+= y_d[i];
+					}
+					y_d[4] = distance;
+					avg_distance = sum/5;
+				}
+
+				if (avg_distance < 50 && avg_distance > 30){
 					return TRUE;
 				}
     	   	}
