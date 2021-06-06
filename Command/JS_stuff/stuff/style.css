@@ -53,8 +53,8 @@ h2{
     text-align: center;
     width: 500px;
     height: 40px;
-    vertical-align: text-top;
     display: block;
+    z-index: 3;
 
 }
 
@@ -129,11 +129,17 @@ h2:hover{
     font-size: 20px;
     }
 
+/* ------------------------------ */
+/*Speedometer*/
+/* ------------------------------ */
 #speedometer{
     height: 70%;
     vertical-align: center;
-    bottom: 11%;
+    width: 50%;
+    position: relative;
+    bottom: 16%;
 }
+
 /* ------------------------------ */
 /*Current Trip Details*/
 /* ------------------------------ */
@@ -177,10 +183,9 @@ td, th {
 }
 
 #map{
-    border-radius: 50%;
     height: 54%;
     width: 50%;
-    background: #35499b;
+    border-radius: 200px;
 }
 /* ------------------------------ */
 /* TOGGLE SWITCH */

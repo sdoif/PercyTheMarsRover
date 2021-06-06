@@ -34,7 +34,9 @@
             
             <section class = 'sub-sec' id = 'speed'> 
                 <h2>Speedometer</h2> 
-                <div id="speedometer"> </div>
+                <div id="speedometer"> 
+
+                </div>
             </section>
 
             <section class = 'sub-sec'> 
@@ -119,6 +121,7 @@
        <!--<script src="app.js" ></script> --> 
 
        <script>
+           let speed = 6;
         //  updating current gear 
             const upKey = document.querySelector("#up-key");
             const downKey = document.querySelector("#down-key");
@@ -137,8 +140,34 @@
             const displayCurrVal = document.querySelector('#curr-speed-val');
             const inputVal = document.querySelector("#speed-slider");
 
-            inputVal.oninput = ( ()=>{ displayCurrVal.textContent = inputVal.value;});
+            inputVal.oninput = ( ()=>{ 
+                displayCurrVal.textContent, speed = inputVal.value;
+                
+            });
         
+        //  Speedometer 
+            let data = [{
+            domain: { x: [0, 1], y: [0, 1] },
+            value: 6,
+            type: "indicator",
+            mode: "gauge+number",
+            gauge:{
+                axis: { range: [null, 20]},
+                bar: { color: "#73AD21" },
+                borderwidth: 3,
+                bordercolor: "#ffebdb"
+                }
+            }];
+
+            let layout = { 
+                height: 250, 
+                width: 520, 
+                paper_bgcolor: "#35499b", 
+                margin: { t: 0, b: 0 }, 
+                font: { color: "#ffebdb", family: "Roboto Mono" }
+            };
+            Plotly.newPlot('speedometer', data, layout);
+
         //  graphing stuff
             let plotDiv = document.getElementById('map')
             
@@ -173,17 +202,17 @@
                 type: 'scatter'
             };
 
-            let data = [rover, redBall, blueBall];
+            let data1 = [rover, redBall, blueBall];
 
-            let layout = {
+            let layout1 = {
                 paper_bgcolor: "#ffebd9",
                 plot_bgcolor: "#ffebdb"
             };
 
             Plotly.newPlot( 
                 plotDiv, 
-                data,
-                layout
+                data1,
+                layout1
                 );
 
         </script>
