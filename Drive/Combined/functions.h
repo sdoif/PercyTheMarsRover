@@ -76,21 +76,26 @@ int DIRR = 21;                    //defining right direction pin
 int pwmr = 5;                     //pin to control right wheel speed using pwm
 int pwml = 9;                     //pin to control left wheel speed using pwm
 //*********//
+float theta_total = 0;
+float r_total = 0;
 
 unsigned long ref_time = 0;
-
 
 int prev_val_y = 0;
 int prev_val_x = 0;
 int min_y = 0;
 int min_x = 0;
 
-int found = 0;
+int rover_length = 73;
+
+float cart_x = 0;
+float cart_y = 0;
 
 int search_x = 0;
 int search_y = 0;
+int _iter_second = 0;
+int _iter_first = 0;
 int _iter_scan = 0;
-int _iter_short = 0;
 int _iter = 0;
 
 int counter_x = 0;
@@ -111,19 +116,14 @@ int y=0;
 int a=0;
 int b=0;
 
-int actual_x_short = 0;
+int actual_x_first = 0;
+int actual_x_second = 0;
 int actual_x_scan = 0;
 int actual_y = 0;
 int actual_x = 0;
 
 float distance_x=0;
 float distance_y=0;
-float distance_xx=0;
-float distance_yy=0;
-float prev_xx = 0;
-float prev_yy = 0;
-float angle_x = 0;
-float angle_y = 0;
 
 int set_yf = -300; //-ve
 int set_yb = 300; //+ve
@@ -269,7 +269,7 @@ void sampling(){
   // Make the initial sampling operations for the circuit measurements
   
   sensorValue0 = analogRead(A0); //sample Vb
-  vref = 1.7;
+  vref = 1.6;
   sensorValue3 = analogRead(A3); //sample Vpd
   current_mA = ina219.getCurrent_mA(); // sample the inductor current (via the sensor chip)
 
@@ -332,61 +332,75 @@ void brake(){
 }
 
 //**********************************//
-float store_angle(float angle_x, float angle_y){
-    float angle = atan2(angle_y, angle_x)*(180.0/PI);
-    Serial.println("angle = "+String(angle));
-    return angle;
+void cartesian(float theta, float r){
+  cart_x = r*cos(theta);
+  cart_y = r*sin(theta);
+  Serial.println("cart_x = "+String(cart_x));
+  Serial.println("cart_y = "+String(cart_y));
 }
 
-bool rover_scan_short(char _mode){
-  if(_iter_short == 0){
-    actual_x_short = abs(actual_x);
+void vector_add(float theta_current, float r_current){
+  theta_total = theta_total + theta_current;
+  r_total = r_total + r_current;
+  Serial.println("theta_total = "+String(theta_total));
+  Serial.println("r_total = "+String(r_total));
+}
+
+float calc_rad(float x){
+  float angle = (x/955)*360;
+  float angle_corrected = angle - 90;
+  float rad = angle_corrected*(PI/180);
+  Serial.println("angle = "+String(angle));
+  Serial.println("angle_corrected = "+String(angle_corrected));
+  Serial.println("rad = "+String(rad));
+  return rad;
+}
+
+bool rover_scan_first(char _mode){
+  if(_iter_first == 0){
+    actual_x_first = abs(actual_x);
   }
-  if(abs(actual_x) >= 350+actual_x_short){
+  if(abs(actual_x) >= 1000 +actual_x_first){
     brake();
     return true;
   }else if(_mode == 's'){
     brake();
-    if(_iter_short == 1){
-      ref_time = millis();
+    if((prev_val_x == total_x)&&(_iter_first == 1)){
+      vector_add(calc_rad(abs(actual_x)), actual_y - rover_length);
+      cartesian(theta_total, r_total);
+      _iter_first = 2;
     }
-    _iter_short = 2;
-    Serial.println("ref_time = "+String(ref_time));
-    if((millis() - ref_time) >= 1000){
-      brake();
-      _iter_short == 3;
-    }else{
-      forward();
-    }
-    if(_iter_short == 3){
-      if((millis() - ref_time) >= 2000){
-        brake();
-      }else{
-        back();
-    }
-    }
+    return false;
   }else{
-    right();
-    _iter_short = 1;
+    left();
+    _iter_first = 1;
     return false;
   }
 }
 
-bool rover_scan(char _mode){
-  if(_iter_scan == 0){
-    actual_x_scan = abs(actual_x);
+bool rover_scan_second(char _mode){
+  if(_iter_second == 0){
+    actual_x_second = abs(actual_x);
   }
-  if((abs(actual_x) >= 350+actual_x_scan)||(_mode == 's')){
+  if(abs(actual_x) >= 610+actual_x_first){
     brake();
-    store_angle(angle_x, angle_y);
+    return false;
+  }else if( _mode == 's'){
+    brake();
+    if(prev_val_x == total_x){
+      Serial.println("scan actual_x = "+String(actual_x));
+      vector_add(calc_rad(abs(actual_x)), actual_y);
+      while(1){
+        brake();
+      }
+    }
     return true;
   }else{
-    right();
-    _iter_scan = 1;
+    left();
+    _iter_first = 1;
     return false;
   }
 }
-
 
 void rover_manual(char _mode){
     if (_mode == 'w') {
@@ -433,11 +447,9 @@ bool reach_forward(char _mode){
         return true;
     }else if(_mode == 'r'){
         right();
-        vref = 1.7;
         reach_forward('g');
     }else if(_mode == 'l'){
         left();
-        vref = 1.7;
         reach_forward('g');
     }
 }
