@@ -301,12 +301,13 @@ Serial.println(prev_val_y);
     
   prev_val_y = total_y;
   prev_val_x = total_x;
-
-for(int i = 0; i<6; i++){
-  Serial1.println(data_command[i]);
-}
-
-for(int i = 0; i<4; i++){
-  Serial1.println(data_vision[i]);
-}
+  actual_y_prev = actual_y;
+  
+    for(int i = 0; i<6; i++){
+      Serial1.print(data_command[i]);
+    }
+    
+    for(int i = 0; i<4; i++){
+      Serial1.print(data_vision[i]);
+    }
 }

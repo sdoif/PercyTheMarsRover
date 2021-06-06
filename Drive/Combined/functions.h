@@ -78,6 +78,9 @@ int pwml = 9;                     //pin to control left wheel speed using pwm
 //*********//
 char _mode='g';
 
+char controlIn[20];
+int readIt = 0;
+
 float theta_total = 0;
 float r_total = 0;
 
@@ -89,6 +92,7 @@ unsigned long ref_time = 0;
 
 int prev_val_y = 0;
 int prev_val_x = 0;
+int actual_y_prev = 0;
 int min_y = 0;
 int min_x = 0;
 
@@ -103,6 +107,7 @@ int _iter_second = 0;
 int _iter_first = 0;
 int _iter_scan = 0;
 int _iter = 0;
+int _iter_send = 0;
 
 int counter_x = 0;
 int counter_y = 0;
@@ -462,7 +467,7 @@ void rover_mode(char _mode){
 
 //String data_command[] = {send_to, gear, x, y, total, _speed};
 //String data_vision[] = {"v", String(rover_scan_zero(_mode)), "57.4", "132"};
-String data_command[] = {"c", "RR", "3.4", "-15.2", "3422", "10.2"};
-String data_vision[] = {"v", String(rover_scan_zero(_mode)), "57.4", "132"};
+String data_command[] = {"c", "RR", "+0003.4", "-0015.2", "00003422", "10.2"};
+String data_vision[] = {"v", String(rover_scan_zero(_mode)), "+0057.4", "+0132.0"};
 
 #endif 

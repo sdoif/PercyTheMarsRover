@@ -5,8 +5,13 @@
 #define TXD1 2
 
 int bytein = 0;
-char msg[50];
-int i = 0;
+char msg[45];
+
+void clearmsg(){
+  for(int i =0; i<45; i++){
+    msg[i] = NULL;
+  }
+}
 
 void setup(){
   Serial.begin(115200);
@@ -15,13 +20,14 @@ void setup(){
 }
 
 void loop(){
-    Serial.println("Data received: ");
-    i = 0;
-    while(Serial2.available()){
+    if(Serial2.available() > 44 ){
+      for(int i = 0; i<45; i++){
       bytein = Serial2.read();
       msg[i] = char(bytein);
-      i++;
+      }
     }
+    Serial.println("Data received: ");
     Serial.println(msg);
-    delay(100);
+    //clearmsg();
+    delay(80);
 }
