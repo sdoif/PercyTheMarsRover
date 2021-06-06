@@ -44,6 +44,13 @@ app.get('/', (req, res) => {
 
 });
 
+app.get('/api/test', (req, res) => {
+
+    res.send('Testing');
+    console.log('entered test');
+
+});
+
 app.post('/api/direction', (req, res) => {
 
     const direction = req.body.direction;
