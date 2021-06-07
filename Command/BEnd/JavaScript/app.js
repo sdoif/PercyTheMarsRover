@@ -1,10 +1,14 @@
 const express = require('express');
 const path = require('path');
 const mqtt = require('mqtt');
+const bp = require('body-parser')
+const { response } = require('express');
 
 const app = express();
 const client = mqtt.connect('mqtt://54.221.168.26', {clientId:"node"});
 app.use(express.urlencoded({extended: true}));
+app.use(bp.json())
+app.use(bp.urlencoded({ extended: true }))
 
 // placeholder for information stored
 let information = {
@@ -45,8 +49,8 @@ app.get('/', (req, res) => {
 });
 
 app.get('/api/test', (req, res) => {
-
-    res.send('Testing');
+    console.log("Sending", JSON.stringify('Testing'))
+    res.send(JSON.stringify('Testing'));
     console.log('entered test');
 
 });
@@ -54,6 +58,7 @@ app.get('/api/test', (req, res) => {
 app.post('/api/direction', (req, res) => {
 
     const direction = req.body.direction;
+    console.log(response.body);
     console.log(`Received new movement command: ${direction}`);
 
     if(client.connected === true){
