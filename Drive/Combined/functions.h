@@ -78,16 +78,10 @@ int pwml = 9;                     //pin to control left wheel speed using pwm
 //*********//
 char _mode='g';
 
-float theta_total = 0;
-float r_total = 0;
-
 int found = 0;
 
-float angle = 0;
-float angle_corrected = 0;
-float rad = 0;
-
-unsigned long ref_time = 0;
+float ycal_total = 0;
+float xcal_total = 0;
 
 int prev_val_y = 0;
 int prev_val_x = 0;
@@ -335,29 +329,29 @@ void brake(){
 }
 
 //**********************************//
-void cartesian(float theta, float r){
-  if(total_y != prev_val_y){
-    cart_x = r*cos(theta);
-    cart_y = r*sin(theta);
-  }
+float store_angle(float x){
+    float angle_deg = ((x/850)*360);
+    float angle_rad = (x/850)*2*PI;
+    Serial.print("angle = ");
+    Serial.println(angle_deg);
+    return angle_rad;
 }
 
-void vector_add(float theta_current, float r_current){
-  if(total_y != prev_val_y){
-    theta_total = theta_total + theta_current;
-    r_total = r_total + r_current;
-  }
+float xcoordinatefinder(float old_r, float new_r, float angle){
+    float xcal = (new_r - old_r)*cos(angle);
+    xcal_total = xcal_total + xcal;
+    Serial.print("x coordinate of rover = ");
+    Serial.println(xcal_total);
+    return xcal_total; 
 }
 
-float calc_rad(float x){
-  if(total_y != prev_val_y){
-    angle = (x/955)*360;
-    angle_corrected = 90 - angle;
-    rad = angle_corrected*(PI/180);
-    return rad;
-   }
+float ycoordinatefinder(float old_r, float new_r, float angle){
+    float ycal = (new_r - old_r)*sin(angle);
+    ycal_total = ycal_total + ycal;
+    Serial.print("y coordinate of rover = ");
+    Serial.println(ycal_total);
+    return ycal_total; 
 }
-
 
 bool rover_scan_one(char _mode){
   if( _mode == 's'){

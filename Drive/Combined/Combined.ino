@@ -227,8 +227,9 @@ void loop(){
     actual_x=total_x;
   }
 
-  //vector_add(calc_rad(abs(actual_x)), actual_y - rover_length);
-  //cartesian(theta_total, r_total);
+ float angle = store_angle(actual_x);
+ xcoordinatefinder(actual_y_prev, actual_y, angle);
+ ycoordinatefinder(actual_y_prev, actual_y, angle);
 
  Serial.print('\n');
 
@@ -309,6 +310,8 @@ Serial.println(prev_val_y);
      
   }else{
     brake();}
+
+  
     
   prev_val_y = total_y;
   prev_val_x = total_x;
