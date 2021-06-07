@@ -268,9 +268,9 @@ Serial.println(prev_val_y);
 
   //#endif
    
-  if (Serial.available() > 0) {
+  if (Serial1.available() > 0) {
     // read the incoming byte:
-     char _modenew = Serial.read();
+     char _modenew = Serial1.read();
      if(_mode!=_modenew){
         _mode=_modenew;
      }

@@ -14,20 +14,25 @@ void clearmsg(){
 }
 
 void setup(){
-  Serial.begin(115200);
+  Serial.begin(9600);
   Serial1.begin(115200, SERIAL_8N1, RXD1, TXD1);
   Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
 }
 
 void loop(){
-    if(Serial2.available() > 44 ){
-      for(int i = 0; i<45; i++){
-      bytein = Serial2.read();
-      msg[i] = char(bytein);
-      }
-    }
-    Serial.println("Data received: ");
-    Serial.println(msg);
-    //clearmsg();
-    delay(80);
+//    if(Serial2.available() > 44 ){
+//      for(int i = 0; i<45; i++){
+//      bytein = Serial2.read();
+//      msg[i] = char(bytein);
+//      }
+//    }
+//    Serial.println("Data received: ");
+//    Serial.println(msg);
+//    //clearmsg();
+//    delay(80);
+  if(Serial.available() > 0){
+    Serial2.println(Serial.readString());
+    Serial.print("Data sent: ");    
+    Serial.println(Serial.readString());
+  }
 }
