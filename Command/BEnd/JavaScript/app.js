@@ -62,6 +62,7 @@ app.post('/api/direction', (req, res) => {
     const direction = req.body.direction;
     console.log(response.body);
     console.log(`Received new movement command: ${direction}`);
+    res.json("Command Received");
 
     if(client.connected === true){
 
@@ -76,6 +77,7 @@ app.post('/api/speed', (req, res) => {
 
     const speed = req.body.speed;
     console.log(`Received new speed setting: ${speed}`);
+    res.json("Speed Changed");
 
     if(client.connected === true){
 
@@ -90,6 +92,7 @@ app.post('/api/mode', (req, res) => {
 
     const mode = req.body.mode;
     console.log(`Changed mode to: ${mode}`);
+    res.json("Mode Changed");
 
     if(client.connected === true){
 
