@@ -70,6 +70,20 @@ app.post('/api/direction', (req, res) => {
 
 });
 
+app.post('/api/speed', (req, res) => {
+
+    const speed = req.body.speed;
+    console.log(`Received new speed setting: ${speed}`);
+
+    if(client.connected === true){
+
+        client.publish('speed', speed, () =>{
+            console.log('Published new speed');
+        });
+    }
+
+});
+
 app.post('/api/mode', (req, res) => {
 
     const mode = req.body.mode;

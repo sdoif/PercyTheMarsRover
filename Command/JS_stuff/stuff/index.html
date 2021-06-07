@@ -260,6 +260,8 @@
             inputVal.oninput = ( ()=>{ 
                 displayCurrVal.textContent = inputVal.value;
                 speed = inputVal.value;
+                postData("http://localhost:9000/api/speed", {speed: speed});
+
                 // console.log("Speed inputted is =", speed)
                 // data[0].value=speed;
                 // console.log("Value stored in gauge container is: ", data[0].value);
@@ -278,6 +280,8 @@
                 }];
 
                 Plotly.newPlot('speedometer', data, layout);
+
+                
             });
 
         </script>
