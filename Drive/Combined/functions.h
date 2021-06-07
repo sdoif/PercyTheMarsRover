@@ -77,8 +77,11 @@ int pwmr = 5;                     //pin to control right wheel speed using pwm
 int pwml = 9;                     //pin to control left wheel speed using pwm
 //*********//
 //char _mode='g';
-int _modenew = 0;
-char _mode[6];
+int c_new = 0;
+int v_new = 0;
+char _mode;
+char c[6] = {'0','0','0','0','0','0'};
+char v[2] = {'0', 'g'};
 
 int _auto = 0;
 int found = 0;
@@ -103,7 +106,7 @@ float cart_y = 0;
 int search_x = 0;
 int search_y = 0;
 int _iter_scan = 0;
-int _iter_go = 0;
+int _iter_serial = 0;
 
 int scan_state = 0;
 
@@ -469,6 +472,6 @@ bool reach_forward(char _mode){
 //String data_command[] = {send_to, gear, x, y, total, _speed};
 //String data_vision[] = {"v", s0 bool, s1 bool, theta, r};
 String data_command[] = {"c", "RR", "+0003.4", "-0015.2", "00003422", "10.2"};
-String data_vision[] = {"v", String(rover_scan_zero(_mode)), "+0057.4", "+0132.0"};
+String data_vision[] = {"v", String(rover_scan_zero(_mode)), "0057.4", "0132.0"};
 
 #endif 
