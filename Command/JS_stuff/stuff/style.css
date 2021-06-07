@@ -111,8 +111,9 @@ h2:hover{
   
   #battery-level {
     border-radius: 3px;
-    background-color: #3BF014;
-    width: 100%;
+    background-color: #e1f014;
+    /* The width should be linked to SoC */
+    width: 50%;
     height: 100%;
   }
 

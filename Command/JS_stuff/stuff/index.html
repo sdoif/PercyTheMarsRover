@@ -27,8 +27,8 @@
                 <div class="battery">
                     <div class="battery-shell"><div id="battery-level"></div></div>
                     <div class="battery-lid"></div>
-                    <p id='battery-percent'> 100% </p>
-                    <p id='battery-ttl'> 50 mins remaining </p>
+                    <p id='battery-percent'> &#9735;50% </p>
+                    <p id='battery-ttl'> 29 mins until full </p>
                 </div>
             </section>
             
@@ -119,7 +119,33 @@
         </section>
 
         <script>
-            
+            //function definitions
+
+            async function fetchData(url='', ){
+                let promise = await fetch(url);
+                let data = promise.json();
+                return data;
+
+            }
+
+            async function postData(url = '', data = {}) {
+                console.log(JSON.stringify(data));
+                const response = await fetch(url, {
+                    method: 'POST', // *GET, POST, PUT, DELETE, etc.
+                    headers: {
+                    'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data) // body data type must match "Content-Type" header
+                });
+                return response.json(); // parses JSON response into native JavaScript objects
+            }
+        </script>
+
+        <script>
+            const recieved = fetchData("http://localhost:9000/api/test")
+            // fetch()
+            //     .then(response => response.json())
+            //     .then(data => console.log(data))
             let speed = 6;
 
         //TO-DO: Add an if manual condition!
@@ -131,11 +157,26 @@
             const stopKey = document.querySelector("#stop-key");
             const currGear = document.querySelector("#curr-gear");
             console.log(upKey===document.getElementById('up-key'))
-            upKey.onclick = function(event){currGear.textContent='D';};
-            downKey.onclick = function(event){currGear.textContent='R';};
-            leftKey.onclick = function(event){currGear.textContent='RL';};
-            rightKey.onclick = function(event){currGear.textContent='RR';};
-            stopKey.onclick = function(event){currGear.textContent='P';};
+            upKey.onclick = function(event){
+                currGear.textContent='D'; 
+                postData("http://localhost:9000/api/direction", {direction: 'D'});
+            };
+            downKey.onclick = function(event){                
+                currGear.textContent='R'; 
+                postData("http://localhost:9000/api/direction", {direction: 'R'});
+            };
+            leftKey.onclick = function(event){
+                currGear.textContent='RL';
+                postData("http://localhost:9000/api/direction", {direction: 'RL'});
+            };
+            rightKey.onclick = function(event){
+                currGear.textContent='RR';
+                postData("http://localhost:9000/api/direction", {direction: 'RR'});
+            };
+            stopKey.onclick = function(event){
+                currGear.textContent='P';
+                postData("http://localhost:9000/api/direction", {direction: 'P'});
+            };
 
         //  Speedometer 
             let data = [{
