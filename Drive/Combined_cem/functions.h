@@ -87,8 +87,8 @@ int prev_val_x = 0;
 int min_y = 0;
 int min_x = 0;
 int actual_y_prev = 0;
-int testing_x=-21;
-int testing_y=13;
+int testing_x=13;
+int testing_y=-18;
 
 int found = 0;
 
@@ -370,50 +370,50 @@ float ycoordinatefinder(float old_r, float new_r, float angle){
     return ycal_total;
   
 }
+float change_angle(float angle){
+if(angle<0){
+float new_angle = angle + (2*PI);
+return new_angle;
+}else{
+  float new_angle = angle;
+  return new_angle;
+}
+}
 void gotocoordinate(int xx, int yy, float current_angle, float currrent_r){
 int x = xx*10;
 int y = yy*10;
 double angle = atan2(yy,xx);
-float angle_deg = angle*(180/PI);
+float angle_new = change_angle(angle);
+//if(angle<0){
+//  angle = angle+(2*PI);
+//}
+//  if(angle_old<0){
+//  angle = angle_old + (2*PI);
+//  }else if(angle_old>=0){
+//    angle = angle_old;
+//  }
+float angle_deg = angle_new*(180/PI);
 float rr = sqrt(sq(xx)+sq(yy));
 float r = rr*10;
 Serial.println("Target angle=");
 Serial.print(angle_deg);
 Serial.print("Target distance=");
 Serial.print(r);
-if(angle<0){
-if((angle<current_angle+0.2)&&(angle>current_angle)){
+if((angle_new<current_angle+0.3)&&(angle_new>current_angle-0.3)){
   brake();
   if(r>currrent_r){
     forward();
   }else if(r<=currrent_r){
     brake();
     }
-}else if(angle>current_angle+0.2){
-  brake();
+}else if(angle_new>current_angle+0.3){
   left();
-}else if(angle<current_angle){
-  brake();
-  right();
+}else if(angle_new<current_angle-0.3){
+   right();
 }
 //brake();
-}else if(angle>0){
-  if((angle<current_angle)&&(angle>current_angle-0.6)){
-  brake();
-  if(r>currrent_r){
-    forward();
-  }else if(r<=currrent_r){
-    brake();
-    }
-}else if(angle>current_angle){
-  brake();
-  left();
-}else if(angle<current_angle-0.6){
-  brake();
-  right();
 }
-}
-}
+
 
 
 bool rover_scan_short(char _mode){
