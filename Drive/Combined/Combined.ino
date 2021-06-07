@@ -227,8 +227,8 @@ void loop(){
     actual_x=total_x;
   }
 
-  vector_add(calc_rad(abs(actual_x)), actual_y - rover_length);
-  cartesian(theta_total, r_total);
+  //vector_add(calc_rad(abs(actual_x)), actual_y - rover_length);
+  //cartesian(theta_total, r_total);
 
  Serial.print('\n');
 
@@ -280,28 +280,47 @@ Serial.println(prev_val_y);
   //*********//
   
   if(vb >= vref - 0.2){
-    if(_mode == 'o'){
-      if(!rover_scan_zero(_mode)){
-        rover_scan_zero(_mode);
-      }
+   if(found != 1){
+    Serial.println("scan_state = "+String(scan_state));
+    if(scan_state < 2){
+      rover_scan_zero(_mode);
       Serial.println("s0 = "+String(rover_scan_zero(_mode)));
-    }else if(_mode == 'i'){
-      if(!rover_scan_first(_mode)){
-        rover_scan_first(_mode);
-      }
-      if(!reach_forward(_mode)){
+    }else if(scan_state == 2){
+      rover_scan_one(_mode);
+      Serial.println("s1 = "+String(rover_scan_one(_mode)));
+      Serial.println("_mode_state_2 = "+String(_mode));
+    }else if(scan_state == 3){
+        _mode = 'g';
+        Serial.println("_mode_state_3 = "+String(_mode));
+        delay(500);
+        scan_state = 4;
+    }else if(scan_state ==4){
+        Serial.println("SCAN_STATE=4 ENTERED");
         reach_forward(_mode);
-      }  
-      Serial.println("s1 = "+String(rover_scan_first(_mode)));
-    }else{
-      brake();
-    }  
+        Serial.println("f = "+String(reach_forward(_mode)));
+    }else if(scan_state == 5){
+        scan_state = 0;
+        delay(500);
+        _mode = 'g';
+    }
+  }else{
+    brake();
+  }
+     
   }else{
     brake();}
     
   prev_val_y = total_y;
   prev_val_x = total_x;
   actual_y_prev = actual_y;
+
+//      Serial.println("angle = "+String(angle));
+//      Serial.println("angle_corrected = "+String(angle_corrected));
+//      Serial.println("rad = "+String(rad));
+//      Serial.println("theta_total = "+String(theta_total));
+//      Serial.println("r_total = "+String(r_total));
+//      Serial.println("cart_x = "+String(cart_x));
+//      Serial.println("cart_y = "+String(cart_y));
   
     for(int i = 0; i<6; i++){
       Serial1.print(data_command[i]);
