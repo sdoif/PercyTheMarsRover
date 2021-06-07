@@ -53,7 +53,6 @@ void setup()
   SPI.setBitOrder(MSBFIRST);
   
   Serial.begin(38400);
-  Serial1.begin(9600);
 
   if(mousecam_init()==-1)
   {
@@ -65,6 +64,9 @@ void setup()
   mousecam_write_reg(26, 14);
 
 }
+  char _mode='x';
+  bool STOP = false;
+  bool DONE;
 
 
 byte frame[ADNS3080_PIXELS_X * ADNS3080_PIXELS_Y];
@@ -133,16 +135,27 @@ void loop(){
   Serial.print((int)md.dx); Serial.print(',');
   Serial.print((int)md.dy); Serial.println(')');
 
+  // Serial.println(md.max_pix);
   //delay(100);
 
-  distance_x = md.dx; //convTwosComp(md.dx);
-  distance_y = md.dy; //convTwosComp(md.dy);
-  
-  total_x1 = (total_x1 + distance_x);
-  total_y1 = (total_y1 + distance_y);
-  
-  total_x = 10*total_x1/157; //Conversion from counts per inch to mm (400 counts per inch)
-  total_y = 10*total_y1/157; //Conversion from counts per inch to mm (400 counts per inch)
+
+    distance_x = md.dx; //convTwosComp(md.dx);
+    distance_y = md.dy; //convTwosComp(md.dy);
+
+    distance_xx = 10*distance_x/157;
+    distance_yy = 10*distance_y/157;
+    Serial.println("distance_x = "+String(distance_x));
+    Serial.println("distance_y = "+String(distance_y));
+    Serial.println("distance_xx = "+String(distance_xx));
+    Serial.println("distance_yy = "+String(distance_yy));
+    
+
+total_x1 = (total_x1 + distance_x);
+total_y1 = (total_y1 + distance_y);
+
+total_x = 10*total_x1/157; //Conversion from counts per inch to mm (400 counts per inch)
+total_y = 10*total_y1/157; //Conversion from counts per inch to mm (400 counts per inch)
+
 
 //total_x1_distance = total_x1_distance + abs(distance_x);
 //total_y1_distance = total_y1_distance + abs(distance_y);
@@ -155,6 +168,19 @@ void loop(){
 //Serial.println("Distance_y_total = " + String(total_y_distance));
 //Serial.print('\n');
 
+if((distance_xx == 0)&&(distance_yy == 0)){
+  if(_iter == 0){
+    angle_x = prev_xx;
+    angle_y = prev_yy;
+  }
+  _iter = 1;
+}
+
+if(md.motion != 1){
+  _iter = 0;
+}
+    Serial.println("angle_x = "+String(angle_x));
+    Serial.println("angle_y = "+String(angle_y));
   //counter stuff
   //min threshold for prev_val needs to be tested based on the maximum speed of the rover
   if(((200<=prev_val_y)&&(prev_val_y<=208))&&((-208<=total_y)&&(total_y<=-200))){
@@ -187,6 +213,9 @@ void loop(){
   //this shows the minimum possible value y can take at the moment 
   min_y = 208*counter_y;
   min_x = 208*counter_x;
+  Serial.print("min_x= ");
+  Serial.println(min_x);
+  Serial.print('\n');
 
     //finding actual value of y 
   if(counter_y>0){  
@@ -227,13 +256,10 @@ void loop(){
     actual_x=total_x;
   }
 
-  //vector_add(calc_rad(abs(actual_x)), actual_y - rover_length);
-  //cartesian(theta_total, r_total);
-
  Serial.print('\n');
 
 Serial.print("vref = " + String(vref));
-Serial.println("vb = " + String(vb));
+Serial.print("vb = " + String(vb));
 Serial.print('\n');
 
 Serial.println("Distance_x = " + String(total_x));
@@ -255,78 +281,90 @@ Serial.print('\n');
 Serial.print("Actual x = ");
 Serial.println(actual_x);
 
-Serial.print('\n');
-Serial.print("prev x = ");
-Serial.println(prev_val_x);
-
-Serial.print('\n');
-Serial.print("prev y = ");
-Serial.println(prev_val_y);
-
   delay(100);
 
   //#endif
    
   if (Serial.available() > 0) {
     // read the incoming byte:
-     char _modenew = Serial.read();
+     char _modenew = 'f';
+     _modenew = Serial.read();
+
      if(_mode!=_modenew){
-        _mode=_modenew;
-     }
+      _mode=_modenew;
+      }
    }
 
   digitalWrite(DIRR, DIRRstate);
   digitalWrite(DIRL, DIRLstate);
   //*********//
+  //rover_search(STOP);
   
-  if(vb >= vref - 0.2){
-   if(found != 1){
-    Serial.println("scan_state = "+String(scan_state));
-    if(scan_state < 2){
-      rover_scan_zero(_mode);
-      Serial.println("s0 = "+String(rover_scan_zero(_mode)));
-    }else if(scan_state == 2){
-      rover_scan_one(_mode);
-      Serial.println("s1 = "+String(rover_scan_one(_mode)));
-      Serial.println("_mode_state_2 = "+String(_mode));
-    }else if(scan_state == 3){
-        _mode = 'g';
-        Serial.println("_mode_state_3 = "+String(_mode));
-        delay(500);
-        scan_state = 4;
-    }else if(scan_state ==4){
-        Serial.println("SCAN_STATE=4 ENTERED");
-        reach_forward(_mode);
-        Serial.println("f = "+String(reach_forward(_mode)));
-    }else if(scan_state == 5){
-        scan_state = 0;
-        delay(500);
-        _mode = 'g';
-    }
-  }else{
-    brake();
-  }
-     
-  }else{
-    brake();}
+ // if(vb >= vref - 0.2){
+//    if(!rover_scan_short(_mode)){
+//      rover_scan_short(_mode);
+//    }
+
+//     if(!rover_scan(_mode)){
+//      rover_scan(_mode);
+//     }
     
+//   if(_mode == 0){
+//     if(!rover_scan_short(_mode)){
+//      rover_scan_short(_mode);}
+//     Serial1.println("s0 = true") 
+//
+//    }else if(_mode == 1){
+//    
+//    if(found != 5){
+//      
+//      if(!rover_scan(_mode)){
+//        rover_scan(_mode);}
+//        
+//    }else{
+//      brake();
+//     }
+//   }
+//       
+//   if(_mode == 2){
+//    
+//    if(!rover_scan(_mode)){
+//      rover_scan(_mode);}
+//      
+//    if(!reach_forward(_mode)){
+//      reach_forward(_mode);}
+//   }
+//
+//   if(found == 5){
+//    brake();
+//   }
+   
+//  }else{
+ //   brake();}
+    
+  //rover_mode(_mode, STOP);
   prev_val_y = total_y;
   prev_val_x = total_x;
-  actual_y_prev = actual_y;
+  prev_xx = distance_xx;
+  prev_yy = distance_yy;
 
-//      Serial.println("angle = "+String(angle));
-//      Serial.println("angle_corrected = "+String(angle_corrected));
-//      Serial.println("rad = "+String(rad));
-//      Serial.println("theta_total = "+String(theta_total));
-//      Serial.println("r_total = "+String(r_total));
-//      Serial.println("cart_x = "+String(cart_x));
-//      Serial.println("cart_y = "+String(cart_y));
+  rover_manual(_mode);
+  float angle = store_angle(actual_x);
   
-    for(int i = 0; i<6; i++){
-      Serial1.print(data_command[i]);
-    }
-    
-    for(int i = 0; i<4; i++){
-      Serial1.print(data_vision[i]);
-    }
+  xcoordinatefinder(actual_y_prev, actual_y, angle);
+  ycoordinatefinder(actual_y_prev, actual_y, angle);
+//  if(loop_ite==0){
+//    actual_y_prev = actual_y;
+//  }else{
+//    
+//  }
+  actual_y_prev = actual_y;
+  Serial.println("ACTUAL Y=");
+  Serial.print(actual_y);
+  Serial.println("PREV Y=");
+  Serial.print(actual_y_prev);
+  //loop_ite++;
+  
+  
+  
 }
