@@ -83,6 +83,8 @@ char _mode;
 char c[6] = {'0','0','0','0','0','0'};
 char v[2] = {'0', 'g'};
 
+String _speed;
+
 int _auto = 0;
 int found = 0;
 
@@ -106,7 +108,7 @@ float cart_y = 0;
 int search_x = 0;
 int search_y = 0;
 int _iter_scan = 0;
-int _iter_serial = 0;
+int _iter_speed = 0;
 
 int scan_state = 0;
 
@@ -271,12 +273,22 @@ float pidi(float pid_input){
   return u0i;
 }
 
+float speed2voltage (float _speed){
+  float voltage = (_speed+1.206)/4.495;
+  return voltage;
+}
+
 void sampling(){
 
   // Make the initial sampling operations for the circuit measurements
   
   sensorValue0 = analogRead(A0); //sample Vb
-  vref = 1.6;
+  if(c[0] == '0'){
+    vref = speed2voltage(_speed.toFloat());
+    Serial.println("vref_set = "+String(vref));
+  }else{
+    vref = 1.6;
+  }
   sensorValue3 = analogRead(A3); //sample Vpd
   current_mA = ina219.getCurrent_mA(); // sample the inductor current (via the sensor chip)
 

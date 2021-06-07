@@ -294,6 +294,7 @@ Serial.println(prev_val_y);
         c_new = Serial.read();
         c[i] = char(c_new);
       }
+      _iter_speed = 0;
     }else if(_mode == 'v'){
        _mode = NULL;
       for(int i = 0; i<2; i++){
@@ -311,7 +312,15 @@ Serial.println(prev_val_y);
   digitalWrite(DIRR, DIRRstate);
   digitalWrite(DIRL, DIRLstate);
   //*********//
-
+  if(_iter_speed == 0){
+    _speed = "";
+    for(int i = 2; i<6; i++){
+      _speed = _speed + c[i];
+    }
+    _iter_speed = 1;
+  }
+  
+  Serial.println("str = "+String(_speed));
   Serial.println("v[0] = "+String(v[0]));
   Serial.println("v[1] = "+String(v[1]));
   Serial.println("c[0] = "+String(c[0]));
