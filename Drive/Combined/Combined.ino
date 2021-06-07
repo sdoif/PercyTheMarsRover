@@ -268,48 +268,79 @@ Serial.println(prev_val_y);
 
   //#endif
    
-  if (Serial1.available() > 0) {
-    // read the incoming byte:
-     char _modenew = Serial1.read();
-     if(_mode!=_modenew){
-        _mode=_modenew;
-     }
-   }
+//  if (Serial1.available() > 0) {
+//    // read the incoming byte:
+//     char _modenew = Serial1.read();
+//     if(_mode!=_modenew){
+//        _mode=_modenew;
+//     }
+//   }
+   
+//   if (Serial.available() > 0) {
+//    // read the incoming byte:
+//     char _modenew = Serial.read();
+//     if(_mode!=_modenew){
+//        _mode=_modenew;
+//     }
+//   }
+
+  if(Serial.available() > 0){
+    for(int i = 0; i<6; i++){
+      _modenew = Serial.read();
+      _mode[i] = char(_modenew);
+    }
+  }
+
+   
 
   digitalWrite(DIRR, DIRRstate);
   digitalWrite(DIRL, DIRLstate);
   //*********//
-  
-  if(vb >= vref - 0.2){
-   if(found != 1){
-    Serial.println("scan_state = "+String(scan_state));
-    if(scan_state < 2){
-      rover_scan_zero(_mode);
-      Serial.println("s0 = "+String(rover_scan_zero(_mode)));
-    }else if(scan_state == 2){
-      rover_scan_one(_mode);
-      Serial.println("s1 = "+String(rover_scan_one(_mode)));
-      Serial.println("_mode_state_2 = "+String(_mode));
-    }else if(scan_state == 3){
-        _mode = 'g';
-        Serial.println("_mode_state_3 = "+String(_mode));
-        delay(500);
-        scan_state = 4;
-    }else if(scan_state ==4){
-        Serial.println("SCAN_STATE=4 ENTERED");
-        reach_forward(_mode);
-        Serial.println("f = "+String(reach_forward(_mode)));
-    }else if(scan_state == 5){
-        scan_state = 0;
-        delay(500);
-        _mode = 'g';
+  if(_mode[0] == 1){
+    if(vb >= vref - 0.2){
+     if(found != 1){
+        
+        Serial.println("scan_state = "+String(scan_state));
+        
+        if(scan_state < 2){
+          rover_scan_zero(_mode[2]);
+          Serial.println("s0 = "+String(rover_scan_zero(_mode[2])));
+          
+        }else if(scan_state == 2){
+          rover_scan_one(_mode[2]);
+          Serial.println("s1 = "+String(rover_scan_one(_mode[2])));
+          Serial.println("_mode_state_2 = "+String(_mode[2]));
+          
+        }else if(scan_state == 3){
+            _mode[2] = 'g';
+            Serial.println("_mode_state_3 = "+String(_mode[2]));
+            delay(500);
+            scan_state = 4;
+            
+        }else if(scan_state ==4){
+            Serial.println("SCAN_STATE=4 ENTERED");
+            reach_forward(_mode[2]);
+            Serial.println("f = "+String(reach_forward(_mode[2])));
+            
+        }else if(scan_state == 5){
+            scan_state = 0;
+            delay(500);
+            _mode[2] = 'g';
+        }
+    }else{
+      brake();
     }
+       
+    }else{
+      brake();}
+      
   }else{
-    brake();
+    if(vb >= vref - 0.2){
+      rover_manual(_mode[2]);
+    }else{
+      brake();
+    }
   }
-     
-  }else{
-    brake();}
 
   
     

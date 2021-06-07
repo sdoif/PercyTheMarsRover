@@ -76,9 +76,15 @@ int DIRR = 21;                    //defining right direction pin
 int pwmr = 5;                     //pin to control right wheel speed using pwm
 int pwml = 9;                     //pin to control left wheel speed using pwm
 //*********//
-char _mode='g';
+//char _mode='g';
+int _modenew = 0;
+char _mode[6];
 
+int _auto = 0;
 int found = 0;
+
+float theta = 0;
+float r = 0;
 
 float ycal_total = 0;
 float xcal_total = 0;
@@ -97,6 +103,7 @@ float cart_y = 0;
 int search_x = 0;
 int search_y = 0;
 int _iter_scan = 0;
+int _iter_go = 0;
 
 int scan_state = 0;
 
@@ -329,6 +336,23 @@ void brake(){
 }
 
 //**********************************//
+//void gotocoordinate(int x, int y){
+//  if(){
+//    theta = atan2(y,x);
+//    r = sqrt((x^2)+(y^2));
+//  }
+//  if(actual_x >= theta){
+//    brake();
+//  }else{
+//    left();
+//  }
+//  if(actual_y >= r){
+//    brake();
+//  }else{
+//    forward();
+//  }
+//}
+
 float store_angle(float x){
     float angle_deg = ((x/850)*360);
     float angle_rad = (x/850)*2*PI;
@@ -404,7 +428,7 @@ bool rover_scan_zero(char _mode){
 }
 
 void rover_manual(char _mode){
-    if (_mode == 'w') {
+  if (_mode == 'w') {
       forward();
   }  
   //rotating clockwise
@@ -419,7 +443,7 @@ void rover_manual(char _mode){
     left();
   } 
   if(_mode == 'x'){
-  brake();
+    brake();
   }
 }
 
@@ -441,14 +465,7 @@ bool reach_forward(char _mode){
     }
 }
 
-void rover_mode(char _mode){
-  if (_mode == 'n'){
-    //rover_scan(STOP);
-  }else if(_mode == 'm'){
-    rover_manual(_mode);
-  }
-}
-
+//{"0d14.1+0003-0012"}
 //String data_command[] = {send_to, gear, x, y, total, _speed};
 //String data_vision[] = {"v", s0 bool, s1 bool, theta, r};
 String data_command[] = {"c", "RR", "+0003.4", "-0015.2", "00003422", "10.2"};
