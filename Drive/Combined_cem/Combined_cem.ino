@@ -348,7 +348,7 @@ Serial.println(actual_x);
   prev_xx = distance_xx;
   prev_yy = distance_yy;
 
-  rover_manual(_mode);
+ //rover_manual(_mode);
   float angle = store_angle(actual_x);
   
   xcoordinatefinder(actual_y_prev, actual_y, angle);
@@ -359,11 +359,13 @@ Serial.println(actual_x);
 //    
 //  }
   actual_y_prev = actual_y;
+  //gotocoordinate(testing_x, testing_y, angle, actual_y);
   Serial.println("ACTUAL Y=");
   Serial.print(actual_y);
   Serial.println("PREV Y=");
   Serial.print(actual_y_prev);
   //loop_ite++;
+  gotocoordinate(testing_x, testing_y, angle, actual_y);
   
   
   

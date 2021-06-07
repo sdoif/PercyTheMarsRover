@@ -87,6 +87,8 @@ int prev_val_x = 0;
 int min_y = 0;
 int min_x = 0;
 int actual_y_prev = 0;
+int testing_x=-21;
+int testing_y=13;
 
 int found = 0;
 
@@ -275,7 +277,7 @@ void sampling(){
   // Make the initial sampling operations for the circuit measurements
   
   sensorValue0 = analogRead(A0); //sample Vb
-  vref = 1.8;
+  vref = 1.7;
   sensorValue3 = analogRead(A3); //sample Vpd
   current_mA = ina219.getCurrent_mA(); // sample the inductor current (via the sensor chip)
 
@@ -368,10 +370,49 @@ float ycoordinatefinder(float old_r, float new_r, float angle){
     return ycal_total;
   
 }
-void gotocoordinate(int x, int y){
-float angle = arctan2(y,x);
-float r = sqrt((x^2)+(y^2));
-// devamini yarin yaz
+void gotocoordinate(int xx, int yy, float current_angle, float currrent_r){
+int x = xx*10;
+int y = yy*10;
+double angle = atan2(yy,xx);
+float angle_deg = angle*(180/PI);
+float rr = sqrt(sq(xx)+sq(yy));
+float r = rr*10;
+Serial.println("Target angle=");
+Serial.print(angle_deg);
+Serial.print("Target distance=");
+Serial.print(r);
+if(angle<0){
+if((angle<current_angle+0.2)&&(angle>current_angle)){
+  brake();
+  if(r>currrent_r){
+    forward();
+  }else if(r<=currrent_r){
+    brake();
+    }
+}else if(angle>current_angle+0.2){
+  brake();
+  left();
+}else if(angle<current_angle){
+  brake();
+  right();
+}
+//brake();
+}else if(angle>0){
+  if((angle<current_angle)&&(angle>current_angle-0.6)){
+  brake();
+  if(r>currrent_r){
+    forward();
+  }else if(r<=currrent_r){
+    brake();
+    }
+}else if(angle>current_angle){
+  brake();
+  left();
+}else if(angle<current_angle-0.6){
+  brake();
+  right();
+}
+}
 }
 
 
