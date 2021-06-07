@@ -159,23 +159,23 @@
             console.log(upKey===document.getElementById('up-key'))
             upKey.onclick = function(event){
                 currGear.textContent='D'; 
-                postData("http://localhost:9000/api/direction", {direction: 'D'});
+                postData("http://localhost:9000/api/direction", {direction: 'w'});
             };
             downKey.onclick = function(event){                
                 currGear.textContent='R'; 
-                postData("http://localhost:9000/api/direction", {direction: 'R'});
+                postData("http://localhost:9000/api/direction", {direction: 's'});
             };
             leftKey.onclick = function(event){
                 currGear.textContent='RL';
-                postData("http://localhost:9000/api/direction", {direction: 'RL'});
+                postData("http://localhost:9000/api/direction", {direction: 'd'});
             };
             rightKey.onclick = function(event){
                 currGear.textContent='RR';
-                postData("http://localhost:9000/api/direction", {direction: 'RR'});
+                postData("http://localhost:9000/api/direction", {direction: 'a'});
             };
             stopKey.onclick = function(event){
                 currGear.textContent='P';
-                postData("http://localhost:9000/api/direction", {direction: 'P'});
+                postData("http://localhost:9000/api/direction", {direction: 'x'});
             };
 
         //  Speedometer 
