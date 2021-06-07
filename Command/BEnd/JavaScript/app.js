@@ -75,13 +75,34 @@ app.post('/api/direction', (req, res) => {
 
 app.post('/api/speed', (req, res) => {
 
-    const speed = req.body.speed;
+    const speed = req.body.speed.toString();
     console.log(`Received new speed setting: ${speed}`);
     res.json("Speed Changed");
+    console.log(typeof(speed));
+    let decimal = "0";
+    let units = "00";
+
+    if(speed.length === 4){
+        decimal = speed.charAt(3);
+        units = speed.substring(0,2);
+    }else if(speed.length === 3){
+        decimal = speed.charAt(2);
+        units = speed.charAt(0);
+        units = 0 + units;
+    }else if(speed.length === 2){
+        units = speed;
+    }else{
+        units = speed.charAt(0);
+        units = 0 + units
+    }
+
+    let readspeed = units + decimal;
+
+    console.log(readspeed);
 
     if(client.connected === true){
 
-        client.publish('speed', speed, () =>{
+        client.publish('speed', readspeed, () =>{
             console.log('Published new speed');
         });
     }
@@ -113,7 +134,7 @@ client.on('connect', () =>{
 
 
 
-client.on('message', (topic, message, packet) =>{
+client.on('message', (topic, message, packet) => {
     console.log(`Recieved message from ${topic} - ${message} `);
 });
 

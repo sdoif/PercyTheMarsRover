@@ -80,19 +80,19 @@
 
                 <div class='switch-div'>
                     <strong class = 'switch-label'> Manual</strong> 
-                    <input type="checkbox" id="switch" /><label for="switch"></label> 
+                    <input type="checkbox" id="switch" onclick="toggleMode();" /><label for="switch"></label> 
                     <strong class = 'switch-label'> Autonomous</strong>
                     <p id='manual-warning'><span id="manual-warning-text">WARNING: Rover may collide with obstacles in this mode</span> </p>
                 </div>
 
                 <div class = 'keypad' id='keypad-id'>
-                    <button type="button" class = 'keypad-button alone-key' id = 'up-key'>&#8593;</button>
+                    <button type="button" class = 'keypad-button alone-key' id = 'up-key' onclick="updateDirection('up-key');">&#8593;</button>
                     <div id="turn-key-div">
-                        <button type="button" class = 'keypad-button lrs-key' id = 'left-key'>&#10226;</button>
-                        <button type="button" class = 'keypad-button lrs-key' id = 'stop-key'>STOP</button>
-                        <button type="button" class = 'keypad-button lrs-key' id = 'right-key'>&#10227;</button>
+                        <button type="button" class = 'keypad-button lrs-key' id = 'left-key' onclick="updateDirection('left-key');">&#10226;</button>
+                        <button type="button" class = 'keypad-button lrs-key' id = 'stop-key' onclick="updateDirection('stop-key');">STOP</button>
+                        <button type="button" class = 'keypad-button lrs-key' id = 'right-key' onclick="updateDirection('right-key');">&#10227;</button>
                     </div>
-                        <button type="button" class = 'keypad-button alone-key' id = 'down-key'>&#8595;</button> 
+                        <button type="button" class = 'keypad-button alone-key' id = 'down-key' onclick="updateDirection('down-key');">&#8595;</button> 
                 </div>
 
                 <br/>
@@ -102,8 +102,8 @@
                         <span id="curr-speed-text">Speed (cm/s) :&nbsp;<span id="curr-speed-val">6.0</span></span>
                     </div>
                     <div class="slider" id="acc-slider">
-                        <div id="min-slider-val">6 </div>
-                        <input type="range" min="6.0" max="16.5" step="0.1" value="6.0" id = 'speed-slider'>
+                        <div id="min-slider-val">6.0 </div>
+                        <input type="range" min="6.0" max="16.5" step="0.1" value="6.0" id = 'speed-slider' oninput="updateSpeed();">
                         <div id="max-slider-val"> 16.5</div>
                     </div>
                 </div>
@@ -121,6 +121,10 @@
         <script>
             //function definitions
 
+            // fetch()
+            //     .then(response => response.json())
+            //     .then(data => console.log(data))
+
             async function fetchData(url='', ){
                 let promise = await fetch(url);
                 let data = promise.json();
@@ -129,62 +133,110 @@
             }
 
             async function postData(url = '', data = {}) {
-                console.log(JSON.stringify(data));
+                console.log("Going to send: ", JSON.stringify(data));
                 const response = await fetch(url, {
-                    method: 'POST', // *GET, POST, PUT, DELETE, etc.
+                    method: 'POST', 
                     headers: {
                     'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(data) // body data type must match "Content-Type" header
+                    body: JSON.stringify(data) // body dt to match header dt
                 });
-                return response.json(); // parses JSON response into native JavaScript objects
+                let _res = response.json()
+                return _res; // parses JSON response into native JavaScript objects
             }
+
+            function toggleMode(){
+                const modeSwitch = document.querySelector("#switch");
+                if(modeSwitch.checked){
+                    postData("http://localhost:9000/api/mode", {mode: 1});
+                    console.log('Switched mode to: Autonomous');
+                }else{
+                    postData("http://localhost:9000/api/mode", {mode: 0});
+                    console.log('Switched mode to: Manual');
+                }
+            }
+
+            function updateDirection(keyId=''){
+                const modeSwitch = document.querySelector("#switch");
+                if(modeSwitch.checked==false){
+
+                    const currGear = document.querySelector("#curr-gear");
+                    const key = document.querySelector('#'+keyId);
+
+                    if(keyId=='up-key'){
+                        currGear.textContent='D'; 
+                        postData("http://localhost:9000/api/direction", {direction: 'w'});
+
+                    }else if(keyId=='left-key'){
+                        currGear.textContent='RL'; 
+                        postData("http://localhost:9000/api/direction", {direction: 'a'});
+                        
+                    }else if(keyId=='stop-key'){
+                        currGear.textContent='P'; 
+                        postData("http://localhost:9000/api/direction", {direction: 'x'});
+                        
+                    }else if(keyId=='right-key'){
+                        currGear.textContent='RR'; 
+                        postData("http://localhost:9000/api/direction", {direction: 'd'});
+                        
+                    }else if(keyId=='down-key'){
+                        currGear.textContent='R'; 
+                        postData("http://localhost:9000/api/direction", {direction: 's'});
+                        
+                    }else{
+                        console.log('Invalid key id')
+                    }
+                }else{
+                    alert('ERROR: Rover on Autonomous mode, switch to manual to send direction command');
+                }
+                
+            }
+
+            function updateSpeed(){
+                const modeSwitch = document.querySelector("#switch");
+                if(modeSwitch.checked==false){
+                    const displayCurrVal = document.querySelector('#curr-speed-val');
+                    const inputVal = document.querySelector("#speed-slider");
+                    displayCurrVal.textContent = inputVal.value;
+                    let _speed = inputVal.value;
+
+                    postData("http://localhost:9000/api/speed", {speed: _speed*100/100});
+
+                    data = [{
+                        domain: { x: [0, 1], y: [0, 1] },
+                        value: _speed,
+                        type: "indicator",
+                        mode: "gauge+number",
+                        gauge:{
+                            axis: { range: [null, 18]},
+                            bar: { color: (_speed<10? '#3BF014' : _speed<15? '#FFFF00' : '#FF0000')},
+                            borderwidth: 3,
+                            bordercolor: "#ffebdb"
+                            }
+                    }];
+
+                    Plotly.newPlot('speedometer', data, layout);
+                }else{
+                    modeSwitch.disable=true;
+                    alert('ERROR: Rover on Autonomous mode, switch to manual to apply changes');
+                }
+            }
+
         </script>
 
         <script>
-            const ip_addrs = "localhost";
-            const port = "9000";
-            const url = "http://"+ip_addrs+":"+port
-            const recieved = fetchData(url+"/api/test")
-            // fetch()
-            //     .then(response => response.json())
-            //     .then(data => console.log(data))
-            let speed = 6;
+            const HOST = "localhost";
+            const PORT = 9000;
+            const URL = "http://"+HOST+":"+PORT;
+            const recieved = fetchData("http://localhost:9000/api/test")
+            
+            let init_speed = 6;
 
-        //TO-DO: Add an if manual condition!
-        //  updating current gear 
-            const upKey = document.querySelector("#up-key");
-            const downKey = document.querySelector("#down-key");
-            const leftKey = document.querySelector("#left-key");
-            const rightKey = document.querySelector("#right-key");
-            const stopKey = document.querySelector("#stop-key");
-            const currGear = document.querySelector("#curr-gear");
-            console.log(upKey===document.getElementById('up-key'))
-            upKey.onclick = function(event){
-                currGear.textContent='D'; 
-                postData(url+"/api/direction", {direction: 'D'});
-            };
-            downKey.onclick = function(event){                
-                currGear.textContent='R'; 
-                postData(url+"/api/direction", {direction: 'R'});
-            };
-            leftKey.onclick = function(event){
-                currGear.textContent='RL';
-                postData(url+"/api/direction", {direction: 'RL'});
-            };
-            rightKey.onclick = function(event){
-                currGear.textContent='RR';
-                postData(url+"/api/direction", {direction: 'RR'});
-            };
-            stopKey.onclick = function(event){
-                currGear.textContent='P';
-                postData(url+"/api/direction", {direction: 'P'});
-            };
 
         //  Speedometer 
             let data = [{
             domain: { x: [0, 1], y: [0, 1] },
-            value: speed,
+            value: init_speed,
             type: "indicator",
             mode: "gauge+number",
             gauge:{
@@ -192,11 +244,6 @@
                 bar: { color: '#3BF014'},
                 borderwidth: 3,
                 bordercolor: "#ffebdb"
-                // steps: [
-                //         {'range': [0, 10], bar: {'color': 'green'}},
-                //         {'range': [10, 15.5], bar: {'color': 'yellow'}},
-                //         {'range': [15.5,18], bar: {'color': 'red'}}]
-
                 }
             }];
 
@@ -255,39 +302,12 @@
                 data1,
                 layout1
                 );
-            
-            //  updating speed display
-            const displayCurrVal = document.querySelector('#curr-speed-val');
-            const inputVal = document.querySelector("#speed-slider");
-            //TO-DO: Add an if manual condition!
-            inputVal.oninput = ( ()=>{ 
-                displayCurrVal.textContent = inputVal.value;
-                speed = inputVal.value;
-                // console.log("Speed inputted is =", speed)
-                // data[0].value=speed;
-                // console.log("Value stored in gauge container is: ", data[0].value);
-
-                data = [{
-                    domain: { x: [0, 1], y: [0, 1] },
-                    value: speed,
-                    type: "indicator",
-                    mode: "gauge+number",
-                    gauge:{
-                        axis: { range: [null, 18]},
-                        bar: { color: (speed<10? '#3BF014' : speed<15? '#FFFF00' : '#FF0000')},
-                        borderwidth: 3,
-                        bordercolor: "#ffebdb"
-                        }
-                }];
-
-                Plotly.newPlot('speedometer', data, layout);
-            });
 
         </script>
 
-        <!-- <audio autoplay loop>
+        <audio autoplay loop>
             <source src = "Source/FILTERED_HIGHLIGHTS_-_Sol16RoverDriveHighlights.mp3" type = "audio/mp3">
-        </audio> -->
+        </audio>
 
 
     </body>
