@@ -5,7 +5,6 @@ Starting code that will connect to wifi and establish mqtt connection, subscribe
 */
 
 #include <WiFi.h>
-#include <SPI.h>
 #include <Ethernet.h>
 #include <PubSubClient.h> // mqtt stuff
 
@@ -90,16 +89,80 @@ void callback(char* topic, byte* message, unsigned int length) {
   //send whatever direction command we receive as its already good!
   if(topic == "direction"){
       toDrive[1] = messageTemp[0];
-      Serial2.print("c" + toDrive);  
+      Serial2.print("c" + String(toDrive);  
   }else if(topic == "speed"){
       toDrive[2] = messageTemp[0];
       toDrive[3] = messageTemp[1];
       toDrive[4] = messageTemp[2];
-      Serial2.print("c" + messageTemp);
+      Serial2.print("c" + String(toDrive));
   }else if(topic == "test"){
     Serial.print(messageTemp);
   }else if (topic == "mode"){
       toDrive[0] = messageTemp[0];
+      Serial2.print("c" + messageTemp);
   }
   
+}
+
+void reconnect() {
+  // Loop until we're reconnected
+  while (!mqttclient.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    // Attempt to connect
+    if (mqttclient.connect("esp32")) {
+      Serial.println("Connected to Broker");
+      // Subscribe
+      Serial.println("Subscribing to Topics");
+      mqttclient.subscribe("direction");
+      mqttclient.subscribe("speed");
+      mqttclient.subscribe("test");
+      
+    }else{
+      Serial.print("failed, rc=");
+      Serial.print(mqttclient.state());
+      Serial.println(" try again in 3 seconds");
+      // Wait 3 seconds before retrying
+      delay(3000);
+    }
+  }
+}
+
+void clearmsg(){
+  for(int i = 0; i<20; i++){
+    msg[i] = NULL;
+  }
+}
+
+void loop() {
+
+  if(WiFi.status() != WL_CONNECTED){
+    Serial.println("Reconnecting to wifi");
+    setupwifi();
+  }
+  
+  while(!mqttclient.connected()) {
+    reconnect();
+  }
+  
+  mqttclient.loop();
+
+  int i = 0;
+  int v = 0;
+  if(Serial.available()){
+    v = 1;
+    i = 0;
+    while(Serial.available()){
+      bytein = Serial.read();
+      msg[i] = char(bytein);
+      i++;
+    }
+  }
+
+
+  if(v){
+    mqttclient.publish("test", msg);
+    clearmsg();
+  }
+  delay(1000);
+
 }

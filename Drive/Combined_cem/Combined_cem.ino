@@ -364,9 +364,8 @@ Serial.println(actual_x);
   Serial.print(actual_y);
   Serial.println("PREV Y=");
   Serial.print(actual_y_prev);
+  gotocoordinate(testing_x, testing_y, angle+2, actual_y);
   //loop_ite++;
-  gotocoordinate(testing_x, testing_y, angle, actual_y);
-  
   
   
 }

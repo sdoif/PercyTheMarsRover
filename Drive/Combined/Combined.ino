@@ -283,38 +283,38 @@ Serial.println(prev_val_y);
 //        _mode=_modenew;
 //     }
 //   }
-  if(Serial.available() > 0){
-    char _modenew = Serial.read();
+  if(Serial1.available() > 0){
+    char _modenew = Serial1.read();
     if(_mode!=_modenew){
       _mode=_modenew;
     }
     if(_mode == 'c'){
       _mode = NULL;
-      for(int i = 0; i<6; i++){
-        c_new = Serial.read();
+      for(int i = 0; i<5; i++){
+        c_new = Serial1.read();
         c[i] = char(c_new);
       }
       _iter_speed = 0;
     }else if(_mode == 'v'){
        _mode = NULL;
       for(int i = 0; i<2; i++){
-        v_new = Serial.read();
+        v_new = Serial1.read();
         v[i] = char(v_new);
       }
     }
   }
-//    Serial.println("Data received: ");
-//    Serial.print("c[] =");
-//    Serial.println(c);
-//    Serial.print("v[] =");    
-//    Serial.println(v);
+    Serial.println("Data received: ");
+    Serial.print("c[] =");
+    Serial.println(c);
+    Serial.print("v[] =");    
+    Serial.println(v);
 
   digitalWrite(DIRR, DIRRstate);
   digitalWrite(DIRL, DIRLstate);
   //*********//
   if(_iter_speed == 0){
     _speed = "";
-    for(int i = 2; i<6; i++){
+    for(int i = 2; i<5; i++){
       _speed = _speed + c[i];
     }
     _iter_speed = 1;
@@ -379,12 +379,20 @@ Serial.println(prev_val_y);
 //      Serial.println("r_total = "+String(r_total));
 //      Serial.println("cart_x = "+String(cart_x));
 //      Serial.println("cart_y = "+String(cart_y));
-  
+
+    data_send = "";
     for(int i = 0; i<6; i++){
-      Serial1.print(data_command[i]);
+      data_send = data_send + data_command[i];
     }
     
     for(int i = 0; i<4; i++){
-      Serial1.print(data_vision[i]);
+      data_send = data_send + data_vision[i];
     }
+
+    for(int i=0; i<43; i++){
+      Serial1.print(data_send[i]);
+    }
+    
+
+    
 }
