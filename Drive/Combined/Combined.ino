@@ -53,7 +53,7 @@ void setup()
   SPI.setBitOrder(MSBFIRST);
   
   Serial.begin(38400);
-  Serial1.begin(9600);
+  Serial1.begin(115200);
 
   if(mousecam_init()==-1)
   {
@@ -265,8 +265,6 @@ Serial.print("prev y = ");
 Serial.println(prev_val_y);
 
   delay(100);
-
-  //#endif
    
 //  if (Serial1.available() > 0) {
 //    // read the incoming byte:
@@ -283,6 +281,7 @@ Serial.println(prev_val_y);
 //        _mode=_modenew;
 //     }
 //   }
+
   if(Serial1.available() > 0){
     char _modenew = Serial1.read();
     if(_mode!=_modenew){
@@ -332,7 +331,7 @@ Serial.println(prev_val_y);
      if(v[0] != '1'){
         Serial.println("not found");    
         if(scan_state < 2){
-          Serial.println("scan sero");
+          Serial.println("scan zero");
           rover_scan_zero(v[1]);
           
         }else if(scan_state == 2){
@@ -391,6 +390,10 @@ Serial.println(prev_val_y);
 
     for(int i=0; i<43; i++){
       Serial1.print(data_send[i]);
+    }
+
+    for(int i =0; i<43; i++){
+      Serial.print(data_send[i]);
     }
     //Serial1.println();
     

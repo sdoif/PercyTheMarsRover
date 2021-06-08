@@ -79,8 +79,13 @@ int pwml = 9;                     //pin to control left wheel speed using pwm
 int c_new = 0;
 int v_new = 0;
 char _mode;
-char c[5] = {'0','0','0','0','0'};
+char c[5] = {'1','x','0','0','0'};
 char v[2] = {'0', 'g'};
+char _x[7];
+char _y[7];
+char __speed[4];
+char _theta[6];
+char _r[6];
 
 String gear;
 
@@ -276,6 +281,7 @@ void sampling(){
   sensorValue0 = analogRead(A0); //sample Vb
   if(c[0] == '0'){
     vref = speed2voltage(_speed.toFloat());
+    dtostrf(_speed.toDouble(),4,1,__speed);
     Serial.println("vref_set = "+String(vref));
   }else{
     vref = 1.6;
@@ -309,7 +315,7 @@ void sampling(){
 }
 
 void back(){
-  gear = "R";
+  gear = " R";
   digitalWrite(pwmr,HIGH);
   digitalWrite(pwml,HIGH);
   DIRRstate = HIGH;
@@ -336,7 +342,7 @@ void right(){
 
 void forward(){
   gear = "";
-  gear = "D";
+  gear = " D";
   digitalWrite(pwmr,HIGH);
   digitalWrite(pwml,HIGH);
   DIRRstate = LOW;
@@ -345,7 +351,7 @@ void forward(){
 
 void brake(){
   gear = "";
-  gear = "P";
+  gear = " P";
   digitalWrite(pwmr,LOW);
   digitalWrite(pwml,LOW);
 }
@@ -365,6 +371,7 @@ float xcoordinatefinder(float old_r, float new_r, float angle){
     xcal_total = xcal_total + xcal;
     Serial.print("x coordinate of rover = ");
     Serial.println(xcal_total);
+    dtostrf(xcal_total,7,1,_x);
     return xcal_total; 
 }
 
@@ -373,6 +380,7 @@ float ycoordinatefinder(float old_r, float new_r, float angle){
     ycal_total = ycal_total + ycal;
     Serial.print("y coordinate of rover = ");
     Serial.println(ycal_total);
+    dtostrf(ycal_total,7,1,_y);
     return ycal_total; 
 }
 
@@ -408,6 +416,8 @@ bool rover_scan_zero(char _mode){
     if((prev_val_x == total_x)&&(_iter_scan == 1)){
      Serial.println("theta = "+String(store_angle(actual_x)));
      Serial.println("r = "+String(actual_y));
+     dtostrf(store_angle(actual_x), 6, 1, _theta);
+     dtostrf(actual_y, 6, 1, _r);
       _iter_scan = 2;
     }
     Serial.println("Scan_zero = STOP");
@@ -449,6 +459,8 @@ bool reach_forward(char _mode){
     }else if(_mode == 's'){
         brake();
         scan_state = 5;
+        dtostrf(store_angle(actual_x), 6, 1, _theta);
+        dtostrf(actual_y, 6, 1, _r);
         return true;
     }else if(_mode == 'r'){
         right();
@@ -459,10 +471,9 @@ bool reach_forward(char _mode){
     }
 }
 
-//{"0d14.1+0003-0012"}
 //String data_command[] = {send_to, gear, x, y, total, _speed};
 //String data_vision[] = {"v", s0 bool, s1 bool, theta, r};
-String data_command[] = {"c", "RR", "+0003.4", "-0015.2", "00003422", "10.2"};
-String data_vision[] = {"v", "0", "0057.4", "0132.0"};
+String data_command[] = {"c", gear, _x, _y, "00003422", __speed};
+String data_vision[] = {"v", String(rover_scan_zero(v[1])), String(rover_scan_one(v[1])), _theta, _r};
 
 #endif 
