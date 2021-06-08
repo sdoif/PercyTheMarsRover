@@ -160,6 +160,7 @@ wire red_detect, green_detect, blue_detect, violet_detect, yellow_detect, border
 //		Can set if parameters on these to trigger new conditions
 //	Width in pixels = 640; have the 210 pixels on the left and right as the special cases
 
+/*
 assign red_detect = (x >= 210 && x <= 430) && ((h > 170 || h < 25) && s > 149 && s < 232 && v > 125 && v <= 200) ? 1 // changed max v from 245 to 200
 						: ( (x < 210 || x > 430) && (h > 170 || h < 15) && s > 75 && s < 161 && v > 100 && v < 200) ? 1 // 235 -> 161
 						: 0;
@@ -173,9 +174,12 @@ assign violet_detect =  (h < 15 && s > 80 && s < 150 && v > 75 && v <= 125) ? 1 
 								// : (x < 210 || x > 430) ? 1 // set everything in the right and left side to violet
 								//: ( x > 430 && ) ? 1// right third
 								//: 0;
-
+*/
 // (h < 25 && s > 80 && s < 160 && v > 50 && v <= 125) ? 1 : 0;// ((h < 20  && s > 89 && s < 170 && v > 64 && v < 128) || (h > 160 && s > 10 && s < 115 && v > 154 && v < 245)) ? 1 : 0; // bad
-//assign violet_detect = 0;
+assign red_detect = 0;
+assign blue_detect = 0;
+assign green_detect = 0;
+assign violet_detect = 0;
 assign yellow_detect = (h > 25 && h < 35 && s > 100 && s < 153 && v > 102 && v <= 245) ? 1 : 0; // good - needs adjusting?
 
 assign border_detect = (x <= 20 || x >= 620) || (y <= 20 || y >= 460); 
