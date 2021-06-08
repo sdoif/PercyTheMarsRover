@@ -10,19 +10,20 @@ Starting code that will connect to wifi and establish mqtt connection, subscribe
 
 //setting up global variables/objects
 
-#define visionIn 5
-#define visionOut 6
-#define driveIn 7
-#define driveOut 8
+#define visionIn 4
+#define visionOut 2
+#define driveIn 16
+#define driveOut 17
 
 WiFiClient wificlient;
 PubSubClient mqttclient(wificlient);
 long lastMsg = 0;
-char msg[20], fromdrive[43], fromvision[20];
-char toDrive[6] = "0x000";
+char msg[20], fromDrive[43], fromVision[20];
+char toVision[13], toCommand[28];
+char toDrive[5] = {'0','x','0','0','0'};
 int value = 0;
 int bytein = 0;
-const char* serverip = "3.80.119.99"; // aws server ip
+const char* serverip = "3.87.147.76"; // aws server ip
 
 
 // setup always runs at the start
@@ -30,8 +31,8 @@ void setup() {
   
     Serial.println("Start");
     // Note the format for setting a serial port is as follows: Serial2.begin(baud-rate, protocol, RX pin, TX pin);
-    //Serial2.begin(115200, SERIAL_8N1, visionIn, visionOut); // setting up uart port to speak with vision
-    //Serial1.begin(115200, SERIAL_8N1, driveIn, driveOut); // setting up uart port to speak with drive
+    Serial1.begin(115200, SERIAL_8N1, visionIn, visionOut); // setting up uart port to speak with vision
+    Serial2.begin(9600, SERIAL_8N1, driveIn, driveOut); // setting up uart port to speak with drive
     Serial.begin(115200); // sets baud rate
     delay(10);
     Serial.println("Connecting to wifi");
@@ -43,29 +44,19 @@ void setup() {
     Serial.println("Setting up mqttclient");
     mqttclient.setServer(serverip, 1883);   
     mqttclient.setCallback(callback);
+
+    mqttconnect();
     
-    if(!mqttclient.connect("esp32")){
-      Serial.println("Client connection failed");
-    }
     delay(1000);
-    if(mqttclient.subscribe("direction")){
-      Serial.println("Subscribed to direction");
-    }else{
-      Serial.println("Failed subscribing");
-    }
     
-    if(mqttclient.publish("test", "hello from esp32")){
-      Serial.println("Message sent");
-    }else{
-      Serial.println("Message failed to send");
-    }
+
 
 }
 
 int setupwifi()
 {
     // We start by connecting to a WiFi network
-    WiFi.begin("Kai", "kai12456"); // connects to wifi idk how to connect to imperial wifi as it needs authentication
+    WiFi.begin("SD", "123123123"); // connects to wifi idk how to connect to imperial wifi as it needs authentication
     Serial.print("Waiting for WiFi... "); 
     while(WiFi.status() != WL_CONNECTED) { // this just tries to connect to wifi i guess
         Serial.print(".");
@@ -85,37 +76,47 @@ void callback(char* topic, byte* message, unsigned int length) {
     Serial.print((char)message[i]);
     messageTemp += (char)message[i];
   }
-  Serial.println();
-  //send whatever direction command we receive as its already good!
-  if(topic == "direction"){
-      toDrive[1] = messageTemp[0];
-      Serial2.print("c" + String(toDrive);  
-  }else if(topic == "speed"){
-      toDrive[2] = messageTemp[0];
-      toDrive[3] = messageTemp[1];
-      toDrive[4] = messageTemp[2];
-      Serial2.print("c" + String(toDrive));
-  }else if(topic == "test"){
-    Serial.print(messageTemp);
-  }else if (topic == "mode"){
-      toDrive[0] = messageTemp[0];
-      Serial2.print("c" + messageTemp);
+
+  String _topic = String(topic);
+  if(_topic=="test"){
+     Serial.print(messageTemp);
+  }else if (_topic=="mode"){
+     toDrive[0] = messageTemp[0];
+     Serial2.print("c" + String(toDrive));
+     Serial.print("c" + String(toDrive));
+  }else if(_topic=="direction"){
+     toDrive[1] = messageTemp[0];
+     Serial2.print("c" + String(toDrive));  
+     Serial.print("c" + String(toDrive));
+  }else if(_topic=="speed"){
+     toDrive[2] = messageTemp[0];
+     toDrive[3] = messageTemp[1];
+     toDrive[4] = messageTemp[2];
+     Serial2.print("c" + String(toDrive));
+     Serial.print("c" + String(toDrive));
   }
   
 }
 
-void reconnect() {
+void mqttconnect() {
   // Loop until we're reconnected
   while (!mqttclient.connected()) {
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
     if (mqttclient.connect("esp32")) {
       Serial.println("Connected to Broker");
-      // Subscribe
       Serial.println("Subscribing to Topics");
-      mqttclient.subscribe("direction");
-      mqttclient.subscribe("speed");
-      mqttclient.subscribe("test");
+      if( (mqttclient.subscribe("direction")) && (mqttclient.subscribe("mode")) && (mqttclient.subscribe("speed")) ){
+        Serial.println("Subscribed to topics");
+      }else{
+        Serial.println("Failed to subscribe to all topics");
+      } 
+
+      if(mqttclient.publish("test", "hello from esp32")){
+        Serial.println("Test message sent");
+      }else{
+        Serial.println("Test message failed to send");
+      }
       
     }else{
       Serial.print("failed, rc=");
@@ -138,31 +139,45 @@ void loop() {
   if(WiFi.status() != WL_CONNECTED){
     Serial.println("Reconnecting to wifi");
     setupwifi();
-  }
-  
-  while(!mqttclient.connected()) {
-    reconnect();
+  }else if(!mqttclient.connected()){
+    mqttconnect();
   }
   
   mqttclient.loop();
 
-  int i = 0;
-  int v = 0;
+  if(Serial2.available()){
+    int j = 0;
+    while(Serial2.available()){
+      bytein = Serial2.read();
+      fromDrive[j] = char(bytein);
+      j++;
+    }
+
+    for(int i = 1; i < 29; i++){
+      toCommand[i] = fromDrive[i];
+    }
+    for(int i = 30; i < 43; i++){
+      toVision[i-30] = fromDrive[i];
+    }
+    
+    mqttclient.publish("drive", toCommand);
+    Serial1.print(toVision);
+  }
+
+  //v is at index 29
+
   if(Serial.available()){
-    v = 1;
-    i = 0;
+    int i = 0;
     while(Serial.available()){
       bytein = Serial.read();
       msg[i] = char(bytein);
       i++;
     }
-  }
-
-
-  if(v){
     mqttclient.publish("test", msg);
     clearmsg();
   }
+
+
   delay(1000);
 
 }

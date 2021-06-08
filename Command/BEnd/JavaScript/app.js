@@ -14,15 +14,15 @@ app.use(express.static(path.join(__dirname, 'views')));
 
 // placeholder for information stored
 let information = {
-    speed: 1,
-    battery: 1,
-    ttl: 1,
-    charging: 1,
-    distanceTravelled: 1,
-    gear: 1,
+    speed: 0,
+    battery: 0,
+    ttl: 0,
+    charging: 0,
+    distanceTravelled: 0,
+    gear: 0,
     roverCoordinates: {x: 0, y: 0},
     ballCoordinates: {},
-    targetBall: 1,
+    targetBall: 0,
     roverPath: {}
 
 }
@@ -137,6 +137,9 @@ client.on('connect', () =>{
 
 client.on('message', (topic, message, packet) => {
     console.log(`Recieved message from ${topic} - ${message} `);
+    if(topic === "drive"){
+
+    }
 });
 
 
