@@ -164,7 +164,7 @@ assign red_detect = (x >= 210 && x <= 430) && ((h > 170 || h < 25) && s > 149 &&
 						: ( (x < 210 || x > 430) && (h > 170 || h < 15) && s > 75 && s < 161 && v > 100 && v < 200) ? 1 // 235 -> 161
 						: 0;
 						
-assign blue_detect = (h > 90 && h < 120 && s > 76 && s < 195 && v > 25 && v < 128) ? 1 : 0; // good - check previous commits for recent values
+assign blue_detect = (h > 100 && h < 120 && s > 76 && s < 195 && v > 25 && v < 128) ? 1 : 0; // good - check previous commits for recent values
 assign green_detect = (h > 60 && h < 80 && s > 75 && s < 200 && v > 50 && v < 128) ? 1 : 0; // good (h > 115 && h < 135 && s > 200 && v > 115 && v < 135)
 
 assign violet_detect =  (h < 15 && s > 80 && s < 150 && v > 75 && v <= 125) ? 1 : 0;
@@ -176,7 +176,7 @@ assign violet_detect =  (h < 15 && s > 80 && s < 150 && v > 75 && v <= 125) ? 1 
 
 // (h < 25 && s > 80 && s < 160 && v > 50 && v <= 125) ? 1 : 0;// ((h < 20  && s > 89 && s < 170 && v > 64 && v < 128) || (h > 160 && s > 10 && s < 115 && v > 154 && v < 245)) ? 1 : 0; // bad
 //assign violet_detect = 0;
-assign yellow_detect = (h > 25 && h < 45 && s > 100 && s < 153 && v > 102 && v <= 245) ? 1 : 0; // good - needs adjusting?
+assign yellow_detect = (h > 25 && h < 35 && s > 100 && s < 153 && v > 102 && v <= 245) ? 1 : 0; // good - needs adjusting?
 
 assign border_detect = (x <= 20 || x >= 620) || (y <= 20 || y >= 460); 
 
@@ -519,13 +519,13 @@ always@(posedge clk) begin
 		frame_count <= frame_count - 1;
 		
 		if (frame_count == 0 && msg_buf_size < MESSAGE_BUF_MAX - 3) begin
-			msg_state <= 2'b0001;
+			msg_state <= 4'b0001;
 			frame_count <= MSG_INTERVAL-1;
 		end
 	end
 	
 	//Cycle through message writer states once started
-	if (msg_state != 2'b0000) msg_state <= msg_state + 2'b0001;
+	if (msg_state != 4'b0000) msg_state <= msg_state + 4'b0001;
 
 end
 	
@@ -547,67 +547,67 @@ wire msg_buf_empty;
 
 always@(*) begin	//Write words to FIFO as state machine advances
 	case(msg_state)
-		2'b0000: begin
+		4'b0000: begin
 			msg_buf_in = 32'b0;
 			msg_buf_wr = 1'b0;
 		end
-		2'b0001: begin
+		4'b0001: begin
 			msg_buf_in = `RED_BOX_MSG_ID;	//Message ID
 			msg_buf_wr = 1'b1;
 		end
-		2'b0010: begin
+		4'b0010: begin
 			msg_buf_in = {5'b0, r_xmin, 5'b0, r_ymin};	//Top left coordinate
 			msg_buf_wr = 1'b1;
 		end
-		2'b0011: begin
+		4'b0011: begin
 			msg_buf_in = {5'b0, r_xmax, 5'b0, r_ymax}; //Bottom right coordinate
 			msg_buf_wr = 1'b1;
 		end
-		2'b0100: begin
+		4'b0100: begin
 			msg_buf_in = `GREEN_BOX_MSG_ID;	//Message ID
 			msg_buf_wr = 1'b1;
 		end
-		2'b0101: begin
+		4'b0101: begin
 			msg_buf_in = {5'b0, g_xmin, 5'b0, g_ymin};	//Top left coordinate
 			msg_buf_wr = 1'b1;
 		end
-		2'b0110: begin
+		4'b0110: begin
 			msg_buf_in = {5'b0, g_xmax, 5'b0, g_ymax}; //Bottom right coordinate
 			msg_buf_wr = 1'b1;
 		end
-		2'b0111: begin
+		4'b0111: begin
 			msg_buf_in = `BLUE_BOX_MSG_ID;	//Message ID
 			msg_buf_wr = 1'b1;
 		end
-		2'b1000: begin
+		4'b1000: begin
 			msg_buf_in = {5'b0, b_xmin, 5'b0, b_ymin};	//Top left coordinate
 			msg_buf_wr = 1'b1;
 		end
-		2'b1001: begin
+		4'b1001: begin
 			msg_buf_in = {5'b0, b_xmax, 5'b0, b_ymax}; //Bottom right coordinate
 			msg_buf_wr = 1'b1;
 		end
-		2'b1010: begin
+		4'b1010: begin
 			msg_buf_in = `VIOLET_BOX_MSG_ID;	//Message ID
 			msg_buf_wr = 1'b1;
 		end
-		2'b1011: begin
+		4'b1011: begin
 			msg_buf_in = {5'b0, v_xmin, 5'b0, v_ymin};	//Top left coordinate
 			msg_buf_wr = 1'b1;
 		end
-		2'b1100: begin
+		4'b1100: begin
 			msg_buf_in = {5'b0, v_xmax, 5'b0, v_ymax}; //Bottom right coordinate
 			msg_buf_wr = 1'b1;
 		end
-		2'b1101: begin
+		4'b1101: begin
 			msg_buf_in = `YELLOW_BOX_MSG_ID;	//Message ID
 			msg_buf_wr = 1'b1;
 		end
-		2'b1110: begin
+		4'b1110: begin
 			msg_buf_in = {5'b0, y_xmin, 5'b0, y_ymin};	//Top left coordinate
 			msg_buf_wr = 1'b1;
 		end
-		2'b1111: begin
+		4'b1111: begin
 			msg_buf_in = {5'b0, y_xmax, 5'b0, y_ymax}; //Bottom right coordinate
 			msg_buf_wr = 1'b1;
 		end
