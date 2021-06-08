@@ -76,20 +76,14 @@ int DIRR = 21;                    //defining right direction pin
 int pwmr = 5;                     //pin to control right wheel speed using pwm
 int pwml = 9;                     //pin to control left wheel speed using pwm
 //*********//
-//char _mode='g';
 int c_new = 0;
 int v_new = 0;
 char _mode;
-char c[6] = {'0','0','0','0','0','0'};
+char c[5] = {'0','0','0','0','0'};
 char v[2] = {'0', 'g'};
 
 String _speed;
-
-int _auto = 0;
-int found = 0;
-
-float theta = 0;
-float r = 0;
+String data_send;
 
 float ycal_total = 0;
 float xcal_total = 0;
@@ -102,11 +96,6 @@ int min_x = 0;
 
 int rover_length = 73;
 
-float cart_x = 0;
-float cart_y = 0;
-
-int search_x = 0;
-int search_y = 0;
 int _iter_scan = 0;
 int _iter_speed = 0;
 
@@ -274,7 +263,7 @@ float pidi(float pid_input){
 }
 
 float speed2voltage (float _speed){
-  float voltage = (_speed+1.206)/4.495;
+  float voltage = (_speed+1.206)/44.95;
   return voltage;
 }
 
@@ -351,22 +340,6 @@ void brake(){
 }
 
 //**********************************//
-//void gotocoordinate(int x, int y){
-//  if(){
-//    theta = atan2(y,x);
-//    r = sqrt((x^2)+(y^2));
-//  }
-//  if(actual_x >= theta){
-//    brake();
-//  }else{
-//    left();
-//  }
-//  if(actual_y >= r){
-//    brake();
-//  }else{
-//    forward();
-//  }
-//}
 
 float store_angle(float x){
     float angle_deg = ((x/850)*360);
@@ -422,13 +395,8 @@ bool rover_scan_zero(char _mode){
   }else if(_mode == 's'){
     brake();
     if((prev_val_x == total_x)&&(_iter_scan == 1)){
-//      Serial.println("angle = "+String(angle));
-//      Serial.println("angle_corrected = "+String(angle_corrected));
-//      Serial.println("rad = "+String(rad));
-//      Serial.println("theta_total = "+String(theta_total));
-//      Serial.println("r_total = "+String(r_total));
-//      Serial.println("cart_x = "+String(cart_x));
-//      Serial.println("cart_y = "+String(cart_y));
+     Serial.println("theta = "+String(store_angle(actual_x)));
+     Serial.println("r = "+String(actual_y));
       _iter_scan = 2;
     }
     Serial.println("Scan_zero = STOP");
@@ -484,6 +452,6 @@ bool reach_forward(char _mode){
 //String data_command[] = {send_to, gear, x, y, total, _speed};
 //String data_vision[] = {"v", s0 bool, s1 bool, theta, r};
 String data_command[] = {"c", "RR", "+0003.4", "-0015.2", "00003422", "10.2"};
-String data_vision[] = {"v", String(rover_scan_zero(_mode)), "0057.4", "0132.0"};
+String data_vision[] = {"v", "0", "0057.4", "0132.0"};
 
 #endif 
