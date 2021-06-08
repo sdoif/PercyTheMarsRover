@@ -195,17 +195,17 @@ int avg_distance(int distance, int *array){
 
 // Function that returns the distance of the ball from the camera based on its boundary
 //		box coordinates
-int distance_calc(int left_x, int right_x){
+alt_u8 distance_calc(int left_x, int right_x){
 
 		// D = (W*F)/P
 	// W = diameter of the ball
-	int W = 3.95;
+	double W = 3.95;
 	// F = Focal length
-	int F = 700;
+	double F = 700;
 	// P = apparent width in pixels
-	int P = right_x - left_x;
+	double P = right_x - left_x;
 	// D = Distance from camera
-	int D = (W*F)/P;
+	alt_u8 D = (W*F)/P;
 
 	return abs(D);
 	/* Moving average filter has been moved to int main
@@ -669,17 +669,22 @@ int main()
 	int balls_detected = 0;
 
 	// Measurement related (Base)
-	int r_topleft, g_topleft, b_topleft, v_topleft, y_topleft;
-	int r_bottomright, g_bottomright, b_bottomright, v_bottomright, y_bottomright;
+	alt_u32 r_topleft, g_topleft, b_topleft, v_topleft, y_topleft;
+	alt_u32 r_bottomright, g_bottomright, b_bottomright, v_bottomright, y_bottomright;
 
 	// Measurement related (Derived)
-	int r_left_x, g_left_x, b_left_x, v_left_x, y_left_x;
-	int r_right_x, g_right_x, b_right_x, v_right_x, y_right_x;
-	int r_left_y, g_left_y, b_left_y, v_left_y, y_left_y;
-	int r_right_y, g_right_y, b_right_y, v_right_y, y_right_y;
+	alt_u32 r_left_x, g_left_x, b_left_x, v_left_x, y_left_x;
+	alt_u32 r_right_x, g_right_x, b_right_x, v_right_x, y_right_x;
+	alt_u32 r_left_y, g_left_y, b_left_y, v_left_y, y_left_y;
+	alt_u32 r_right_y, g_right_y, b_right_y, v_right_y, y_right_y;
+
+	alt_u32 r_left_x_final, g_left_x_final, b_left_x_final, v_left_x_final, y_left_x_final;
+	alt_u32 r_right_x_final, g_right_x_final, b_right_x_final, v_right_x_final, y_right_x_final;
+	alt_u32 r_left_y_final, g_left_y_final, b_left_y_final, v_left_y_final, y_left_y_final;
+	alt_u32 r_right_y_final, g_right_y_final, b_right_y_final, v_right_y_final, y_right_y_final;
 
 	// Single variable to handle all of the distances
-	int distance;
+	alt_u8 distance;
 
 	// 2nd scan specific variables
 	int s2_balls_detected = 0;
@@ -693,16 +698,21 @@ int main()
 	firstBall = &nothing;
 
 	// Moving average filters - arrays, their points and the index
-	int r_d[5], g_d[5], b_d[5], v_d[5], y_d[5];
-	int *r_d_ptr = r_d;
-	int *g_d_ptr = g_d;
-	int *b_d_ptr = b_d;
-	int *v_d_ptr = v_d;
-	int *y_d_ptr = y_d;
+	double r_d[5], g_d[5], b_d[5], v_d[5], y_d[5];
+	double *r_d_ptr = r_d;
+	double *g_d_ptr = g_d;
+	double *b_d_ptr = b_d;
+	double *v_d_ptr = v_d;
+	double *y_d_ptr = y_d;
 	int index; // to handle all moving average filters in sync
 
 	// Other
 	int state = 0; // or stage
+
+	alt_u32 r_lxsum, g_lxsum, b_lxsum, v_lxsum, y_lxsum;
+	alt_u32 r_rxsum, g_rxsum, b_rxsum, v_rxsum, y_rxsum;
+	alt_u32 r_lysum, g_lysum, b_lysum, v_lysum, y_lysum;
+	alt_u32 r_rysum, g_rysum, b_rysum, v_rysum, y_rysum;
 
 	// In this loop, we look at what state we are in and perform
 	//		the desired actions
@@ -733,79 +743,131 @@ int main()
 
 			// Analyse incoming BB information and verilog and make the proper variable assignments.
 			// 		Make 5 data measurements and take averages from them
-       		int r_lxsum, g_lxsum, b_lxsum, v_lxsum, y_lxsum;
-       		int r_rxsum, g_rxsum, b_rxsum, v_rxsum, y_rxsum;
-       		int r_lysum, g_lysum, b_lysum, v_lysum, y_lysum;
-       		int r_rysum, g_rysum, b_rysum, v_rysum, y_rysum;
 
+       		for (int i = 0; i < 25; i++){ // TODO - Have all data here be remembered in this scope and the final value be the average of the 5 iterations
+				//Get next word from message buffer (Verilog)
+				int word = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
+				if (word == EEE_IMGPROC_MSG_START_R){ // If the incoming string == RBB
+					// Print on a newline
+					printf("\n");
+					r_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (top left coordinate)
+					r_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (bottom right coordinate)
 
-			//Get next word from message buffer (Verilog)
-			int word = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
-			if (word == EEE_IMGPROC_MSG_START_R){ // If the incoming string == RBB
-				// Print on a newline
-				printf("\n");
-				r_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (top left coordinate)
-				r_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (bottom right coordinate)
+					r_left_x = (r_topleft)>>16; // extracting the top 16 bits
+					r_right_x = (r_bottomright)>>16;
+					r_left_y = (r_topleft & 0x0000ffff);
+					r_right_y = (r_bottomright & 0x0000ffff);
 
-				r_left_x = (r_topleft)>>16; // extracting the top 16 bits
-				r_right_x = (r_bottomright)>>16;
-				r_left_y = (r_topleft & 0x0000ffff);
-				r_right_y = (r_bottomright && 0x0000ffff);
+					// distance = distance_calc(r_left_x, r_right_x, r_d_ptr, index);
+					//("Red distance : %i cm", distance);
+				} else if (word == EEE_IMGPROC_MSG_START_G){ // If the incoming string == GBB
+					printf("\n");
+					g_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
+					g_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
 
+					g_left_x = (g_topleft)>>16; // extracting the top 16 bits
+					g_right_x = (g_bottomright)>>16;
+					g_left_y = (g_topleft & 0x0000ffff);
+					g_right_y = (g_bottomright & 0x0000ffff);
 
-				// distance = distance_calc(r_left_x, r_right_x, r_d_ptr, index);
-				//("Red distance : %i cm", distance);
-			} else if (word == EEE_IMGPROC_MSG_START_G){ // If the incoming string == GBB
-				printf("\n");
-				g_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
-				g_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
+					// distance = distance_calc(g_left_x, g_right_x, g_d_ptr, index);
+					//printf("Green distance : %i cm", distance);
+				} else if (word == EEE_IMGPROC_MSG_START_B){ // If the incoming string == BBB
+					printf("\n");
+					b_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
+					b_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
 
-				g_left_x = (g_topleft)>>16; // extracting the top 16 bits
-				g_right_x = (g_bottomright)>>16;
-				g_left_y = (g_topleft & 0x0000ffff);
-				g_right_y = (g_bottomright && 0x0000ffff);
+					b_left_x = (b_topleft)>>16; // extracting the top 16 bits
+					b_right_x = (b_bottomright)>>16;
+					b_left_y = (b_topleft & 0x0000ffff);
+					b_right_y = (b_bottomright & 0x0000ffff);
 
-				// distance = distance_calc(g_left_x, g_right_x, g_d_ptr, index);
-				//printf("Green distance : %i cm", distance);
-			} else if (word == EEE_IMGPROC_MSG_START_B){ // If the incoming string == BBB
-				printf("\n");
-				b_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
-				b_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
-
-				b_left_x = (b_topleft)>>16; // extracting the top 16 bits
-				b_right_x = (b_bottomright)>>16;
-				b_left_y = (b_topleft & 0x0000ffff);
-				b_right_y = (b_bottomright && 0x0000ffff);
-
-
-				// distance = distance_calc(b_left_x, b_right_x, b_d_ptr, index);
-				// printf("Blue distance : %i cm\n", distance);
+					// distance = distance_calc(b_left_x, b_right_x, b_d_ptr, index);
+					// printf("Blue distance : %i cm\n", distance);
 				} else if (word == EEE_IMGPROC_MSG_START_V){ // If the incoming string == VBB
-				printf("\n");
-				v_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
-				v_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
+					printf("\n");
+					v_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
+					v_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
 
-				v_left_x = (v_topleft)>>16; // extracting the top 16 bits
-				v_right_x = (v_bottomright)>>16;
-				v_left_y = (v_topleft & 0x0000ffff);
-				v_right_y = (v_bottomright && 0x0000ffff);
+					v_left_x = (v_topleft)>>16; // extracting the top 16 bits
+					v_right_x = (v_bottomright)>>16;
+					v_left_y = (v_topleft & 0x0000ffff);
+					v_right_y = (v_bottomright & 0x0000ffff);
 
-				// distance = distance_calc(v_left_x, v_right_x, v_d_ptr, index);
-				//printf("Violet distance : %i cm", distance);
-			} else if (word == EEE_IMGPROC_MSG_START_Y){ // If the incoming string == YBB
-				printf("\n");
-				y_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
-				y_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
+					// distance = distance_calc(v_left_x, v_right_x, v_d_ptr, index);
+					//printf("Violet distance : %i cm", distance);
+				} else if (word == EEE_IMGPROC_MSG_START_Y){ // If the incoming string == YBB
+					printf("\n");
+					y_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
+					y_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
 
-				y_left_x = (y_topleft)>>16; // extracting the top 16 bits
-				y_right_x = (y_bottomright)>>16;
-				y_left_y = (y_topleft & 0x0000ffff);
-				y_right_y = (y_bottomright && 0x0000ffff);
+					y_left_x = (y_topleft)>>16; // extracting the top 16 bits
+					printf("left x noavg : %i\n", y_left_x);
+					y_right_x = (y_bottomright)>>16;
+					printf("right x noavg : %i\n", y_right_x);
+					y_left_y = (y_topleft & 0x0000ffff);
+					y_right_y = (y_bottomright & 0x0000ffff);
 
-				// distance = distance_calc(y_left_x, y_right_x, y_d_ptr, index);
-				//printf("Yellow distance : %i cm", distance);
-			}
+					y_lxsum += y_left_x;
+					printf("lxsum : %i\n", y_lxsum);
+					y_rxsum += y_right_x;
+					y_lysum += y_left_y;
+					y_rysum += y_right_y;
 
+					// distance = distance_calc(y_left_x, y_right_x, y_d_ptr, index);
+					//printf("Yellow distance : %i cm", distance);
+				}
+       		}
+
+       		r_left_x = r_lxsum / 5;
+       		r_right_x = r_rxsum / 5;
+       		r_left_y = r_lysum / 5;
+       		r_right_y = r_rysum / 5;
+
+       		g_left_x = g_lxsum / 5;
+       		g_right_x = g_rxsum / 5;
+       		g_left_y = g_lysum / 5;
+       		g_right_y = g_rysum / 5;
+
+       		b_left_x = b_lxsum / 5;
+       		b_right_x = b_rxsum / 5;
+       		b_left_y = b_lysum / 5;
+       		b_right_y = b_rysum / 5;
+
+       		v_left_x = v_lxsum / 5;
+       		v_right_x = v_rxsum / 5;
+       		v_left_y = v_lysum / 5;
+       		v_right_y = v_rysum / 5;
+
+       		y_left_x_final = y_lxsum / 5;
+       		y_right_x_final = y_rxsum / 5;
+       		y_left_y_final = y_lysum / 5;
+       		y_right_y_final = y_rysum / 5;
+
+       		r_lxsum = 0;
+       		r_rxsum = 0;
+       		r_lysum = 0;
+       		r_rysum = 0;
+
+       		g_lxsum = 0;
+       		g_rxsum = 0;
+       		g_lysum = 0;
+       		g_rysum = 0;
+
+       		b_lxsum = 0;
+       		b_rxsum = 0;
+       		b_lysum = 0;
+       		b_rysum = 0;
+
+       		v_lxsum = 0;
+       		v_rxsum = 0;
+       		v_lysum = 0;
+       		v_rysum = 0;
+
+       		y_lxsum = 0;
+       		y_rxsum = 0;
+       		y_lysum = 0;
+       		y_rysum = 0;
 			// Variables from incoming verilog info have been assigned, data is ready
 
             // Testing functions
@@ -822,7 +884,8 @@ int main()
             */
 
             // Find average distance of the previous 5 results
-            int distance = distance_calc(y_left_x, y_right_x);
+       		printf("Left x: %d, Right x : %d\n", y_left_x_final, y_right_x_final);
+       		alt_u8 distance = distance_calc(y_left_x, y_right_x);
 			//distance = avg_distance(distance, y_d_ptr);
             printf("Distance : %i\n", distance);
 /*
