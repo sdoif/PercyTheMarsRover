@@ -164,6 +164,19 @@ void loop() {
     Serial1.print(toVision);
   }
 
+  if(Serial1.available()){
+    int k = 0;
+    while(Serial1.available()){
+      bytein = Serial1.available();
+      fromVision[k] = char(bytein);
+      k++;
+    }
+    Serial.print("Received from vision: ");
+    Serial.println(fromVison);
+    Serial2.print("v" + fromVision);
+    
+  }
+
   //v is at index 29
 
   if(Serial.available()){
