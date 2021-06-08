@@ -1,6 +1,6 @@
 const mqtt = require('mqtt');
 
-const client = mqtt.connect('mqtt://54.221.168.26', {clientId:"node"});
+const client = mqtt.connect('mqtt://3.87.147.76', {clientId:"node"});
 
 client.on('connect', () =>{
     console.log('Established mqtt connection');

@@ -53,7 +53,6 @@ void setup()
   SPI.setBitOrder(MSBFIRST);
   
   Serial.begin(38400);
-  Serial1.begin(115200);
 
   if(mousecam_init()==-1)
   {
@@ -65,6 +64,9 @@ void setup()
   mousecam_write_reg(26, 14);
 
 }
+  char _mode='x';
+  bool STOP = false;
+  bool DONE;
 
 
 byte frame[ADNS3080_PIXELS_X * ADNS3080_PIXELS_Y];
@@ -133,16 +135,27 @@ void loop(){
   Serial.print((int)md.dx); Serial.print(',');
   Serial.print((int)md.dy); Serial.println(')');
 
+  // Serial.println(md.max_pix);
   //delay(100);
 
-  distance_x = md.dx; //convTwosComp(md.dx);
-  distance_y = md.dy; //convTwosComp(md.dy);
-  
-  total_x1 = (total_x1 + distance_x);
-  total_y1 = (total_y1 + distance_y);
-  
-  total_x = 10*total_x1/157; //Conversion from counts per inch to mm (400 counts per inch)
-  total_y = 10*total_y1/157; //Conversion from counts per inch to mm (400 counts per inch)
+
+    distance_x = md.dx; //convTwosComp(md.dx);
+    distance_y = md.dy; //convTwosComp(md.dy);
+
+    distance_xx = 10*distance_x/157;
+    distance_yy = 10*distance_y/157;
+    Serial.println("distance_x = "+String(distance_x));
+    Serial.println("distance_y = "+String(distance_y));
+    Serial.println("distance_xx = "+String(distance_xx));
+    Serial.println("distance_yy = "+String(distance_yy));
+    
+
+total_x1 = (total_x1 + distance_x);
+total_y1 = (total_y1 + distance_y);
+
+total_x = 10*total_x1/157; //Conversion from counts per inch to mm (400 counts per inch)
+total_y = 10*total_y1/157; //Conversion from counts per inch to mm (400 counts per inch)
+
 
 //total_x1_distance = total_x1_distance + abs(distance_x);
 //total_y1_distance = total_y1_distance + abs(distance_y);
@@ -155,6 +168,19 @@ void loop(){
 //Serial.println("Distance_y_total = " + String(total_y_distance));
 //Serial.print('\n');
 
+if((distance_xx == 0)&&(distance_yy == 0)){
+  if(_iter == 0){
+    angle_x = prev_xx;
+    angle_y = prev_yy;
+  }
+  _iter = 1;
+}
+
+if(md.motion != 1){
+  _iter = 0;
+}
+    Serial.println("angle_x = "+String(angle_x));
+    Serial.println("angle_y = "+String(angle_y));
   //counter stuff
   //min threshold for prev_val needs to be tested based on the maximum speed of the rover
   if(((200<=prev_val_y)&&(prev_val_y<=208))&&((-208<=total_y)&&(total_y<=-200))){
@@ -187,6 +213,9 @@ void loop(){
   //this shows the minimum possible value y can take at the moment 
   min_y = 208*counter_y;
   min_x = 208*counter_x;
+  Serial.print("min_x= ");
+  Serial.println(min_x);
+  Serial.print('\n');
 
     //finding actual value of y 
   if(counter_y>0){  
@@ -227,14 +256,10 @@ void loop(){
     actual_x=total_x;
   }
 
- float angle = store_angle(actual_x);
- xcoordinatefinder(actual_y_prev, actual_y, angle);
- ycoordinatefinder(actual_y_prev, actual_y, angle);
-
  Serial.print('\n');
 
 Serial.print("vref = " + String(vref));
-Serial.println("vb = " + String(vb));
+Serial.print("vb = " + String(vb));
 Serial.print('\n');
 
 Serial.println("Distance_x = " + String(total_x));
@@ -256,147 +281,91 @@ Serial.print('\n');
 Serial.print("Actual x = ");
 Serial.println(actual_x);
 
-Serial.print('\n');
-Serial.print("prev x = ");
-Serial.println(prev_val_x);
-
-Serial.print('\n');
-Serial.print("prev y = ");
-Serial.println(prev_val_y);
-
   delay(100);
-   
-//  if (Serial1.available() > 0) {
-//    // read the incoming byte:
-//     char _modenew = Serial1.read();
-//     if(_mode!=_modenew){
-//        _mode=_modenew;
-//     }
-//   }
-   
-//   if (Serial.available() > 0) {
-//    // read the incoming byte:
-//     char _modenew = Serial.read();
-//     if(_mode!=_modenew){
-//        _mode=_modenew;
-//     }
-//   }
 
-  if(Serial1.available() > 0){
-    char _modenew = Serial1.read();
-    if(_mode!=_modenew){
+  //#endif
+   
+  if (Serial.available() > 0) {
+    // read the incoming byte:
+     char _modenew = 'f';
+     _modenew = Serial.read();
+
+     if(_mode!=_modenew){
       _mode=_modenew;
-    }
-    if(_mode == 'c'){
-      _mode = NULL;
-      for(int i = 0; i<5; i++){
-        c_new = Serial1.read();
-        c[i] = char(c_new);
       }
-      _iter_speed = 0;
-    }else if(_mode == 'v'){
-       _mode = NULL;
-      for(int i = 0; i<2; i++){
-        v_new = Serial1.read();
-        v[i] = char(v_new);
-      }
-    }
-  }
-    Serial.println("Data received: ");
-    Serial.print("c[] =");
-    Serial.println(c);
-    Serial.print("v[] =");    
-    Serial.println(v);
+   }
 
   digitalWrite(DIRR, DIRRstate);
   digitalWrite(DIRL, DIRLstate);
   //*********//
-  if(_iter_speed == 0){
-    _speed = "";
-    for(int i = 2; i<5; i++){
-      _speed = _speed + c[i];
-    }
-    _iter_speed = 1;
-  }
+  //rover_search(STOP);
   
-  Serial.println("str = "+String(_speed));
-  Serial.println("v[0] = "+String(v[0]));
-  Serial.println("v[1] = "+String(v[1]));
-  Serial.println("c[0] = "+String(c[0]));
-  
-  if(c[0] == '1'){
-    Serial.println("auto");
-    if(vb >= vref - 0.2){
-     Serial.println("voltage");
-     if(v[0] != '1'){
-        Serial.println("not found");    
-        if(scan_state < 2){
-          Serial.println("scan zero");
-          rover_scan_zero(v[1]);
-          
-        }else if(scan_state == 2){
-          rover_scan_one(v[1]);
-          
-        }else if(scan_state == 3){
-            v[1] = 'g';
-            delay(500);
-            scan_state = 4;
-            
-        }else if(scan_state ==4){
-            reach_forward(v[1]);
-            
-        }else if(scan_state == 5){
-            scan_state = 0;
-            delay(500);
-            v[1] = 'g';
-        }
-    }else{
-      brake();
-    }
-       
-    }else{
-      brake();}
-      
-  }else if(c[0] == '0'){
-    if(vb >= vref - 0.2){
-      rover_manual(c[1]);
-    }else{
-      brake();
-    }
-  }
+ // if(vb >= vref - 0.2){
+//    if(!rover_scan_short(_mode)){
+//      rover_scan_short(_mode);
+//    }
 
-  
+//     if(!rover_scan(_mode)){
+//      rover_scan(_mode);
+//     }
     
+//   if(_mode == 0){
+//     if(!rover_scan_short(_mode)){
+//      rover_scan_short(_mode);}
+//     Serial1.println("s0 = true") 
+//
+//    }else if(_mode == 1){
+//    
+//    if(found != 5){
+//      
+//      if(!rover_scan(_mode)){
+//        rover_scan(_mode);}
+//        
+//    }else{
+//      brake();
+//     }
+//   }
+//       
+//   if(_mode == 2){
+//    
+//    if(!rover_scan(_mode)){
+//      rover_scan(_mode);}
+//      
+//    if(!reach_forward(_mode)){
+//      reach_forward(_mode);}
+//   }
+//
+//   if(found == 5){
+//    brake();
+//   }
+   
+//  }else{
+ //   brake();}
+    
+  //rover_mode(_mode, STOP);
   prev_val_y = total_y;
   prev_val_x = total_x;
+  prev_xx = distance_xx;
+  prev_yy = distance_yy;
+
+ //rover_manual(_mode);
+  float angle = store_angle(actual_x);
+  
+  xcoordinatefinder(actual_y_prev, actual_y, angle);
+  ycoordinatefinder(actual_y_prev, actual_y, angle);
+//  if(loop_ite==0){
+//    actual_y_prev = actual_y;
+//  }else{
+//    
+//  }
   actual_y_prev = actual_y;
-
-//      Serial.println("angle = "+String(angle));
-//      Serial.println("angle_corrected = "+String(angle_corrected));
-//      Serial.println("rad = "+String(rad));
-//      Serial.println("theta_total = "+String(theta_total));
-//      Serial.println("r_total = "+String(r_total));
-//      Serial.println("cart_x = "+String(cart_x));
-//      Serial.println("cart_y = "+String(cart_y));
-
-    data_send = "";
-    for(int i = 0; i<6; i++){
-      data_send = data_send + data_command[i];
-    }
-    
-    for(int i = 0; i<4; i++){
-      data_send = data_send + data_vision[i];
-    }
-
-    for(int i=0; i<43; i++){
-      Serial1.print(data_send[i]);
-    }
-
-    for(int i =0; i<43; i++){
-      Serial.print(data_send[i]);
-    }
-    //Serial1.println();
-    
-
-    
+  //gotocoordinate(testing_x, testing_y, angle, actual_y);
+  Serial.println("ACTUAL Y=");
+  Serial.print(actual_y);
+  Serial.println("PREV Y=");
+  Serial.print(actual_y_prev);
+  gotocoordinate(testing_x, testing_y, angle+2, actual_y);
+  //loop_ite++;
+  
+  
 }
