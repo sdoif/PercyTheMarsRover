@@ -79,16 +79,18 @@ int pwml = 9;                     //pin to control left wheel speed using pwm
 //*********//
 
 unsigned long ref_time = 0;
+unsigned long reff_time = 0;
 
 float new_origin;
-
+int loop_count = 0;
 int prev_val_y = 0;
 int prev_val_x = 0;
 int min_y = 0;
 int min_x = 0;
 int actual_y_prev = 0;
-int testing_x=13;
-int testing_y=-18;
+int testing_x=25;
+int testing_y=11;
+int __iter = 0;
 
 int found = 0;
 
@@ -379,7 +381,7 @@ return new_angle;
   return new_angle;
 }
 }
-void gotocoordinate(int xx, int yy, float current_angle, float currrent_r){
+bool gotocoordinate(int xx, int yy, float current_angle, float currrent_r){
 int x = xx*10;
 int y = yy*10;
 double angle = atan2(yy,xx);
@@ -399,56 +401,49 @@ Serial.println("Target angle=");
 Serial.print(angle_deg);
 Serial.print("Target distance=");
 Serial.print(r);
-if((angle_new<current_angle+0.3)&&(angle_new>current_angle-0.3)){
-  brake();
+
+if((angle_new-0.12<current_angle)&&(angle_new+0.12>current_angle)){
   if(r>currrent_r){
-    forward();
-  }else if(r<=currrent_r){
+    if(__iter==0){
+      reff_time = millis();
+      __iter=1;
+    }
+    if(millis()-reff_time < 500){
+      forward();
+    }else if(((millis()-reff_time) >= 500)&&((millis()-reff_time) <= 2000)){
+  brake();
+  
+  }else if((millis()-reff_time) > 2000){
+   __iter = 0;
+  }
+  }
+  else if(r<=currrent_r){
     brake();
     }
-}else if(angle_new>current_angle+0.3){
-  left();
-}else if(angle_new<current_angle-0.3){
+}else if(angle_new-0.12>current_angle){
+ if(_iter == 0){
+    ref_time = millis();
+    Serial.println("ref_time = "+String(ref_time));
+      _iter = 1;
+  }
+//Serial.println("_iter = "+String(_iter));
+ // Serial.println("time = "+String(millis()));
+  if((millis()-ref_time) < 500){
+    left();
+  }else if(((millis()-ref_time) >= 500)&&((millis()-ref_time) <= 2000)){
+    brake();
+  }else if((millis()-ref_time) > 2000){
+   _iter = 0;
+  }
+}else if(angle_new+0.12<current_angle){
    right();
 }
-//brake();
+
 }
 
 
 
-bool rover_scan_short(char _mode){
-  if(_iter_short == 0){
-    actual_x_short = abs(actual_x);
-  }
-  if(abs(actual_x) >= 350+actual_x_short){
-    brake();
-    return true;
-  }else if(_mode == 's'){
-    brake();
-    if(_iter_short == 1){
-      ref_time = millis();
-    }
-    _iter_short = 2;
-    Serial.println("ref_time = "+String(ref_time));
-    if((millis() - ref_time) >= 1000){
-      brake();
-      _iter_short == 3;
-    }else{
-      forward();
-    }
-    if(_iter_short == 3){
-      if((millis() - ref_time) >= 2000){
-        brake();
-      }else{
-        back();
-    }
-    }
-  }else{
-    right();
-    _iter_short = 1;
-    return false;
-  }
-}
+
 
 bool rover_scan(char _mode){
   if(_iter_scan == 0){
@@ -489,19 +484,19 @@ void rover_manual(char _mode){
 
 bool reach_forward(char _mode){
     if(_mode == 'g'){
-      forward();
       vref = 3;
+      forward();
       return false;
     }else if(_mode == 's'){
         brake();
         return true;
     }else if(_mode == 'r'){
-        right();
         vref = 1.7;
+        right();
         reach_forward('g');
     }else if(_mode == 'l'){
-        left();
         vref = 1.7;
+        left();
         reach_forward('g');
     }
 }
