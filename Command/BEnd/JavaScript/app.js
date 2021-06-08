@@ -5,7 +5,7 @@ const bp = require('body-parser')
 const { response } = require('express');
 
 const app = express();
-const client = mqtt.connect('mqtt://3.80.119.99', {clientId:"node"});
+const client = mqtt.connect('mqtt://3.87.147.76', {clientId:"node"});
 app.use(express.urlencoded({extended: true}));
 app.use(bp.json())
 app.use(bp.urlencoded({ extended: true }))
@@ -111,7 +111,8 @@ app.post('/api/speed', (req, res) => {
 
 app.post('/api/mode', (req, res) => {
 
-    const mode = req.body.mode;
+    const _mode = req.body.mode;
+    const mode = String(_mode);
     console.log(`Changed mode to: ${mode}`);
     res.json("Mode Changed");
 
