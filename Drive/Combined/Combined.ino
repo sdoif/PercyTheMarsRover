@@ -392,6 +392,7 @@ Serial.println(prev_val_y);
     for(int i=0; i<43; i++){
       Serial1.print(data_send[i]);
     }
+    //Serial1.println();
     
 
     

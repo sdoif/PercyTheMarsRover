@@ -4,8 +4,11 @@
 #define RXD1 4
 #define TXD1 2
 
+int _index = 0;
 int bytein = 0;
 char msg[43];
+String add;
+String correct;
 //char str[6];
 
 void clearmsg(){
@@ -27,8 +30,24 @@ void loop(){
       msg[i] = char(bytein);
       }
     }
+  add = "";
+  for(int i =0; i<2; i++){
+    for(int i = 0; i<43; i++){
+      add = add + msg[i];
+    }
+  }
+    
+    _index = add.indexOf('c');
+    
+  correct = "";
+  for(int i = _index; i<_index+43; i++){
+    correct = correct + add[i];
+  }
     Serial.println("Data received: ");
     Serial.println(msg);
+    Serial.println(add);
+    Serial.println("index of c = "+String(_index));
+    Serial.println("correct = "+String(correct));
     //clearmsg();
     delay(80);
     
