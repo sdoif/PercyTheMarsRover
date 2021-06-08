@@ -160,7 +160,7 @@ wire red_detect, green_detect, blue_detect, violet_detect, yellow_detect, border
 //		Can set if parameters on these to trigger new conditions
 //	Width in pixels = 640; have the 210 pixels on the left and right as the special cases
 
-/*
+
 assign red_detect = (x >= 210 && x <= 430) && ((h > 170 || h < 25) && s > 149 && s < 232 && v > 125 && v <= 200) ? 1 // changed max v from 245 to 200
 						: ( (x < 210 || x > 430) && (h > 170 || h < 15) && s > 75 && s < 161 && v > 100 && v < 200) ? 1 // 235 -> 161
 						: 0;
@@ -174,13 +174,12 @@ assign violet_detect =  (h < 15 && s > 80 && s < 150 && v > 75 && v <= 125) ? 1 
 								// : (x < 210 || x > 430) ? 1 // set everything in the right and left side to violet
 								//: ( x > 430 && ) ? 1// right third
 								//: 0;
-*/
 // (h < 25 && s > 80 && s < 160 && v > 50 && v <= 125) ? 1 : 0;// ((h < 20  && s > 89 && s < 170 && v > 64 && v < 128) || (h > 160 && s > 10 && s < 115 && v > 154 && v < 245)) ? 1 : 0; // bad
-assign red_detect = 0;
-assign blue_detect = 0;
-assign green_detect = 0;
-assign violet_detect = 0;
-assign yellow_detect = (h > 25 && h < 35 && s > 100 && s < 153 && v > 102 && v <= 245) ? 1 : 0; // good - needs adjusting?
+//assign red_detect = 0;
+//assign blue_detect = 0;
+//assign green_detect = 0;
+//assign violet_detect = 0;
+assign yellow_detect = (h > 25 && h < 40 && s > 100 && s < 153 && v > 102 && v <= 245) ? 1 : 0; // good - needs adjusting?
 
 assign border_detect = (x <= 20 || x >= 620) || (y <= 20 || y >= 460); 
 
@@ -439,7 +438,7 @@ always@(posedge clk) begin
 		if (x < y_xmin) y_xmin <= x; 
 		if (x > y_xmax) y_xmax <= x;
 		if (y < y_ymin) y_ymin <= y;
-		y_ymax <= y;
+		if (y > y_ymax) y_ymax <= y;
 	end
 	
 	// The sections above and below need to be in the same always@(posedge clk)
@@ -515,8 +514,8 @@ always@(posedge clk) begin
 		
 		y_left <= y_xmin;
 		y_right <= y_xmax;
-		y_top <= y_ymin;
-		y_bottom <= y_ymax;
+		y_top <= y_ymax;
+		y_bottom <= y_ymin;
 		
 		
 		//Start message writer FSM once every MSG_INTERVAL frames, if there is room in the FIFO
@@ -608,11 +607,11 @@ always@(*) begin	//Write words to FIFO as state machine advances
 			msg_buf_wr = 1'b1;
 		end
 		4'b1110: begin
-			msg_buf_in = {5'b0, y_xmin, 5'b0, y_ymin};	//Top left coordinate
+			msg_buf_in = {5'b0, y_xmin, 5'b0, y_ymax};	//Top left coordinate
 			msg_buf_wr = 1'b1;
 		end
 		4'b1111: begin
-			msg_buf_in = {5'b0, y_xmax, 5'b0, y_ymax}; //Bottom right coordinate
+			msg_buf_in = {5'b0, y_xmax, 5'b0, y_ymin}; //Bottom right coordinate
 			msg_buf_wr = 1'b1;
 		end
 	endcase

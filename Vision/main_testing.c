@@ -603,11 +603,8 @@ int main()
 
 				//char incomingChar = fgetc(fp);
 				while(1){
-				    char incomingString[32];
-
 				    char state[2];
 				    char incomingChar;
-				    char *ptr = NULL;
 
 					//fgets(incomingString, 32, fp);
 					printf("\n");

@@ -127,15 +127,14 @@ typedef struct{
 } Ball;
 
 // Analyses if the object is actually the ball or not
-bool is_ball(int topleft, int bottomright, int left_x, int right_x){
-	int left_y = (topleft & 0x0000ffff);
-	int right_y = (bottomright && 0x0000ffff);
-
+bool is_ball(int left_x, int right_x, int left_y, int right_y){
 	int height = left_y - right_y;
+	//printf("Height : %i\n", height);
 	int length = right_x - left_x;
+	//printf("Length : %i\n", length);
 
 	// If the length is within 10% of the height, we can consider this as a proper box
-	if (length < height * 1.1 && length > height * 0.9){ // ADJUST PARAMETERS HERE
+	if (length < (height * 1.2) && length > (height * 0.8)){ // ADJUST PARAMETERS HERE
 		return TRUE;
 	}else{
 		return FALSE;
@@ -145,7 +144,7 @@ bool is_ball(int topleft, int bottomright, int left_x, int right_x){
 // Analyses if the ball is close to the centre of the camera frame
 bool is_in_centre_range(int left_x, int right_x){
 	int middle_x = (right_x + left_x) / 2;
-	printf("Middle axis pixel is %i\n", middle_x);
+	//printf("Middle axis pixel is %i\n", middle_x);
 	// middle x-axis pixel = 320
 	if (middle_x < 400 && middle_x > 240){
 		return TRUE;
@@ -796,11 +795,17 @@ int main()
 				printf("\n");
 				y_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
 				y_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
+				printf("Bottom right coordinate : %08x", y_bottomright);
 
 				y_left_x = (y_topleft)>>16; // extracting the top 16 bits
+				printf("left x : %i ", y_left_x);
 				y_right_x = (y_bottomright)>>16;
+				printf("right x : %i ", y_right_x);
 				y_left_y = (y_topleft & 0x0000ffff);
-				y_right_y = (y_bottomright && 0x0000ffff);
+				printf("left y : %i ", y_left_y);
+				y_right_y = (y_bottomright & 0x0000ffff);
+				printf("right y : %i ", y_right_y);
+
 
 				// distance = distance_calc(y_left_x, y_right_x, y_d_ptr, index);
 				//printf("Yellow distance : %i cm", distance);
@@ -809,22 +814,21 @@ int main()
 			// Variables from incoming verilog info have been assigned, data is ready
 
             // Testing functions
-    	   	/*
-            if(is_ball(y_topleft, y_bottomright, y_left_x, r_right_x)){
+
+            if(is_ball(y_left_x, y_right_x, y_left_y, y_right_y)){
                 printf("Yellow ball is being considered as a ball\n");
             }
 
             if (is_in_centre_range(y_left_x, y_right_x)){
-                printf("Yellow ball is in the centre range\n");
+                //printf("Yellow ball is in the centre range\n");
             }
             int angle = angle_calc(y_left_x, y_right_x);
-            printf("Angle from centre is: %i\n", angle);
-            */
+            //printf("Angle from centre is: %i\n", angle);
 
             // Find average distance of the previous 5 results
             int distance = distance_calc(y_left_x, y_right_x);
 			//distance = avg_distance(distance, y_d_ptr);
-            printf("Distance : %i\n", distance);
+            //printf("Distance : %i\n", distance);
 /*
 			// Check incoming chars for state changes
 			if (control_word == 0){ // TODO - Update and complete once we've finalised the character selections

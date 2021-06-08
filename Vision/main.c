@@ -239,7 +239,6 @@ bool go_towards(Ball *ball, FILE* fp){
 			int verilog_word = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
 			if (verilog_word == EEE_IMGPROC_MSG_START_R){ // If the incoming string == RBB
 				// Print on a newline
-				printf("\n");
 				int r_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (top left coordinate)
 				int r_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (bottom right coordinate)
 
@@ -252,13 +251,13 @@ bool go_towards(Ball *ball, FILE* fp){
 				// Measure angle and correct if needed to
 				int angle = angle_calc(r_left_x, r_right_x);
 				if(angle > 10){
-					fprintf(fp, "S");
-					fprintf(fp, "L");
+					fprintf(fp, "0s");
+					fprintf(fp, "0l");
 				}else if(angle < -10){
-					fprintf(fp, "S");
-					fprintf(fp, "R");
+					fprintf(fp, "0s");
+					fprintf(fp, "0r");
 				}else{
-					fprintf(fp, "F");
+					fprintf(fp, "0g");
 				}
 
 				// If we can make a valid decision measurement, make it
@@ -310,13 +309,13 @@ bool go_towards(Ball *ball, FILE* fp){
 				// Measure angle and correct if needed to
 				int angle = angle_calc(g_left_x, g_right_x);
 				if(angle > 10){
-					fprintf(fp, "S");
-					fprintf(fp, "L");
+					fprintf(fp, "0s");
+					fprintf(fp, "0l");
 				}else if(angle < -10){
-					fprintf(fp, "S");
-					fprintf(fp, "R");
+					fprintf(fp, "0s");
+					fprintf(fp, "0r");
 				}else{
-					fprintf(fp, "F");
+					fprintf(fp, "0g");
 				}
 
 				// If we can make a valid decision measurement, make it
@@ -369,13 +368,13 @@ bool go_towards(Ball *ball, FILE* fp){
 				// Measure angle and correct if needed to
 				int angle = angle_calc(b_left_x, b_right_x);
 				if(angle > 10){
-					fprintf(fp, "S");
-					fprintf(fp, "L");
+					fprintf(fp, "0s");
+					fprintf(fp, "0l");
 				}else if(angle < -10){
-					fprintf(fp, "S");
-					fprintf(fp, "R");
+					fprintf(fp, "0s");
+					fprintf(fp, "0r");
 				}else{
-					fprintf(fp, "F");
+					fprintf(fp, "0g");
 				}
 
 				// If we can make a valid decision measurement, make it
@@ -427,13 +426,13 @@ bool go_towards(Ball *ball, FILE* fp){
 				// Measure angle and correct if needed to
 				int angle = angle_calc(v_left_x, v_right_x);
 				if(angle > 10){
-					fprintf(fp, "S");
-					fprintf(fp, "L");
+					fprintf(fp, "0s");
+					fprintf(fp, "0l");
 				}else if(angle < -10){
-					fprintf(fp, "S");
-					fprintf(fp, "R");
+					fprintf(fp, "0s");
+					fprintf(fp, "0r");
 				}else{
-					fprintf(fp, "F");
+					fprintf(fp, "0g");
 				}
 
 				// If we can make a valid decision measurement, make it
@@ -485,13 +484,13 @@ bool go_towards(Ball *ball, FILE* fp){
 				// Measure angle and correct if needed to
 				int angle = angle_calc(y_left_x, y_right_x);
 				if(angle > 10){
-					fprintf(fp, "S");
-					fprintf(fp, "L");
+					fprintf(fp, "0s");
+					fprintf(fp, "0l");
 				}else if(angle < -10){
-					fprintf(fp, "S");
-					fprintf(fp, "R");
+					fprintf(fp, "0s");
+					fprintf(fp, "0r");
 				}else{
-					fprintf(fp, "F");
+					fprintf(fp, "0g");
 				}
 
 				// If we can make a valid decision measurement, make it
@@ -655,7 +654,7 @@ int main()
 	// Measurement related (Base)
 	int r_topleft, g_topleft, b_topleft, v_topleft, y_topleft;
 	int r_bottomright, g_bottomright, b_bottomright, v_bottomright, y_bottomright;
-	
+
 	// Measurement related (Derived)
 	int r_left_x, g_left_x, b_left_x, v_left_x, y_left_x;
 	int r_right_x, g_right_x, b_right_x, v_right_x, y_right_x;
@@ -696,7 +695,8 @@ int main()
         // touch KEY0 to trigger Auto focus
 	    if((IORD(KEY_BASE,0)&0x03) == 0x02){
     		current_focus = Focus_Window(320,240);
-        
+	    }
+
 	   	// touch KEY1 to ZOOM
 		if((IORD(KEY_BASE,0)&0x03) == 0x01){
 	      	if(bin_level == 3 )bin_level = 1;
@@ -736,7 +736,7 @@ int main()
 	        	//incomingChar = fgetc(fp); // to skip the first +
 	        	//printf("should be a +: %c\n", incomingChar);
 			    incomingChar = fgetc(fp); // first theta char
-	        	for(int i = 0; i < 5; i++)){ // read chars and append to string until we reach the +
+	        	for(int i = 0; i < 5; i++){ // read chars and append to string until we reach the +
 	        		//printf("incoming theta digit: %c\n", incomingChar);
 	        		if((incomingChar < 58 && incomingChar > 47) || incomingChar == 46){
 	        			strncat(theta, &incomingChar, 1);
@@ -761,7 +761,7 @@ int main()
 			}
 
 			// ---------- End of analysing incoming chars from Control ---------
-		
+
 			if ((balls_detected == 5) && state1 == '1'){
 				// send signal which indicates that all 5 balls have been detected
 				foundbit = 1;
@@ -778,7 +778,7 @@ int main()
 			}else if(state1_array[0] == 1 && state1_array[1] == 0 && state == 2){
 				state = 0;
 			}
-			
+
 
 			// Analyse incoming BB information and verilog and make the proper variable assignments
     	   	if (word == EEE_IMGPROC_MSG_START_R){ // If the incoming string == RBB
@@ -1108,6 +1108,7 @@ int main()
 						balls_detected++;
 						state = 0; // to repeat the 1st scan and loop back
 					}
+				}
 			}
     	}
 
@@ -1155,7 +1156,7 @@ int main()
 	   //Main loop delay
 	   usleep(10000);
 
-   };
+   	};
 	fclose(fp);
   	return 0;
 }
