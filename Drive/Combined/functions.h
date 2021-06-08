@@ -82,6 +82,8 @@ char _mode;
 char c[5] = {'0','0','0','0','0'};
 char v[2] = {'0', 'g'};
 
+String gear;
+
 String _speed;
 String data_send;
 
@@ -307,6 +309,7 @@ void sampling(){
 }
 
 void back(){
+  gear = "R";
   digitalWrite(pwmr,HIGH);
   digitalWrite(pwml,HIGH);
   DIRRstate = HIGH;
@@ -314,6 +317,8 @@ void back(){
 }
 
 void left(){
+  gear = "";
+  gear = "RL";
   digitalWrite(pwmr,HIGH);
   digitalWrite(pwml,HIGH);
   DIRRstate = LOW;
@@ -321,6 +326,8 @@ void left(){
 }
 
 void right(){
+  gear = "";
+  gear = "RR";
   digitalWrite(pwmr,HIGH);
   digitalWrite(pwml,HIGH);
   DIRRstate = HIGH;
@@ -328,6 +335,8 @@ void right(){
 }
 
 void forward(){
+  gear = "";
+  gear = "D";
   digitalWrite(pwmr,HIGH);
   digitalWrite(pwml,HIGH);
   DIRRstate = LOW;
@@ -335,6 +344,8 @@ void forward(){
 }
 
 void brake(){
+  gear = "";
+  gear = "P";
   digitalWrite(pwmr,LOW);
   digitalWrite(pwml,LOW);
 }
