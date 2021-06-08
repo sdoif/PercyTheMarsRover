@@ -172,8 +172,8 @@ void loop() {
       k++;
     }
     Serial.print("Received from vision: ");
-    Serial.println(fromVison);
-    Serial2.print("v" + fromVision);
+    Serial.println(fromVision);
+    Serial2.print("v" + String(fromVision));
     
   }
 
