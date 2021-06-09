@@ -5,7 +5,7 @@ const bp = require('body-parser')
 const { response } = require('express');
 
 const app = express();
-const client = mqtt.connect('mqtt://3.87.147.76', {clientId:"node"});
+const client = mqtt.connect('mqtt://3.91.160.250', {clientId:"node"});
 app.use(express.urlencoded({extended: true}));
 app.use(bp.json())
 app.use(bp.urlencoded({ extended: true }))
