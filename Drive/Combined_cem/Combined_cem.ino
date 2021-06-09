@@ -142,12 +142,14 @@ void loop(){
     distance_x = md.dx; //convTwosComp(md.dx);
     distance_y = md.dy; //convTwosComp(md.dy);
 
-    distance_xx = 10*distance_x/157;
-    distance_yy = 10*distance_y/157;
+    distance_xx = (10*distance_x/157)/10;
+    distance_yy = (10*distance_y/157)/10;
+    total_distance = fabs(distance_yy) + total_distance;
     Serial.println("distance_x = "+String(distance_x));
     Serial.println("distance_y = "+String(distance_y));
     Serial.println("distance_xx = "+String(distance_xx));
     Serial.println("distance_yy = "+String(distance_yy));
+    Serial.println("Total distance travelled =" +String(total_distance));
     
 
 total_x1 = (total_x1 + distance_x);
@@ -338,7 +340,7 @@ Serial.println(actual_x);
   prev_xx = distance_xx;
   prev_yy = distance_yy;
 
- //rover_manual(_mode);
+ rover_manual(_mode);
   float angle = store_angle(actual_x);
   
   xcoordinatefinder(actual_y_prev, actual_y, angle);
@@ -354,7 +356,7 @@ Serial.println(actual_x);
   Serial.print(actual_y);
   Serial.println("PREV Y=");
   Serial.print(actual_y_prev);
-  gotocoordinate(testing_x, testing_y, angle, actual_y);
+  //gotocoordinate(testing_x, testing_y, angle, actual_y);
   
   //loop_ite++;
   

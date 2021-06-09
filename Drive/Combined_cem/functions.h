@@ -88,9 +88,10 @@ int prev_val_x = 0;
 int min_y = 0;
 int min_x = 0;
 int actual_y_prev = 0;
-int testing_x=25;
+int testing_x=15;
 int testing_y=11;
 int __iter = 0;
+float total_distance=0;
 
 int found = 0;
 
