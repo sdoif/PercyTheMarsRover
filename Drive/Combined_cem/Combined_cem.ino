@@ -168,17 +168,7 @@ total_y = 10*total_y1/157; //Conversion from counts per inch to mm (400 counts p
 //Serial.println("Distance_y_total = " + String(total_y_distance));
 //Serial.print('\n');
 
-if((distance_xx == 0)&&(distance_yy == 0)){
-  if(_iter == 0){
-    angle_x = prev_xx;
-    angle_y = prev_yy;
-  }
-  _iter = 1;
-}
 
-if(md.motion != 1){
-  _iter = 0;
-}
     Serial.println("angle_x = "+String(angle_x));
     Serial.println("angle_y = "+String(angle_y));
   //counter stuff
@@ -364,7 +354,8 @@ Serial.println(actual_x);
   Serial.print(actual_y);
   Serial.println("PREV Y=");
   Serial.print(actual_y_prev);
-  gotocoordinate(testing_x, testing_y, angle+2, actual_y);
+  gotocoordinate(testing_x, testing_y, angle, actual_y);
+  
   //loop_ite++;
   
   
