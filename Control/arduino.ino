@@ -135,8 +135,6 @@ void clearmsg(){
 }
 
 void loop() {
-
-  Serial.println("Start of loop");
   
   if(WiFi.status() != WL_CONNECTED){
     Serial.println("Reconnecting to wifi");
@@ -144,11 +142,8 @@ void loop() {
   }else if(!mqttclient.connected()){
     mqttconnect();
   }
-
   
   mqttclient.loop();
-
-  Serial.println("b4 reading serials");
 
   if(Serial2.available()){
     int j = 0;
@@ -169,9 +164,6 @@ void loop() {
     Serial1.print(toVision);
   }
 
-  Serial.println("after drive reaad");
-
-  
   if(Serial1.available()){
     int k = 0;
     while(Serial1.available()){
@@ -186,8 +178,6 @@ void loop() {
   }
   
   //v is at index 29
-
-  Serial.println("after vision read");
 
   if(Serial.available()){
     int i = 0;
