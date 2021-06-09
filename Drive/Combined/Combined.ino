@@ -230,8 +230,8 @@ Serial.print('\n');
   }
 
  float angle = store_angle(actual_x);
- xcoordinatefinder(actual_y_prev, actual_y, angle);
- ycoordinatefinder(actual_y_prev, actual_y, angle);
+ x_to_command = xcoordinatefinder(actual_y_prev, actual_y, angle);
+ y_to_command = ycoordinatefinder(actual_y_prev, actual_y, angle);
 
 // Serial.print('\n');
 //
@@ -284,22 +284,22 @@ Serial.print('\n');
 //     }
 //   }
 
-  if(Serial.available() > 0){
-    char _modenew = Serial.read();
+  if(Serial1.available() > 0){
+    char _modenew = Serial1.read();
     if(_mode!=_modenew){
       _mode=_modenew;
     }
     if(_mode == 'c'){
       _mode = NULL;
       for(int i = 0; i<5; i++){
-        c_new = Serial.read();
+        c_new = Serial1.read();
         c[i] = char(c_new);
       }
       _iter_speed = 0;
     }else if(_mode == 'v'){
        _mode = NULL;
       for(int i = 0; i<2; i++){
-        v_new = Serial.read();
+        v_new = Serial1.read();
         v[i] = char(v_new);
       }
     }
@@ -387,13 +387,13 @@ Serial.print('\n');
 //      Serial.println("cart_x = "+String(cart_x));
 //      Serial.println("cart_y = "+String(cart_y));
 
-    data_command[2] = fixed_size(total_x);
-    data_command[3] = fixed_size(total_y);
+    data_command[2] = fixed_size(x_to_command);
+    data_command[3] = fixed_size(y_to_command);
     data_command[4] = fixed_size(total);
     data_command[5] = fixed_size(voltage2speed(vref));
 
-    data_vision[1] = String(rover_scan_zero(v[1]));
-    data_vision[2] = String(rover_scan_one(v[1]));
+    data_vision[1] = String(s_0);
+    data_vision[2] = String(s_1);
     data_vision[3] = fixed_size(theta_store);
     data_vision[4] = fixed_size(r_store);
     

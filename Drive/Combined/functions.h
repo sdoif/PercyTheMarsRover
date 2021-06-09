@@ -80,10 +80,16 @@ bool s_0;
 bool s_1;
 bool f;
 
+float x_to_command = 0;
+float y_to_command = 0;
+
+unsigned long reff_time = 0;
+unsigned long ref_time = 0;
+
 int c_new = 0;
 int v_new = 0;
 char _mode;
-char c[5] = {'1','x','0','0','0'};
+char c[5] = {'0','x','0','0','0'};
 char v[2] = {'0', 'g'};
 
 char gear = 'x';
@@ -104,6 +110,8 @@ int rover_length = 73;
 
 int _iter_scan = 0;
 int _iter_speed = 0;
+int __iter = 0;
+int _iter = 0;
 
 int scan_state = 0;
 
@@ -154,7 +162,6 @@ String fixed_size(float num){
     snum="0"+snum;
     }
   return snum;
-  
 }
 
 void mousecam_write_reg(int reg, int val)
@@ -394,7 +401,7 @@ float xcoordinatefinder(float old_r, float new_r, float angle){
     xcal_total = xcal_total + xcal;
     Serial.print("x coordinate of rover = ");
     Serial.println(xcal_total);
-    return xcal_total; 
+    return xcal_total/10; 
 }
 
 float ycoordinatefinder(float old_r, float new_r, float angle){
@@ -402,7 +409,74 @@ float ycoordinatefinder(float old_r, float new_r, float angle){
     ycal_total = ycal_total + ycal;
     Serial.print("y coordinate of rover = ");
     Serial.println(ycal_total);
-    return ycal_total; 
+    return ycal_total/10; 
+}
+
+float change_angle(float angle){
+  if(angle<0){
+    float new_angle = angle + (2*PI);
+    return new_angle;
+  }else{
+    float new_angle = angle;
+    return new_angle;
+  }
+}
+bool gotocoordinate(int xx, int yy, float current_angle, float currrent_r){
+  int x = xx*10;
+  int y = yy*10;
+  double angle = atan2(yy,xx);
+  float angle_new = change_angle(angle);
+  //if(angle<0){
+  //  angle = angle+(2*PI);
+  //}
+  //  if(angle_old<0){
+  //  angle = angle_old + (2*PI);
+  //  }else if(angle_old>=0){
+  //    angle = angle_old;
+  //  }
+  float angle_deg = angle_new*(180/PI);
+  float rr = sqrt(sq(xx)+sq(yy));
+  float r = rr*10;
+  Serial.println("Target angle=");
+  Serial.print(angle_deg);
+  Serial.print("Target distance=");
+  Serial.print(r);
+  
+  if((angle_new-0.12<current_angle)&&(angle_new+0.12>current_angle)){
+    if(r>currrent_r){
+      if(__iter==0){
+        reff_time = millis();
+        __iter=1;
+      }
+      if(millis()-reff_time < 500){
+        forward();
+      }else if(((millis()-reff_time) >= 500)&&((millis()-reff_time) <= 2000)){
+        brake();
+    
+      }else if((millis()-reff_time) > 2000){
+        __iter = 0;
+      }
+    }else if(r<=currrent_r){
+      brake();
+      }
+    }else if(angle_new-0.12>current_angle){
+      if(_iter == 0){
+        ref_time = millis();
+        Serial.println("ref_time = "+String(ref_time));
+          _iter = 1;
+      }
+  //Serial.println("_iter = "+String(_iter));
+   // Serial.println("time = "+String(millis()));
+    if((millis()-ref_time) < 500){
+      left();
+    }else if(((millis()-ref_time) >= 500)&&((millis()-ref_time) <= 2000)){
+      brake();
+    }else if((millis()-ref_time) > 2000){
+     _iter = 0;
+    }
+  }else if(angle_new+0.12<current_angle){
+     right();
+  }
 }
 
 bool rover_scan_one(char _mode){
