@@ -6,13 +6,13 @@
 
 int _index = 0;
 int bytein = 0;
-char msg[44];
+char msg[69];
 String add;
 String correct;
 //char str[6];
 
 void clearmsg(){
-  for(int i =0; i<44; i++){
+  for(int i =0; i<69; i++){
     msg[i] = NULL;
   }
 }
@@ -20,19 +20,19 @@ void clearmsg(){
 void setup(){
   Serial.begin(115200);
   Serial1.begin(115200, SERIAL_8N1, RXD1, TXD1);
-  Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
+  Serial2.begin(115200, SERIAL_8N1, RXD2, TXD2);
 }
 
 void loop(){
-    if(Serial2.available() > 43){
-      for(int i = 0; i<44; i++){
+    if(Serial2.available() > 68){
+      for(int i = 0; i<69; i++){
       bytein = Serial2.read();
       msg[i] = char(bytein);
       }
     }
   add = "";
   for(int i =0; i<2; i++){
-    for(int i = 0; i<44; i++){
+    for(int i = 0; i<69; i++){
       add = add + msg[i];
     }
   }
@@ -40,7 +40,7 @@ void loop(){
     _index = add.indexOf('c');
     
   correct = "";
-  for(int i = _index; i<_index+44; i++){
+  for(int i = _index; i<_index+69; i++){
     correct = correct + add[i];
   }
     Serial.println("Data received: ");
