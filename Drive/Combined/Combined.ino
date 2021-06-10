@@ -425,4 +425,5 @@ Serial.print('\n');
     Serial.println("data_vision[2] = "+String(data_vision[2]));
     Serial.println("data_vision[3] = "+String(data_vision[3]));
     Serial.println("data_vision[4] = "+String(data_vision[4]));
+    Serial.println("data_vision[5] = "+String(data_vision[5]));
 }

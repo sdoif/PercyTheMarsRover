@@ -163,7 +163,7 @@ String fixed_size(float num){
   if (num_length>9) return "NUM TOO LARGE";
   String snum = String(num);
   for(;snum.length()<9;num_length++){
-    snum="0"+snum;
+    snum=" "+snum;
     }
   return snum;
 }

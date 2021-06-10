@@ -12,15 +12,15 @@
 WiFiClient wificlient;
 PubSubClient mqttclient(wificlient);
 long lastMsg = 0;
-char msg[70], fromDrive[70], fromVision[20];
-char toVision[26], toCommand[44];
+char msg[80], fromDrive[80], fromVision[20];
+char toVision[36], toCommand[44];
 char toDrive[5] = {'0','x','0','0','0'};
 int value = 0;
 int bytein = 0;
 int _index = 0;
 String add;
 String correct;
-const char* serverip = "54.226.89.16"; // aws server ip
+const char* serverip = "35.178.136.139"; // aws server ip
 
 
 // setup always runs at the start
@@ -163,9 +163,9 @@ void loop() {
   
   mqttclient.loop();
 
-  if(Serial2.available() > 69){
+  if(Serial2.available() > 79){
 
-      for(int i = 0; i < 70 ; i++){
+      for(int i = 0; i < 80 ; i++){
         bytein = Serial2.read();
         msg[i] = char(bytein);
       }
@@ -173,7 +173,7 @@ void loop() {
     add = "";
 
     for(int i = 0; i < 2; i++){
-      for(int i = 0; i<70; i++){
+      for(int i = 0; i<80; i++){
         add = add + msg[i];
       }
     }
@@ -183,7 +183,7 @@ void loop() {
     _index = add.indexOf('c');
       
     correct = "";
-    for(int i = _index; i < _index + 70; i++){
+    for(int i = _index; i < _index + 80; i++){
       correct = correct + add[i];
     }
 
@@ -192,7 +192,7 @@ void loop() {
     for(int i = 1; i < 44; i++){
       toCommand[i] = correct[i];
     }
-    for(int i = 45; i < 70; i++){
+    for(int i = 45; i < 80; i++){
       toVision[i-45] = correct[i];
     }
 
@@ -202,23 +202,23 @@ void loop() {
     }
     Serial.println();
 
-    mqttclient.publish("drive", toCommand);
-    Serial1.print(toVision);
+    mqttclient.publish("drive", (toCommand).byte());
+    //Serial1.print(toVision);
   }
 
 
-  if(Serial1.available()){
-    int k = 0;
-    while(Serial1.available()){
-      bytein = Serial1.read();
-      fromVision[k] = char(bytein);
-      k++;
-    }
-    Serial.print("Received from vision: ");
-    Serial.println(fromVision);
-    Serial2.print("v" + String(fromVision));
-    
-  }
+//  if(Serial1.available()){
+//    int k = 0;
+//    while(Serial1.available()){
+//      bytein = Serial1.read();
+//      fromVision[k] = char(bytein);
+//      k++;
+//    }
+//    Serial.print("Received from vision: ");
+//    Serial.println(fromVision);
+//    Serial2.print("v" + String(fromVision));
+//    
+//  }
 
   if(Serial.available()){
     int i = 0;
