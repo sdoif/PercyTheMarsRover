@@ -12,7 +12,7 @@
 WiFiClient wificlient;
 PubSubClient mqttclient(wificlient);
 long lastMsg = 0;
-char msg[80], fromDrive[80], fromVision[20];
+char msg[90], fromDrive[80], fromVision[20];
 char toVision[36], toCommand[44];
 char toDrive[5] = {'0','x','0','0','0'};
 int value = 0;
@@ -75,7 +75,7 @@ void setup() {
 int setupwifi()
 {
     // We start by connecting to a WiFi network
-    WiFi.begin("SD", "1231231234"); // connects to wifi idk how to connect to imperial wifi as it needs authentication
+    WiFi.begin("Selin", "selinuygun"); // connects to wifi idk how to connect to imperial wifi as it needs authentication
     Serial.print("Waiting for WiFi... "); 
     while(WiFi.status() != WL_CONNECTED) { // this just tries to connect to wifi i guess
         Serial.print(".");
@@ -192,8 +192,8 @@ void loop() {
     for(int i = 1; i < 44; i++){
       toCommand[i] = correct[i];
     }
-    for(int i = 45; i < 80; i++){
-      toVision[i-45] = correct[i];
+    for(int i = 44; i < 80; i++){
+      toVision[i-44] = correct[i];
     }
 
     
@@ -201,24 +201,28 @@ void loop() {
       Serial.print(toCommand[i]);
     }
     Serial.println();
-
-    mqttclient.publish("drive", (toCommand).byte());
-    //Serial1.print(toVision);
+    byte buffer[44];
+    for(int i = 0; i < 44; i++){
+      buffer[i] = byte(toCommand[i]);
+    }
+    mqttclient.publish("drive", buffer, 44);
+    Serial1.print(toVision);
+    Serial.print("toVision = "+String(toVision));
   }
 
 
-//  if(Serial1.available()){
-//    int k = 0;
-//    while(Serial1.available()){
-//      bytein = Serial1.read();
-//      fromVision[k] = char(bytein);
-//      k++;
-//    }
-//    Serial.print("Received from vision: ");
-//    Serial.println(fromVision);
-//    Serial2.print("v" + String(fromVision));
-//    
-//  }
+  if(Serial1.available()){
+    int k = 0;
+    while(Serial1.available()){
+      bytein = Serial1.read();
+      fromVision[k] = char(bytein);
+      k++;
+    }
+    Serial.print("Received from vision: ");
+    Serial.println(fromVision);
+    Serial2.print("v" + String(fromVision));
+    
+  }
 
   if(Serial.available()){
     int i = 0;

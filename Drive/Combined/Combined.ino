@@ -400,30 +400,21 @@ Serial.print('\n');
 
     loop_counter ++;
 
-    if(loop_counter == 50){
+    if(loop_counter == 10){
+      Serial.print("data = ");
       for(int i = 0; i<6; i++){
+        Serial.print(data_command[i]);
         Serial1.print(data_command[i]);
         Serial1.print('/');
+        Serial.print('/');
       } 
-      for(int i = 0; i<5; i++){
+      for(int i = 0; i<6; i++){
         Serial1.print(data_vision[i]);
+        Serial.print(data_vision[i]);
         Serial1.print('/');
+        Serial.print('/');
       }
       loop_counter = 0;
     }  
-   
 
-    Serial.println("data_command[0] = "+String(data_command[0]));
-    Serial.println("data_command[1] = "+String(data_command[1]));
-    Serial.println("data_command[2] = "+String(data_command[2]));
-    Serial.println("data_command[3] = "+String(data_command[3]));
-    Serial.println("data_command[4] = "+String(data_command[4]));
-    Serial.println("data_command[5] = "+String(data_command[5]));
-
-    Serial.println("data_vision[0] = "+String(data_vision[0]));
-    Serial.println("data_vision[1] = "+String(data_vision[1]));
-    Serial.println("data_vision[2] = "+String(data_vision[2]));
-    Serial.println("data_vision[3] = "+String(data_vision[3]));
-    Serial.println("data_vision[4] = "+String(data_vision[4]));
-    Serial.println("data_vision[5] = "+String(data_vision[5]));
 }
