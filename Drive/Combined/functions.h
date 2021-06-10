@@ -107,8 +107,6 @@ float xcal_total_store = 0;
 int prev_val_y = 0;
 int prev_val_x = 0;
 int actual_y_prev = 0;
-int min_y = 0;
-int min_x = 0;
 
 int rover_length = 73;
 
@@ -317,7 +315,7 @@ void sampling(){
     ////dtostrf(_speed.toDouble(),4,1,__speed);
     Serial.println("vref_set = "+String(vref));
   }else{
-    vref = 1.6;
+    vref = 1.5;
   }
   sensorValue3 = analogRead(A3); //sample Vpd
   current_mA = ina219.getCurrent_mA(); // sample the inductor current (via the sensor chip)

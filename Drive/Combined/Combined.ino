@@ -187,21 +187,19 @@ Serial.print('\n');
   }
   
   //this shows the minimum possible value y can take at the moment 
-  min_y = 208*counter_y;
-  min_x = 208*counter_x;
 
     //finding actual value of y 
   if(counter_y>0){  
     if(total_y>0){
-      actual_y = min_y + total_y;
+      actual_y = 208*counter_y + total_y;
     }else if(total_y<0){
-      actual_y = min_y + (208+total_y);
+      actual_y = 208*counter_y + (208+total_y);
     }
   }else if(counter_y<0){
     if(total_y>0){
-      actual_y = min_y - (208-total_y);
+      actual_y = 208*counter_y - (208-total_y);
     }else if(total_y<0){
-      actual_y = min_y + total_y;
+      actual_y = 208*counter_y + total_y;
     }
   }else{ 
     actual_y=total_y;
@@ -209,18 +207,18 @@ Serial.print('\n');
 
   if(counter_x>0){  
     if(total_x>0){
-      actual_x = min_x + total_x;
+      actual_x = 208*counter_x + total_x;
     }else if(total_x<0){
-      actual_x = min_x + (208+total_x);
+      actual_x = 208*counter_x + (208+total_x);
     }else{
       //for completeness
       actual_x = actual_x;
      }  
   }else if(counter_x<0){
     if(total_x>0){
-      actual_x = min_x - (208-total_x);
+      actual_x = 208*counter_x - (208-total_x);
     }else if(total_x<0){
-      actual_x = min_x + total_x;
+      actual_x = 208*counter_x + total_x;
     }else{
       //for completeness
       actual_x = actual_x;
