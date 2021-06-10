@@ -119,24 +119,6 @@ void callback(char* topic, byte* message, unsigned int length) {
      Serial.print("c" + String(toDrive));
   }
   
-//  if(strcmp(topic, "direction")){
-//      toDrive[1] = messageTemp[0];
-//      Serial2.print("c" + String(toDrive));  
-//      Serial.print("c" + String(toDrive)); 
-//  }else if(strcmp(topic, "speed")){
-//      toDrive[2] = messageTemp[0];
-//      toDrive[3] = messageTemp[1];
-//      toDrive[4] = messageTemp[2];
-//      Serial2.print("c" + String(toDrive));
-//      Serial.print("c" + String(toDrive));
-//  }else if(strcmp(topic, "test")){
-//    Serial.print(messageTemp);
-//  }else if (strcmp(topic, "mode")){
-//      toDrive[0] = messageTemp[0];
-//      Serial2.print("c" + String(toDrive));
-//      Serial.print("c" + String(toDrive));
-//  }
-  
 }
 
 void reconnect() {
@@ -218,26 +200,30 @@ void loop() {
   }
   Serial.println();
 
+if(Serial1.available()){
+    int k = 0;
+    while(Serial1.available()){
+      bytein = Serial1.read();
+      fromVision[k] = char(bytein);
+      k++;
+    }
+    Serial.print("Received from vision: ");
+    Serial.println(fromVision);
+    Serial2.print("v" + String(fromVision));
+    
+  }
+
   mqttclient.publish("drive", toCommand);
 
-  int i = 0;
-  int v = 0;
   if(Serial.available()){
-    v = 1;
-    i = 0;
+    int i = 0;
     while(Serial.available()){
       bytein = Serial.read();
       msg[i] = char(bytein);
       i++;
     }
-  
-
-
-  if(v){
     mqttclient.publish("test", msg);
     clearmsg();
   }
-  delay(1000);
 
-}
 }
