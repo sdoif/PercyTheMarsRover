@@ -12,8 +12,8 @@
 WiFiClient wificlient;
 PubSubClient mqttclient(wificlient);
 long lastMsg = 0;
-char msg[80], fromDrive[80], fromVision[20];
-char toVision[36], toCommand[44];
+char msg[90], fromDrive[90], fromVision[20];
+char toVision[36], toCommand[54];
 char toDrive[5] = {'0','x','0','0','0'};
 int value = 0;
 int bytein = 0;
@@ -75,7 +75,7 @@ void setup() {
 int setupwifi()
 {
     // We start by connecting to a WiFi network
-    WiFi.begin("SD", "1231231234"); // connects to wifi idk how to connect to imperial wifi as it needs authentication
+    WiFi.begin("Selin", "selinuygun"); // connects to wifi idk how to connect to imperial wifi as it needs authentication
     Serial.print("Waiting for WiFi... "); 
     while(WiFi.status() != WL_CONNECTED) { // this just tries to connect to wifi i guess
         Serial.print(".");
@@ -163,9 +163,9 @@ void loop() {
   
   mqttclient.loop();
 
-  if(Serial2.available() > 79){
+  if(Serial2.available() > 89){
 
-      for(int i = 0; i < 80 ; i++){
+      for(int i = 0; i < 90 ; i++){
         bytein = Serial2.read();
         msg[i] = char(bytein);
       }
@@ -173,7 +173,7 @@ void loop() {
     add = "";
 
     for(int i = 0; i < 2; i++){
-      for(int i = 0; i<80; i++){
+      for(int i = 0; i<90; i++){
         add = add + msg[i];
       }
     }
@@ -183,42 +183,46 @@ void loop() {
     _index = add.indexOf('c');
       
     correct = "";
-    for(int i = _index; i < _index + 80; i++){
+    for(int i = _index; i < _index + 90; i++){
       correct = correct + add[i];
     }
 
     Serial.println("correct = " + correct);
 
-    for(int i = 1; i < 44; i++){
+    for(int i = 1; i < 54; i++){
       toCommand[i] = correct[i];
     }
-    for(int i = 45; i < 80; i++){
-      toVision[i-45] = correct[i];
+    for(int i = 54; i < 80; i++){
+      toVision[i-54] = correct[i];
     }
 
     
-    for(int i = 1; i<44; i++){
+    for(int i = 1; i<54; i++){
       Serial.print(toCommand[i]);
     }
     Serial.println();
-
-    mqttclient.publish("drive", (toCommand).byte());
-    //Serial1.print(toVision);
+    byte buffer[54];
+    for(int i = 0; i < 54; i++){
+      buffer[i] = byte(toCommand[i]);
+    }
+    mqttclient.publish("drive", buffer, 54);
+    Serial1.print(toVision);
+    Serial.print("toVision = "+String(toVision));
   }
 
 
-//  if(Serial1.available()){
-//    int k = 0;
-//    while(Serial1.available()){
-//      bytein = Serial1.read();
-//      fromVision[k] = char(bytein);
-//      k++;
-//    }
-//    Serial.print("Received from vision: ");
-//    Serial.println(fromVision);
-//    Serial2.print("v" + String(fromVision));
-//    
-//  }
+  if(Serial1.available()){
+    int k = 0;
+    while(Serial1.available()){
+      bytein = Serial1.read();
+      fromVision[k] = char(bytein);
+      k++;
+    }
+    Serial.print("Received from vision: ");
+    Serial.println(fromVision);
+    Serial2.print("v" + String(fromVision));
+    
+  }
 
   if(Serial.available()){
     int i = 0;
