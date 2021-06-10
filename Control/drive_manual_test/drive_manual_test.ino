@@ -1,9 +1,3 @@
-/*
-
-Starting code that will connect to wifi and establish mqtt connection, subscribe to a thread and publish a message to another thread.
-
-*/
-
 #include <WiFi.h>
 #include <Ethernet.h>
 #include <PubSubClient.h> // mqtt stuff
@@ -18,11 +12,15 @@ Starting code that will connect to wifi and establish mqtt connection, subscribe
 WiFiClient wificlient;
 PubSubClient mqttclient(wificlient);
 long lastMsg = 0;
-char msg[20], fromdrive[43], fromvision[20];
+char msg[70], fromdrive[70], fromvision[20];
+char toVision[26], toCommand[44];
 char toDrive[5] = {'0','x','0','0','0'};
 int value = 0;
 int bytein = 0;
-const char* serverip = "3.87.147.76"; // aws server ip
+int _index = 0;
+String add;
+String correct;
+const char* serverip = "54.226.89.16"; // aws server ip
 
 
 // setup always runs at the start
@@ -31,7 +29,7 @@ void setup() {
     Serial.println("Start");
     // Note the format for setting a serial port is as follows: Serial2.begin(baud-rate, protocol, RX pin, TX pin);
     Serial1.begin(115200, SERIAL_8N1, visionIn, visionOut); // setting up uart port to speak with vision
-    Serial2.begin(9600, SERIAL_8N1, driveIn, driveOut); // setting up uart port to speak with drive
+    Serial2.begin(115200, SERIAL_8N1, driveIn, driveOut); // setting up uart port to speak with drive
     Serial.begin(115200); // sets baud rate
     delay(10);
     Serial.println("Connecting to wifi");
@@ -77,7 +75,7 @@ void setup() {
 int setupwifi()
 {
     // We start by connecting to a WiFi network
-    WiFi.begin("SD", "123123123"); // connects to wifi idk how to connect to imperial wifi as it needs authentication
+    WiFi.begin("SD", "1231231234"); // connects to wifi idk how to connect to imperial wifi as it needs authentication
     Serial.print("Waiting for WiFi... "); 
     while(WiFi.status() != WL_CONNECTED) { // this just tries to connect to wifi i guess
         Serial.print(".");
@@ -120,24 +118,6 @@ void callback(char* topic, byte* message, unsigned int length) {
      Serial2.print("c" + String(toDrive));
      Serial.print("c" + String(toDrive));
   }
-  
-//  if(strcmp(topic, "direction")){
-//      toDrive[1] = messageTemp[0];
-//      Serial2.print("c" + String(toDrive));  
-//      Serial.print("c" + String(toDrive)); 
-//  }else if(strcmp(topic, "speed")){
-//      toDrive[2] = messageTemp[0];
-//      toDrive[3] = messageTemp[1];
-//      toDrive[4] = messageTemp[2];
-//      Serial2.print("c" + String(toDrive));
-//      Serial.print("c" + String(toDrive));
-//  }else if(strcmp(topic, "test")){
-//    Serial.print(messageTemp);
-//  }else if (strcmp(topic, "mode")){
-//      toDrive[0] = messageTemp[0];
-//      Serial2.print("c" + String(toDrive));
-//      Serial.print("c" + String(toDrive));
-//  }
   
 }
 
@@ -183,23 +163,67 @@ void loop() {
   
   mqttclient.loop();
 
-  int i = 0;
-  int v = 0;
+  if(Serial2.available() > 69){
+      for(int i = 0; i<70; i++){
+      bytein = Serial2.read();
+      msg[i] = char(bytein);
+      }
+    }
+  add = "";
+  for(int i =0; i<2; i++){
+    for(int i = 0; i<70; i++){
+      add = add + msg[i];
+    }
+  }
+
+  Serial.println("add = "+add);
+  
+  _index = add.indexOf('c');
+    
+  correct = "";
+  for(int i = _index; i<_index+70; i++){
+    correct = correct + add[i];
+  }
+
+  Serial.println("correct = "+correct);
+
+  for(int i = 1; i < 44; i++){
+    toCommand[i] = correct[i];
+  }
+  for(int i = 45; i < 70; i++){
+    toVision[i-45] = correct[i];
+  }
+
+  
+  for(int i = 1; i<44; i++){
+    Serial.print(toCommand[i]);
+  }
+  Serial.println();
+
+if(Serial1.available()){
+    int k = 0;
+    while(Serial1.available()){
+      bytein = Serial1.read();
+      fromVision[k] = char(bytein);
+      k++;
+    }
+    Serial.print("Received from vision: ");
+    Serial.println(fromVision);
+    Serial2.print("v" + String(fromVision));
+    
+  }
+
+  mqttclient.publish("drive", toCommand);
+
   if(Serial.available()){
-    v = 1;
-    i = 0;
+    int i = 0;
     while(Serial.available()){
       bytein = Serial.read();
       msg[i] = char(bytein);
       i++;
     }
-  }
-
-
-  if(v){
     mqttclient.publish("test", msg);
     clearmsg();
   }
-  delay(1000);
 
 }

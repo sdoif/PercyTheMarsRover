@@ -1,6 +1,6 @@
 body {
     color: #ffebdb;
-    background:#ffebdb;
+    background:#25242c;
     font-size: 35px;
     height: 2000px;
   }
@@ -10,7 +10,7 @@ body {
     /*border: 10px solid rgb(109, 67, 15);*/
     /*border-radius: 20px;*/
     background: rgb(192, 120, 33);
-    margin: 0 auto;
+    margin: 1% auto;
     overflow: scroll;
     /*box-sizing: border-box;*/
     display: block;
@@ -19,9 +19,9 @@ body {
 
 .sub-sec{
     width: 32%;
-    height: 350px;
+    height: 380px;
     border-radius: 15px 30px;
-    background: #35499b;
+    background: #25242c;
     margin: 8px ;
     box-sizing: border-box;
     float: left;
@@ -39,7 +39,8 @@ h1{
     font-weight: 650;
     text-align: left;
     margin-left: 2%;
-    margin-bottom: 3%;
+    margin-top: 3%;
+    margin-bottom: 2%;
     position: relative;
     bottom: 3%;
     text-transform: uppercase;
@@ -73,8 +74,12 @@ h2:hover{
 }
 
 #status{
-    background-color: #fb770d;
-    height: 25%;
+    background-color: #333a55;
+    height: 30%;
+}
+
+#mission-control-text{
+    margin-top: 5%;
 }
 /* ------------------------------ */
 /*ENERGY STATUS STUFF*/ 
@@ -176,7 +181,7 @@ td, th {
 }
 
 #control{
-    background-color: #fb770d;
+    background-color: #333a55;
     height: 75%;
 }
 
@@ -193,11 +198,6 @@ td, th {
     margin-right: -2%;
 }
 
-#map{
-    height: 54%;
-    width: 50%;
-    border-radius: 200px;
-}
 /* ------------------------------ */
 /* TOGGLE SWITCH */
 /* ------------------------------ */
@@ -211,7 +211,7 @@ label{
 	cursor: grab;
 	width: 100px;
 	height: 50px;
-	background: #35499b;
+	background: #25242c;
 	border-radius: 50px;
 	position: relative;
     bottom: -2%;
@@ -301,6 +301,7 @@ label:active:after {
     padding: 2% 0% 2% 0%;
     border-radius: 2%;
     text-align: center;
+    background-color: #25242c;
     
 }
 
@@ -353,6 +354,8 @@ button:active {
     border-color:#ffebdb;
     border-style: solid;
     border-radius: 2%;
+    background-color: #25242c;
+
 }
 
 #acc-slider{
@@ -397,6 +400,26 @@ button:active {
     bottom: 10px;
 }
 
+input[type=range]:disabled {
+    /* Disabled Element */
+}
+
+input[type=range]:disabled::-webkit-slider-runnable-track {
+    /* Disabled slider-runnable-track */
+}
+
+input[type=range]:disabled::-moz-range-track {
+      /* Disabled slider-range-track */
+}
+
+input[type=range]:disabled::-webkit-slider-thumb {
+    /* Disabled slider-thumb */
+}
+
+input[type=range]:disabled::-moz-range-thumb {
+    /* Disabled slider-thumb */
+}
+
 #curr-speed-val{
     position: absolute;
 }
@@ -404,4 +427,33 @@ button:active {
 #curr-speed-text{
     position: relative;
     margin-right: 5%;
+}
+/* ------------------------------ */
+/* SPEED CONTROL */
+/* ------------------------------ */
+#map-div{
+    position: relative;
+    right: 4%;
+    bottom: 5%;
+}
+
+#map{
+    height: 90%;
+    width: 100%;
+    border-radius: 200px;
+    margin: 0 auto;
+    position: relative;
+    bottom: 3%;
+}
+
+#live-map-txt{
+    font-size: 45px;
+    vertical-align: text-top;
+    margin: 0 auto;
+    padding-bottom: 0;
+}
+
+#commands{
+    position: relative;
+    top: 5%;
 }

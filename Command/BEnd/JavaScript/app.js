@@ -5,7 +5,7 @@ const bp = require('body-parser')
 const { response } = require('express');
 
 const app = express();
-const client = mqtt.connect('mqtt://3.87.147.76', {clientId:"node"});
+const client = mqtt.connect('mqtt://3.91.160.250', {clientId:"node"});
 app.use(express.urlencoded({extended: true}));
 app.use(bp.json())
 app.use(bp.urlencoded({ extended: true }))
@@ -14,17 +14,21 @@ app.use(express.static(path.join(__dirname, 'views')));
 
 // placeholder for information stored
 let information = {
-    speed: 0,
     battery: 0,
     ttl: 0,
     charging: 0,
-    distanceTravelled: 0,
-    gear: 0,
-    roverCoordinates: {x: 0, y: 0},
     ballCoordinates: {},
     targetBall: 0,
     roverPath: {}
+}
 
+let roverStatus = {
+
+    gear: "x",
+    xCoordinate: 0,
+    yCoordinate: 0,
+    distanceTravelled: 0,
+    speed: 0
 }
 
 const server = app.listen(9000, (err) => {
@@ -55,6 +59,11 @@ app.get('/api/test', (req, res) => {
     res.send(JSON.stringify('Testing'));
     console.log('entered test');
 
+});
+
+app.get('/api/roverStats', (req, res) => {
+    console.log("Requested roverStatus");
+    res.send(JSON.stringify(roverStatus));
 });
 
 app.post('/api/direction', (req, res) => {
@@ -138,8 +147,14 @@ client.on('connect', () =>{
 client.on('message', (topic, message, packet) => {
     console.log(`Recieved message from ${topic} - ${message} `);
     if(topic === "drive"){
-
+        let values = message.split("/");
+        roverStatus.gear = values[0];
+        roverStatus.xCoordinate = values[1];
+        roverStatus.yCoordinate = values[2];
+        roverStatus.distanceTravelled = values[3];
+        roverStatus.speed = values[4];
     }
+    
 });
 
 
