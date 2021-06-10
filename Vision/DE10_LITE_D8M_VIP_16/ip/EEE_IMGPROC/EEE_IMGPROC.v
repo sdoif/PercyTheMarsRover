@@ -91,9 +91,10 @@ parameter Y_BB_COL_DEFAULT = 24'hf9ff92;
 //	I'm assuming we access these colour channels through these variables so these 
 //		variables store the RGB values of the pixel we are looking at detected from the camera
 wire [7:0] red, green, blue;
+wire [23:0] pixel = {red, green, blue};
 // Grey is the variable storing the colour for the grey we will be replacing the 
 //		non-colour pixels with
-// wire [7:0] grey;
+wire [7:0] grey;
 //	The output colour channels which the camera outputs through the VGA cable
 wire [7:0]   red_out, green_out, blue_out;
 
@@ -103,6 +104,29 @@ wire [7:0]   red_out, green_out, blue_out;
 wire         sop, eop, in_valid, out_ready;
 ////////////////////////////////////////////////////////////////////////
 
+// ----------------------- Mean Filtering -----------------------
+
+reg [23:0] blurred_image; // variable to store the filtered pixel
+reg [23:0] pixels_preblur [0:2]; // array of 3 pixels, each of size 24 bits
+
+reg [15:0] blurred_red, blurred_blue, blurred_green;
+
+
+always@(posedge clk) begin
+   for (i = 0; i < 2; i = i+1) begin
+		pixels_preblur[i] = pixels_preblur[i+1]; // blocking assignment, combinational logic
+	end
+	
+	// append the current pixel to the array
+	pixels_preblur[2] = pixel;
+	
+	blurred_red = (7*pixels_preblur[0][23:16] + 26*pixels_preblur[1][23:16] + 41*red)/74;
+	blurred_green = (7*pixels_preblur[0][15:8] + 26*pixels_preblur[1][15:8] + 41*green)/74;
+	blurred_blue = (7*pixels_preblur[0][7:0] + 26*pixels_preblur[1][7:0] + 41*blue)/74;
+
+end
+
+
 // ----------------------- Mapping RGB to HSV -----------------------
 // https://docs.opencv.org/3.4/de/d25/imgproc_color_conversions.html
 //Implementation with just ternary operators
@@ -111,17 +135,17 @@ wire [7:0] min;
 wire [7:0] s_temp, v_temp, h_temp;
 
 // not divided by 255
-assign v_temp = (red >= green && red >= blue) ? red
-				: (green >= red && green >= blue) ? green
-				: (blue >= red && blue >= green) ? blue
+assign v_temp = (blurred_red >= blurred_green && blurred_red >= blurred_blue) ? blurred_red
+				: (blurred_green >= blurred_red && blurred_green >= blurred_blue) ? blurred_green
+				: (blurred_blue >= blurred_red && blurred_blue >= blurred_green) ? blurred_blue
 				: 0;
 	
 assign v = v_temp; // *100/255; // scale to percent
 
 // not divided by 255
-assign min = red <= green && red <= blue ? red
-				: green <= red && green <= blue ? green
-				: blue <= red && blue <= green ? blue
+assign min = blurred_red <= blurred_green && blurred_red <= blurred_blue ? blurred_red
+				: blurred_green <= blurred_red && blurred_green <= blurred_blue ? blurred_green
+				: blurred_blue <= blurred_red && blurred_blue <= blurred_green ? blurred_blue
 				: 0;
 
 // scaled up by 255
@@ -131,12 +155,12 @@ assign s_temp = v_temp != 0 ? 255*(v_temp - min)/v_temp
 assign s = s_temp; // *100/255; // scaling to percentage
 						
 // v_temp and the colours are not scaled down
-assign h_temp = (red == green && green == blue) ? 0
-			: v_temp == red ? //60*(green - blue)/(v_temp - min) // if V == R
-					green >= blue ? 60*(green - blue)/(v_temp - min) // if g-b is positive, dont add 360
-					: (360*(v_temp-min) + 60*(green - blue))/(v_temp - min) // if negative, add 360
-			: v_temp == green ? (120*(v_temp - min) + 60*(blue - red))/(v_temp - min)
-			: v_temp == blue ?	(240*(v_temp - min) + 60*(red - green))/(v_temp - min)
+assign h_temp = (blurred_red == blurred_green && blurred_green == blurred_blue) ? 0
+			: v_temp == blurred_red ? //60*(blurred_green - blurred_blue)/(v_temp - min) // if V == R
+					blurred_green >= blurred_blue ? 60*(blurred_green - blurred_blue)/(v_temp - min) // if g-b is positive, dont add 360
+					: (360*(v_temp-min) + 60*(blurred_green - blurred_blue))/(v_temp - min) // if negative, add 360
+			: v_temp == blurred_green ? (120*(v_temp - min) + 60*(blurred_blue - blurred_red))/(v_temp - min)
+			: v_temp == blurred_blue ?	(240*(v_temp - min) + 60*(blurred_red - blurred_green))/(v_temp - min)
 			: 0;
 				
 assign h = h_temp *1/2; // H correction to fit colourmap
@@ -160,26 +184,23 @@ wire red_detect, green_detect, blue_detect, violet_detect, yellow_detect, border
 //		Can set if parameters on these to trigger new conditions
 //	Width in pixels = 640; have the 210 pixels on the left and right as the special cases
 
-
 assign red_detect = (x >= 210 && x <= 430) && ((h > 170 || h < 25) && s > 149 && s < 232 && v > 125 && v <= 200) ? 1 // changed max v from 245 to 200
 						: ( (x < 210 || x > 430) && (h > 170 || h < 15) && s > 75 && s < 161 && v > 100 && v < 200) ? 1 // 235 -> 161
 						: 0;
 						
-assign blue_detect = (h > 100 && h < 120 && s > 76 && s < 195 && v > 25 && v < 128) ? 1 : 0; // good - check previous commits for recent values
+assign blue_detect = (h > 90 && h < 120 && s > 76 && s < 195 && v > 25 && v < 128) ? 1 : 0; // good - check previous commits for recent values
 assign green_detect = (h > 60 && h < 80 && s > 75 && s < 200 && v > 50 && v < 128) ? 1 : 0; // good (h > 115 && h < 135 && s > 200 && v > 115 && v < 135)
 
-assign violet_detect =  (h < 15 && s > 80 && s < 150 && v > 75 && v <= 125) ? 1 : 0;
+//assign violet_detect =  (h < 15 && s > 80 && s < 150 && v > 75 && v <= 125) ? 1 : 0;
 								// (x >= 210 && x <= 430 && h < 15 && s > 80 && s < 150 && v > 75 && v <= 125) ? 1 // central third
 								//: ( (x < 210 || x > 430) && h > 9 && h < 17 && s > 160 && s < 235 && v > 88 && v < 200) ? 1 // left and right
 								// : (x < 210 || x > 430) ? 1 // set everything in the right and left side to violet
 								//: ( x > 430 && ) ? 1// right third
 								//: 0;
+
 // (h < 25 && s > 80 && s < 160 && v > 50 && v <= 125) ? 1 : 0;// ((h < 20  && s > 89 && s < 170 && v > 64 && v < 128) || (h > 160 && s > 10 && s < 115 && v > 154 && v < 245)) ? 1 : 0; // bad
-//assign red_detect = 0;
-//assign blue_detect = 0;
-//assign green_detect = 0;
 //assign violet_detect = 0;
-assign yellow_detect = (h > 25 && h < 40 && s > 100 && s < 153 && v > 102 && v <= 245) ? 1 : 0; // good - needs adjusting?
+assign yellow_detect = (h > 25 && h < 45 && s > 100 && s < 153 && v > 102 && v <= 245) ? 1 : 0; // good - needs adjusting?
 
 assign border_detect = (x <= 20 || x >= 620) || (y <= 20 || y >= 460); 
 
@@ -193,11 +214,12 @@ assign border_detect = (x <= 20 || x >= 620) || (y <= 20 || y >= 460);
 //	24 bit value which stores the concatenated 8-bit RGB values together for each colour 
 wire [23:0] red_high, green_high, blue_high, violet_high, yellow_high, black;
 
-// assign grey = green[7:1] + red[7:2] + blue[7:2]; //Grey = green/2 + red/4 + blue/4
+assign grey = blurred_green[7:1] + blurred_red[7:2] + blurred_blue[7:2]; //Grey = green/2 + red/4 + blue/4
 assign black = 24'h0;
 wire [23:0] background; // variable storing what we want to fill the background colour with (colours not detected)
 
-assign background = black;
+assign background = {grey, grey, grey};
+//black;
 // {grey, grey, grey}
 
 assign red_high  =  {8'hff, 8'h0, 8'h01};
@@ -214,7 +236,7 @@ assign new_image = border_detect ? background
 						: red_detect ? red_high
 						: green_detect ? green_high
 						: blue_detect ? blue_high
-						: violet_detect ? violet_high
+						//: violet_detect ? violet_high
 						: yellow_detect ? yellow_high
 						: background;
 
@@ -227,8 +249,8 @@ assign new_image = border_detect ? background
 
 //	Storing the previous 3 pixel values
 
-reg [23:0] pixels [0:2]; // array of 3 pixels, each of size 24 bits
-reg [15:0] pixels_hue [0:2];
+reg [23:0] pixels [0:4];
+reg [15:0] pixels_hue [0:4];
 integer i, j;
 
 reg [15:0] smallest_hue, largest_hue;
@@ -238,16 +260,8 @@ reg [15:0] temp;
 reg [23:0] filtered_image; // variable to store the filtered pixel
 
 // update each term in the array at each clock edge
-always@(posedge clk) begin
-	// move values down the filter array to make space for the current pixel
-	for (i = 0; i < 2; i = i+1) begin	
-		pixels[i] = pixels[i+1]; // blocking assignment, combinational logic
-	end
-	
-	// append the current pixel to the array
-	pixels[2] = new_image;
-	
 /*
+
 		Pixel values
 	red_high  =  {8'hff, 8'h0, 8'h01}; h = 360, s = 100, v = 100
 	green_high  =  {8'h0, 8'hff, 8'h0}; h = 120, s = 100, v = 100
@@ -256,7 +270,29 @@ always@(posedge clk) begin
 	yellow_high  =  {8'hed, 8'hff, 8'h6f}; h = 68, 56.5, v = 100
 	black = 24'h0;
 */
+reg counter;
 
+always@(posedge clk) begin
+	// move values down the filter array to make space for the current pixel
+	for (i = 0; i < 4; i = i+1) begin	
+		pixels[i] = pixels[i+1]; // blocking assignment, combinational logic
+	end
+	
+	// append the current pixel to the array
+	pixels[4] = new_image;
+
+	for (i = 0; i < 4; i = i+1) begin
+		if (pixels[i] == background) begin
+			counter = counter + 1;
+		end
+	end
+	
+	if (counter >= 2) begin
+		filtered_image = background;
+	end else begin
+		filtered_image = new_image;
+	end
+/*
 	// 		Calculate the median of the pixels - based on hue
 	// 	Finding the hue of each pixel
 	for (i = 0; i < 3; i = i+1) begin
@@ -266,8 +302,8 @@ always@(posedge clk) begin
 			pixels_hue[i] = 120;
 		end else if (pixels[i] == blue_high) begin
 			pixels_hue[i] = 240;
-		end else if (pixels[i] == violet_high) begin
-			pixels_hue[i] = 296;
+//		end else if (pixels[i] == violet_high) begin
+//			pixels_hue[i] = 296;
 		end else if (pixels[i] == yellow_high) begin
 			pixels_hue[i] = 68;
 		end else if (pixels[i] == background) begin
@@ -277,7 +313,7 @@ always@(posedge clk) begin
 		end
 	end
 	
-/*
+/
 	// 	Forming the sorted array based on the hue using bubble sort - very inefficient, was just for functionality
 	//	Can improve the sorting algorithm used in the future
 	for (i = 0; i < 5; i = i+1) begin
@@ -292,14 +328,14 @@ always@(posedge clk) begin
 			end
 		end
 	end
-*/
+/
 
 	//		Forming the sorted array just by finding the smallest and largest values - much more efficient - O(n)
 
-smallest_hue <= pixels_hue[0];
-largest_hue <= pixels_hue[0];
-smallest_hue_index <= 0;
-largest_hue_index <= 0;
+	smallest_hue <= pixels_hue[0];
+	largest_hue <= pixels_hue[0];
+	smallest_hue_index <= 0;
+	largest_hue_index <= 0;
 
 	for (i = 1; i < 3; i = i+1) begin
 		if (pixels_hue[i] < smallest_hue) begin
@@ -331,8 +367,8 @@ largest_hue_index <= 0;
 		filtered_image = green_high;
 	end else if (pixels_hue[median_hue_index] == 240) begin // select blue
 		filtered_image = blue_high;
-	end else if (pixels_hue[median_hue_index] == 296) begin // select violet
-		filtered_image = violet_high;
+//	end else if (pixels_hue[median_hue_index] == 296) begin // select violet
+//		filtered_image = violet_high;
 	end else if (pixels_hue[median_hue_index] == 68) begin // select yellow
 		filtered_image = yellow_high;
 	end else if (pixels_hue[median_hue_index] == 0) begin // select black
@@ -340,6 +376,7 @@ largest_hue_index <= 0;
 	end else begin
 		filtered_image = background;
 	end
+*/
 end
 
 //	---------- End of Filtering ----------
@@ -363,7 +400,7 @@ wire [23:0] bounded_image;
 assign bounded_image = r_bb_active ? r_bb_col
 							: g_bb_active ? g_bb_col
 							: b_bb_active ? b_bb_col
-							: v_bb_active ? v_bb_col
+							//: v_bb_active ? v_bb_col
 							: y_bb_active ? y_bb_col
 							: filtered_image;
 // ---------- End of applying bounding boxes ----------
@@ -438,7 +475,7 @@ always@(posedge clk) begin
 		if (x < y_xmin) y_xmin <= x; 
 		if (x > y_xmax) y_xmax <= x;
 		if (y < y_ymin) y_ymin <= y;
-		if (y > y_ymax) y_ymax <= y;
+		y_ymax <= y;
 	end
 	
 	// The sections above and below need to be in the same always@(posedge clk)
@@ -514,8 +551,8 @@ always@(posedge clk) begin
 		
 		y_left <= y_xmin;
 		y_right <= y_xmax;
-		y_top <= y_ymax;
-		y_bottom <= y_ymin;
+		y_top <= y_ymin;
+		y_bottom <= y_ymax;
 		
 		
 		//Start message writer FSM once every MSG_INTERVAL frames, if there is room in the FIFO
@@ -551,7 +588,7 @@ wire msg_buf_empty;
 always@(*) begin	//Write words to FIFO as state machine advances
 	case(msg_state)
 		4'b0000: begin
-			msg_buf_in = 32'b0;
+			msg_buf_in = {5'b0, y_xmax, 5'b0, y_ymax};
 			msg_buf_wr = 1'b0;
 		end
 		4'b0001: begin
@@ -607,11 +644,11 @@ always@(*) begin	//Write words to FIFO as state machine advances
 			msg_buf_wr = 1'b1;
 		end
 		4'b1110: begin
-			msg_buf_in = {5'b0, y_xmin, 5'b0, y_ymax};	//Top left coordinate
+			msg_buf_in = {5'b0, y_xmin, 5'b0, y_ymin};	//Top left coordinate
 			msg_buf_wr = 1'b1;
 		end
 		4'b1111: begin
-			msg_buf_in = {5'b0, y_xmax, 5'b0, y_ymin}; //Bottom right coordinate
+			msg_buf_in = {5'b0, y_xmax, 5'b0, y_ymax}; //Bottom right coordinate
 			msg_buf_wr = 1'b1;
 		end
 	endcase
@@ -744,4 +781,3 @@ assign msg_buf_rd = s_chipselect & s_read & ~read_d & ~msg_buf_empty & (s_addres
 
 
 endmodule
-
