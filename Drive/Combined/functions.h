@@ -80,6 +80,8 @@ bool s_0;
 bool s_1;
 bool f;
 
+int loop_counter = 0;
+
 float x_to_command = 0;
 float y_to_command = 0;
 
@@ -99,6 +101,8 @@ float a_speed;
 
 float ycal_total = 0;
 float xcal_total = 0;
+float ycal_total_store = 0;
+float xcal_total_store = 0;
 
 int prev_val_y = 0;
 int prev_val_x = 0;
@@ -152,7 +156,7 @@ volatile int xydat[2];
 int tdistance = 0;
 
 String data_command[6] = {"c", "0", "0", "0", "0", "0"};
-String data_vision[5] = {"v", "0", "0", "0", "0"};
+String data_vision[6] = {"v", "0", "0", "0", "0", "0"};
 
 String fixed_size(float num){
   int num_length = String(num).length();
@@ -511,6 +515,8 @@ bool rover_scan_zero(char _mode){
     if((prev_val_x == total_x)&&(_iter_scan == 1)){
       theta_store = store_angle(actual_x);
       r_store = float(actual_y);
+      xcal_total_store = xcal_total;
+      ycal_total_store = ycal_total;
       _iter_scan = 2;
     }
     Serial.println("Scan_zero = STOP");
@@ -552,6 +558,10 @@ bool reach_forward(char _mode){
     }else if((_mode == 's')&&s_1){
         brake();
         scan_state = 6;
+        theta_store = store_angle(actual_x);
+        r_store = float(actual_y);
+        xcal_total_store = xcal_total;
+        ycal_total_store = ycal_total;
         return true;
     }else if((_mode == 'r')&&s_1){
         right();
@@ -563,7 +573,7 @@ bool reach_forward(char _mode){
 }
 
 //String data_command[] = {send_to, gear, x, y, total, _speed};
-//String data_vision[] = {"v", s0 bool, s1 bool, theta, r};
+//String data_vision[] = {"v", s0 bool, s1 bool, theta, x, y};
 //String data_command[6] = {"c", gear, fixed_size(total_x), fixed_size(total_y), fixed_size(total), fixed_size(_speed.toFloat())};
 //String data_vision[5] = {"v", String(rover_scan_zero(v[1])), String(rover_scan_one(v[1])), fixed_size(theta_store), fixed_size(r_store)};
 
