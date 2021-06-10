@@ -157,50 +157,57 @@ void loop() {
     setupwifi();
   }
   
-  while(!mqttclient.connected()) {
+  if(!mqttclient.connected()) {
     reconnect();
   }
   
   mqttclient.loop();
 
   if(Serial2.available() > 69){
+
+      for(int i = 0; i < 70 ; i++){
+        bytein = Serial2.read();
+        msg[i] = char(bytein);
+      }
+
+    add = "";
+
+    for(int i = 0; i < 2; i++){
       for(int i = 0; i<70; i++){
-      bytein = Serial2.read();
-      msg[i] = char(bytein);
+        add = add + msg[i];
       }
     }
-  add = "";
-  for(int i =0; i<2; i++){
-    for(int i = 0; i<70; i++){
-      add = add + msg[i];
-    }
-  }
 
-  Serial.println("add = "+add);
-  
-  _index = add.indexOf('c');
+    Serial.println("add = " + add);
     
-  correct = "";
-  for(int i = _index; i<_index+70; i++){
-    correct = correct + add[i];
+    _index = add.indexOf('c');
+      
+    correct = "";
+    for(int i = _index; i < _index + 70; i++){
+      correct = correct + add[i];
+    }
+
+    Serial.println("correct = " + correct);
+
+    for(int i = 1; i < 44; i++){
+      toCommand[i] = correct[i];
+    }
+    for(int i = 45; i < 70; i++){
+      toVision[i-45] = correct[i];
+    }
+
+    
+    for(int i = 1; i<44; i++){
+      Serial.print(toCommand[i]);
+    }
+    Serial.println();
+
+    mqttclient.publish("drive", toCommand);
+    Serial1.print(toVision);
   }
 
-  Serial.println("correct = "+correct);
 
-  for(int i = 1; i < 44; i++){
-    toCommand[i] = correct[i];
-  }
-  for(int i = 45; i < 70; i++){
-    toVision[i-45] = correct[i];
-  }
-
-  
-  for(int i = 1; i<44; i++){
-    Serial.print(toCommand[i]);
-  }
-  Serial.println();
-
-if(Serial1.available()){
+  if(Serial1.available()){
     int k = 0;
     while(Serial1.available()){
       bytein = Serial1.read();
@@ -212,8 +219,6 @@ if(Serial1.available()){
     Serial2.print("v" + String(fromVision));
     
   }
-
-  mqttclient.publish("drive", toCommand);
 
   if(Serial.available()){
     int i = 0;
