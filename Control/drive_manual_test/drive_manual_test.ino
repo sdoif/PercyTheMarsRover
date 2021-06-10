@@ -12,7 +12,7 @@
 WiFiClient wificlient;
 PubSubClient mqttclient(wificlient);
 long lastMsg = 0;
-char msg[70], fromdrive[70], fromvision[20];
+char msg[70], fromDrive[70], fromVision[20];
 char toVision[26], toCommand[44];
 char toDrive[5] = {'0','x','0','0','0'};
 int value = 0;
