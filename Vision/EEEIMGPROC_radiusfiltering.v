@@ -91,11 +91,12 @@ parameter Y_BB_COL_DEFAULT = 24'hf9ff92;
 //	I'm assuming we access these colour channels through these variables so these 
 //		variables store the RGB values of the pixel we are looking at detected from the camera
 wire [7:0] red, green, blue;
+wire [23:0] incomingpixel = {red, green, blue};
 // Grey is the variable storing the colour for the grey we will be replacing the 
 //		non-colour pixels with
-// wire [7:0] grey;
+wire [7:0] grey;
 //	The output colour channels which the camera outputs through the VGA cable
-wire [7:0]   red_out, green_out, blue_out;
+wire [7:0] red_out, green_out, blue_out;
 
 // sop - start of packet
 // eop - end of packet
@@ -103,12 +104,52 @@ wire [7:0]   red_out, green_out, blue_out;
 wire         sop, eop, in_valid, out_ready;
 ////////////////////////////////////////////////////////////////////////
 
-// ----------------------- Mapping RGB to HSV -----------------------
-// https://docs.opencv.org/3.4/de/d25/imgproc_color_conversions.html
-//Implementation with just ternary operators
+//		Declarations
+//	Filtering
+integer i = -1;
+// Stores all pixels in the frame
+reg[23:0] allpixels [0:307199];
+wire [23:0] gaussian_filtered_pixel;
+
+//	Mapping to HSV
 wire [7:0] h, s, v;
 wire [7:0] min;
 wire [7:0] s_temp, v_temp, h_temp;
+
+/*
+		Pixel values
+	red_high  =  {8'hff, 8'h0, 8'h01}; h = 360, s = 100, v = 100
+	green_high  =  {8'h0, 8'hff, 8'h0}; h = 120, s = 100, v = 100
+	blue_high  =  {8'h0, 8'h0, 8'hff}; h = 240, s = 100, v = 100
+	violet_high  =  {8'h8e, 8'h15, 8'h96}; h = 296, s = 86, v = 58.8
+	yellow_high  =  {8'hed, 8'hff, 8'h6f}; h = 68, 56.5, v = 100
+	black = 24'h0;
+*/
+
+
+always@(posedge clk) begin
+	// Store all incoming pixels from the frame in the array allpixels[]
+	i++;
+	allpixels[i] = incomingpixel;
+
+	// if we've reached the final pixel of the frame, advance to filtering
+	if ( i == 307199){
+		//reset the array counter for the next frame
+		i = 0;
+
+		// iterate through all pixels in the frame
+		for(int i = 0; i < 307199; i++){
+			// Use if statements for special cases : pixels at the edges
+
+			// -------- Gaussian Filtering --------
+			
+
+		}
+
+	}
+end
+// ----------------------- Mapping RGB to HSV -----------------------
+// https://docs.opencv.org/3.4/de/d25/imgproc_color_conversions.html
 
 // not divided by 255
 assign v_temp = (red >= green && red >= blue) ? red
@@ -190,12 +231,12 @@ assign border_detect = (x <= 20 || x >= 620) || (y <= 20 || y >= 460);
 //	24 bit value which stores the concatenated 8-bit RGB values together for each colour 
 wire [23:0] red_high, green_high, blue_high, violet_high, yellow_high, black;
 
-// assign grey = green[7:1] + red[7:2] + blue[7:2]; //Grey = green/2 + red/4 + blue/4
+assign grey = green[7:1] + red[7:2] + blue[7:2]; //Grey = green/2 + red/4 + blue/4
 assign black = 24'h0;
 wire [23:0] background; // variable storing what we want to fill the background colour with (colours not detected)
 
-assign background = black;
-// {grey, grey, grey}
+assign background = {grey, grey, grey};
+// black
 
 assign red_high  =  {8'hff, 8'h0, 8'h01};
 assign green_high  =  {8'h0, 8'hff, 8'h0}; 
@@ -208,12 +249,12 @@ assign yellow_high  =  {8'hed, 8'hff, 8'h6f};
 wire [23:0] new_image;
 
 assign new_image = border_detect ? background
-						: red_detect ? red_high
-						: green_detect ? green_high
-						: blue_detect ? blue_high
-						: violet_detect ? violet_high
-						: yellow_detect ? yellow_high
-						: background;
+					: red_detect ? red_high
+					: green_detect ? green_high
+					: blue_detect ? blue_high
+					: violet_detect ? violet_high
+					: yellow_detect ? yellow_high
+					: background;
 
 // -------------------------- Filtering --------------------------
 
@@ -227,7 +268,6 @@ assign new_image = border_detect ? background
 reg [23:0] pixels [0:1919]; // array of 1920 pixels, each of size 24 bits
 reg [15:0] pixels_hue [0:1919];
 integer j;
-integer i = 0;
 
 reg [15:0] smallest_hue, largest_hue;
 reg smallest_hue_index, largest_hue_index, median_hue_index;
@@ -235,20 +275,44 @@ reg smallest_hue_index, largest_hue_index, median_hue_index;
 reg [15:0] temp;
 reg [23:0] filtered_image; // variable to store the filtered pixel
 
-// update each term in the array at each clock edge
-always@(posedge clk) begin
-    // Each clock cycle looks at a single pixel
+reg[23:0] pixelrow1 [0:639];
+reg[23:0] pixelrow2 [0:639];
+reg[23:0] pixelrow3 [0:639];
+reg[23:0] pixelrow4 [0:639];
+reg[23:0] pixelrow5 [0:639];
 
-    // Must first initialise the 3 pixel rows
-    //      Will need a temporary array of 1920 pixels to store the next 3 rows as we iterate through in each clock cycle
-	for (i = 0; i < 1918; i = i+1) begin	
-		pixels[i] = pixels[i+1]; // blocking assignment, combinational logic
-	end
-	
+/*
+//	Width of the frames captured by the camera in pixels
+parameter IMAGE_W = 11'd640;
+1 row = 640 pixels
+5 rows = 3200 pixels
+//	Height of the frames
+parameter IMAGE_H = 11'd480;
+*/
+
+
+// 		Filtering plan
+//	-Bring in a new row at each clock edge.
+//	-Form the 5x5 or 4x5 or 3x5 matrices of the row 3 rows above it
+//	-Use Gaussian blur pre-colour detection
+//	-Apply a mean filter in the same 5x5 array
+
+// update each term in the array at each clock edge
+always@(posedge clk) begin // Each clock cycle looks at a single pixel
 	// append the current pixel to the array
-	pixels[i] = new_image;
+	/*
 	i++;
-	
+	if (i < 640) begin
+		pixelrow1[i] = new_image;
+	end else if (i >= 640 && i <= 1280) begin
+		pixelrow2[i] = new_image;
+	end
+	*/
+
+	// Store all pixels in the frame
+	i++;
+	allpixels[i] = new_image;
+
 /*
 		Pixel values
 	red_high  =  {8'hff, 8'h0, 8'h01}; h = 360, s = 100, v = 100
@@ -259,89 +323,109 @@ always@(posedge clk) begin
 	black = 24'h0;
 */
 
-	// 		Calculate the median of the pixels - based on hue
-	// 	Finding the hue of each pixel
-	for (i = 0; i < 3; i = i+1) begin
-		if (pixels[i] == red_high) begin
-			pixels_hue[i] = 360;
-		end else if (pixels[i] == green_high) begin
-			pixels_hue[i] = 120;
-		end else if (pixels[i] == blue_high) begin
-			pixels_hue[i] = 240;
-		end else if (pixels[i] == violet_high) begin
-			pixels_hue[i] = 296;
-		end else if (pixels[i] == yellow_high) begin
-			pixels_hue[i] = 68;
-		end else if (pixels[i] == background) begin
-			pixels_hue[i] = 0;
-		end else begin
-			pixels_hue[i] = 0;
-		end
-	end
-	
-/*
-	// 	Forming the sorted array based on the hue using bubble sort - very inefficient, was just for functionality
-	//	Can improve the sorting algorithm used in the future
-	for (i = 0; i < 5; i = i+1) begin
-		// might be able to change j < 3 to j < 3 - i, check OneNote
-		for (j = 0; j < 4; j = j+1) begin
-			if (pixels_hue[j] > pixels_hue[j+1]) begin
-				// swap them in the array
-				temp = pixels_hue[j];
-				pixels_hue[j] = pixels_hue[j+1];
-				pixels_hue[j+1] = temp;
-				// larger value now swapped so that it is at the larger index
+	// - only triggered once we've iterated through all pixels in a row, i is a multiple of 639
+	//if (i % 639 == 0 && i != 0) begin
+
+	// if we've reached the final pixel of the frame, advance to filtering
+	if ( i == 307199){
+		//reset the array counter
+		i = 0;
+
+		// iterate through all pixels in the frame
+		for(int i = 0; i < 307199; i++){
+			// Use if statements for special cases : pixels at the edges
+
+		}
+
+	}
+
+
+
+		//i = 0; // reset i
+		// 		Calculate the median of the pixels - based on hue
+		// 	Finding the hue of each pixel
+		for (i = 0; i < 3; i = i+1) begin
+			if (pixels[i] == red_high) begin
+				pixels_hue[i] = 360;
+			end else if (pixels[i] == green_high) begin
+				pixels_hue[i] = 120;
+			end else if (pixels[i] == blue_high) begin
+				pixels_hue[i] = 240;
+			end else if (pixels[i] == violet_high) begin
+				pixels_hue[i] = 296;
+			end else if (pixels[i] == yellow_high) begin
+				pixels_hue[i] = 68;
+			end else if (pixels[i] == background) begin
+				pixels_hue[i] = 0;
+			end else begin
+				pixels_hue[i] = 0;
 			end
 		end
-	end
-*/
-
-	//		Forming the sorted array just by finding the smallest and largest values - much more efficient - O(n)
-
-smallest_hue <= pixels_hue[0];
-largest_hue <= pixels_hue[0];
-smallest_hue_index <= 0;
-largest_hue_index <= 0;
-
-	for (i = 1; i < 3; i = i+1) begin
-		if (pixels_hue[i] < smallest_hue) begin
-			smallest_hue <= pixels_hue[i];
-			smallest_hue_index <= i;
-		end else if (pixels_hue[i] > largest_hue) begin
-			largest_hue <= pixels_hue[i];
-			largest_hue_index <= i;
-		end else begin
+		
+	/*
+		// 	Forming the sorted array based on the hue using bubble sort - very inefficient, was just for functionality
+		//	Can improve the sorting algorithm used in the future
+		for (i = 0; i < 5; i = i+1) begin
+			// might be able to change j < 3 to j < 3 - i, check OneNote
+			for (j = 0; j < 4; j = j+1) begin
+				if (pixels_hue[j] > pixels_hue[j+1]) begin
+					// swap them in the array
+					temp = pixels_hue[j];
+					pixels_hue[j] = pixels_hue[j+1];
+					pixels_hue[j+1] = temp;
+					// larger value now swapped so that it is at the larger index
+				end
+			end
 		end
-	end
-	
-	if ((smallest_hue_index == 0 && largest_hue_index == 1) || (smallest_hue_index == 1 && largest_hue_index == 0)) begin
-		median_hue_index = 2;
-	end else if ((smallest_hue_index == 0 && largest_hue_index == 2) || (smallest_hue_index == 2 && largest_hue_index == 0)) begin
-		median_hue_index = 1;
-	end else if ((smallest_hue_index == 1 && largest_hue_index == 2) || (smallest_hue_index == 2 && largest_hue_index == 1)) begin
-		median_hue_index = 0;
-	end else begin
-		median_hue_index = 1;
-	end
+	*/
 
-	//		Selecting the median value as the pixel and converting back to RGB
-	//	Replace median_hue_index with 1 if using bubble sort function
-	//median_hue_index = 1;
-	if (pixels_hue[median_hue_index] == 360) begin // select red
-		filtered_image = red_high;
-	end else if (pixels_hue[median_hue_index] == 120) begin // select green
-		filtered_image = green_high;
-	end else if (pixels_hue[median_hue_index] == 240) begin // select blue
-		filtered_image = blue_high;
-	end else if (pixels_hue[median_hue_index] == 296) begin // select violet
-		filtered_image = violet_high;
-	end else if (pixels_hue[median_hue_index] == 68) begin // select yellow
-		filtered_image = yellow_high;
-	end else if (pixels_hue[median_hue_index] == 0) begin // select black
-		filtered_image = background;
-	end else begin
-		filtered_image = background;
-	end
+		//		Forming the sorted array just by finding the smallest and largest values - much more efficient - O(n)
+
+		smallest_hue <= pixels_hue[0];
+		largest_hue <= pixels_hue[0];
+		smallest_hue_index <= 0;
+		largest_hue_index <= 0;
+
+		for (i = 1; i < 3; i = i+1) begin
+			if (pixels_hue[i] < smallest_hue) begin
+				smallest_hue <= pixels_hue[i];
+				smallest_hue_index <= i;
+			end else if (pixels_hue[i] > largest_hue) begin
+				largest_hue <= pixels_hue[i];
+				largest_hue_index <= i;
+			end else begin
+			end
+		end
+		
+		if ((smallest_hue_index == 0 && largest_hue_index == 1) || (smallest_hue_index == 1 && largest_hue_index == 0)) begin
+			median_hue_index = 2;
+		end else if ((smallest_hue_index == 0 && largest_hue_index == 2) || (smallest_hue_index == 2 && largest_hue_index == 0)) begin
+			median_hue_index = 1;
+		end else if ((smallest_hue_index == 1 && largest_hue_index == 2) || (smallest_hue_index == 2 && largest_hue_index == 1)) begin
+			median_hue_index = 0;
+		end else begin
+			median_hue_index = 1;
+		end
+
+		//		Selecting the median value as the pixel and converting back to RGB
+		//	Replace median_hue_index with 1 if using bubble sort function
+		//median_hue_index = 1;
+		if (pixels_hue[median_hue_index] == 360) begin // select red
+			filtered_image = red_high;
+		end else if (pixels_hue[median_hue_index] == 120) begin // select green
+			filtered_image = green_high;
+		end else if (pixels_hue[median_hue_index] == 240) begin // select blue
+			filtered_image = blue_high;
+		end else if (pixels_hue[median_hue_index] == 296) begin // select violet
+			filtered_image = violet_high;
+		end else if (pixels_hue[median_hue_index] == 68) begin // select yellow
+			filtered_image = yellow_high;
+		end else if (pixels_hue[median_hue_index] == 0) begin // select black
+			filtered_image = background;
+		end else begin
+			filtered_image = background;
+		end
+	end// end of if
 end
 
 //	---------- End of Filtering ----------
