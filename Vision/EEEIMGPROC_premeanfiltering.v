@@ -106,22 +106,22 @@ wire         sop, eop, in_valid, out_ready;
 // ----------------------- Mean Filtering -----------------------
 
 reg [23:0] mean_filtered_image; // variable to store the filtered pixel
-reg [23:0] pixels [0:4]; // array of 5 pixels, each of size 24 bits
+reg [23:0] pixels_preblur [0:2]; // array of 3 pixels, each of size 24 bits
 
 always@(posedge clk) begin
-    for (i = 0; i < 4; i = i+1) begin	
-		pixels[i] = pixels[i+1]; // blocking assignment, combinational logic
+    for (i = 0; i < 2; i = i+1) begin	
+		pixels_preblur[i] = pixels_preblur[i+1]; // blocking assignment, combinational logic
 	end
 	
 	// append the current pixel to the array
-	pixels[4] = {red, green, blue};
+	pixels_preblur[2] = {red, green, blue};
 	
-   mean_filtered_image = (pixels[0] + pixels[1] + pixels[2] + pixels[3] + pixels[4]) / 5;
+   blurred_image = ((7/74)*pixels_preblur[0] + (26/74)*pixels_preblur[1] + (41/74)*pixels_preblur[2]);
 end
 
-wire [7:0] mean_red = mean_filtered_image[23:16];
-wire [7:0] mean_blue = mean_filtered_image[15:8];
-wire [7:0] mean_green = mean_filtered_image[7:0];
+wire [7:0] blurred_red = blurred_image[23:16];
+wire [7:0] blurred_blue = blurred_image[15:8];
+wire [7:0] blurred_green = blurred_image[7:0];
 
 // ----------------------- Mapping RGB to HSV -----------------------
 // https://docs.opencv.org/3.4/de/d25/imgproc_color_conversions.html
@@ -131,17 +131,17 @@ wire [7:0] min;
 wire [7:0] s_temp, v_temp, h_temp;
 
 // not divided by 255
-assign v_temp = (mean_red >= mean_green && mean_red >= mean_blue) ? mean_red
-				: (mean_green >= mean_red && mean_green >= mean_blue) ? mean_green
-				: (mean_blue >= mean_red && mean_blue >= mean_green) ? mean_blue
+assign v_temp = (blurred_red >= blurred_green && blurred_red >= blurred_blue) ? blurred_red
+				: (blurred_green >= blurred_red && blurred_green >= blurred_blue) ? blurred_green
+				: (blurred_blue >= blurred_red && blurred_blue >= blurred_green) ? blurred_blue
 				: 0;
 	
 assign v = v_temp; // *100/255; // scale to percent
 
 // not divided by 255
-assign min = mean_red <= mean_green && mean_red <= mean_blue ? mean_red
-				: mean_green <= mean_red && mean_green <= mean_blue ? mean_green
-				: mean_blue <= mean_red && mean_blue <= mean_green ? mean_blue
+assign min = blurred_red <= blurred_green && blurred_red <= blurred_blue ? blurred_red
+				: blurred_green <= blurred_red && blurred_green <= blurred_blue ? blurred_green
+				: blurred_blue <= blurred_red && blurred_blue <= blurred_green ? blurred_blue
 				: 0;
 
 // scaled up by 255
@@ -151,12 +151,12 @@ assign s_temp = v_temp != 0 ? 255*(v_temp - min)/v_temp
 assign s = s_temp; // *100/255; // scaling to percentage
 						
 // v_temp and the colours are not scaled down
-assign h_temp = (mean_red == mean_green && mean_green == mean_blue) ? 0
-			: v_temp == mean_red ? //60*(mean_green - mean_blue)/(v_temp - min) // if V == R
-					mean_green >= mean_blue ? 60*(mean_green - mean_blue)/(v_temp - min) // if g-b is positive, dont add 360
-					: (360*(v_temp-min) + 60*(mean_green - mean_blue))/(v_temp - min) // if negative, add 360
-			: v_temp == mean_green ? (120*(v_temp - min) + 60*(mean_blue - mean_red))/(v_temp - min)
-			: v_temp == mean_blue ?	(240*(v_temp - min) + 60*(mean_red - mean_green))/(v_temp - min)
+assign h_temp = (blurred_red == blurred_green && blurred_green == blurred_blue) ? 0
+			: v_temp == blurred_red ? //60*(blurred_green - blurred_blue)/(v_temp - min) // if V == R
+					blurred_green >= blurred_blue ? 60*(blurred_green - blurred_blue)/(v_temp - min) // if g-b is positive, dont add 360
+					: (360*(v_temp-min) + 60*(blurred_green - blurred_blue))/(v_temp - min) // if negative, add 360
+			: v_temp == blurred_green ? (120*(v_temp - min) + 60*(blurred_blue - blurred_red))/(v_temp - min)
+			: v_temp == blurred_blue ?	(240*(v_temp - min) + 60*(blurred_red - blurred_green))/(v_temp - min)
 			: 0;
 				
 assign h = h_temp *1/2; // H correction to fit colourmap
@@ -244,6 +244,7 @@ assign new_image = border_detect ? background
 
 //	Storing the previous 3 pixel values
 
+reg [23:0] pixels [0:2];
 reg [15:0] pixels_hue [0:2];
 integer i, j;
 
@@ -263,7 +264,7 @@ reg [23:0] filtered_image; // variable to store the filtered pixel
 	violet_high  =  {8'h8e, 8'h15, 8'h96}; h = 296, s = 86, v = 58.8
 	yellow_high  =  {8'hed, 8'hff, 8'h6f}; h = 68, 56.5, v = 100
 	black = 24'h0;
-
+*/
 
 always@(posedge clk) begin
 	// move values down the filter array to make space for the current pixel
@@ -359,7 +360,6 @@ largest_hue_index <= 0;
 		filtered_image = background;
 	end
 end
-*/
 
 //	---------- End of Filtering ----------
 
@@ -384,7 +384,7 @@ assign bounded_image = r_bb_active ? r_bb_col
 							: b_bb_active ? b_bb_col
 							: v_bb_active ? v_bb_col
 							: y_bb_active ? y_bb_col
-							: mean_filtered_image;
+							: filtered_image;
 // ---------- End of applying bounding boxes ----------
 						
 //		Adjusting the pixels output to the screen
@@ -433,27 +433,27 @@ end
 //Find first and last pixels of each colour
 always@(posedge clk) begin
 		// update bounding boxes for each box post filtering
-	if (mean_filtered_image == red_high & in_valid) begin
+	if (filtered_image == red_high & in_valid) begin
 		if (x < r_xmin) r_xmin <= x; // continually update x_min, x_max, y_min and y_max if the current red pixel
 		if (x > r_xmax) r_xmax <= x;	// 	is beyond the bounds of the current frame
 		if (y < r_ymin) r_ymin <= y;
 		r_ymax <= y;
-	end else if(mean_filtered_image == green_high & in_valid) begin
+	end else if(filtered_image == green_high & in_valid) begin
 		if (x < g_xmin) g_xmin <= x; 
 		if (x > g_xmax) g_xmax <= x;
 		if (y < g_ymin) g_ymin <= y;
 		g_ymax <= y;
-	end else if(mean_filtered_image == blue_high & in_valid) begin
+	end else if(filtered_image == blue_high & in_valid) begin
 		if (x < b_xmin) b_xmin <= x; 
 		if (x > b_xmax) b_xmax <= x;
 		if (y < b_ymin) b_ymin <= y;
 		b_ymax <= y;
-	end else if(mean_filtered_image == violet_high & in_valid) begin
+	end else if(filtered_image == violet_high & in_valid) begin
 		if (x < v_xmin) v_xmin <= x; 
 		if (x > v_xmax) v_xmax <= x;
 		if (y < v_ymin) v_ymin <= y;
 		v_ymax <= y;
-	end else if(mean_filtered_image == yellow_high & in_valid) begin
+	end else if(filtered_image == yellow_high & in_valid) begin
 		if (x < y_xmin) y_xmin <= x; 
 		if (x > y_xmax) y_xmax <= x;
 		if (y < y_ymin) y_ymin <= y;
@@ -763,4 +763,3 @@ assign msg_buf_rd = s_chipselect & s_read & ~read_d & ~msg_buf_empty & (s_addres
 
 
 endmodule
-
