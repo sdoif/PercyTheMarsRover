@@ -395,17 +395,23 @@ Serial.print('\n');
     data_vision[1] = String(s_0);
     data_vision[2] = String(s_1);
     data_vision[3] = fixed_size(theta_store);
-    data_vision[4] = fixed_size(r_store);
-    
-    for(int i = 0; i<6; i++){
-      Serial1.print(data_command[i]);
-      Serial1.print('/');
-    }   
+    data_vision[4] = fixed_size(xcal_total_store);
+    data_vision[5] = fixed_size(ycal_total_store);
 
-    for(int i = 0; i<5; i++){
-      Serial1.print(data_vision[i]);
-      Serial1.print('/');
-    }
+    loop_counter ++;
+
+    if(loop_counter == 50){
+      for(int i = 0; i<6; i++){
+        Serial1.print(data_command[i]);
+        Serial1.print('/');
+      } 
+      for(int i = 0; i<5; i++){
+        Serial1.print(data_vision[i]);
+        Serial1.print('/');
+      }
+      loop_counter = 0;
+    }  
+   
 
     Serial.println("data_command[0] = "+String(data_command[0]));
     Serial.println("data_command[1] = "+String(data_command[1]));
@@ -419,4 +425,5 @@ Serial.print('\n');
     Serial.println("data_vision[2] = "+String(data_vision[2]));
     Serial.println("data_vision[3] = "+String(data_vision[3]));
     Serial.println("data_vision[4] = "+String(data_vision[4]));
+    Serial.println("data_vision[5] = "+String(data_vision[5]));
 }
