@@ -6,7 +6,7 @@
 
 int _index = 0;
 int bytein = 0;
-char msg[70];
+char msg[80];
 String add;
 String correct;
 //char str[6];
@@ -24,15 +24,15 @@ void setup(){
 }
 
 void loop(){
-    if(Serial2.available() > 69){
-      for(int i = 0; i<70; i++){
+    if(Serial2.available() > 79){
+      for(int i = 0; i<80; i++){
       bytein = Serial2.read();
       msg[i] = char(bytein);
       }
     }
   add = "";
   for(int i =0; i<2; i++){
-    for(int i = 0; i<70; i++){
+    for(int i = 0; i<80; i++){
       add = add + msg[i];
     }
   }
@@ -40,7 +40,7 @@ void loop(){
     _index = add.indexOf('c');
     
   correct = "";
-  for(int i = _index; i<_index+70; i++){
+  for(int i = _index; i<_index+80; i++){
     correct = correct + add[i];
   }
     Serial.println("Data received: ");

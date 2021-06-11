@@ -23,7 +23,7 @@ char toVision[13], toCommand[28];
 char toDrive[5] = {'0','x','0','0','0'};
 int value = 0;
 int bytein = 0;
-const char* serverip = "3.87.147.76"; // aws server ip
+const char* serverip = "3.91.160.250"; // aws server ip
 
 
 // setup always runs at the start
@@ -31,7 +31,7 @@ void setup() {
   
     Serial.println("Start");
     // Note the format for setting a serial port is as follows: Serial2.begin(baud-rate, protocol, RX pin, TX pin);
-    Serial1.begin(115200, SERIAL_8N1, visionIn, visionOut); // setting up uart port to speak with vision
+    Serial1.begin(9600, SERIAL_8N1, visionIn, visionOut); // setting up uart port to speak with vision
     Serial2.begin(9600, SERIAL_8N1, driveIn, driveOut); // setting up uart port to speak with drive
     Serial.begin(115200); // sets baud rate
     delay(10);
@@ -56,7 +56,7 @@ void setup() {
 int setupwifi()
 {
     // We start by connecting to a WiFi network
-    WiFi.begin("SD", "123123123"); // connects to wifi idk how to connect to imperial wifi as it needs authentication
+    WiFi.begin("Kai", "kai12456"); // connects to wifi idk how to connect to imperial wifi as it needs authentication
     Serial.print("Waiting for WiFi... "); 
     while(WiFi.status() != WL_CONNECTED) { // this just tries to connect to wifi i guess
         Serial.print(".");
@@ -135,7 +135,7 @@ void clearmsg(){
 }
 
 void loop() {
-
+  
   if(WiFi.status() != WL_CONNECTED){
     Serial.println("Reconnecting to wifi");
     setupwifi();
@@ -167,7 +167,7 @@ void loop() {
   if(Serial1.available()){
     int k = 0;
     while(Serial1.available()){
-      bytein = Serial1.available();
+      bytein = Serial1.read();
       fromVision[k] = char(bytein);
       k++;
     }
@@ -176,7 +176,7 @@ void loop() {
     Serial2.print("v" + String(fromVision));
     
   }
-
+  
   //v is at index 29
 
   if(Serial.available()){
