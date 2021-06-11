@@ -184,9 +184,12 @@ wire red_detect, green_detect, blue_detect, violet_detect, yellow_detect, border
 //		Can set if parameters on these to trigger new conditions
 //	Width in pixels = 640; have the 210 pixels on the left and right as the special cases
 
-assign red_detect = (x >= 210 && x <= 430) && ((h > 170 || h < 25) && s > 149 && s < 232 && v > 125 && v <= 200) ? 1 // changed max v from 245 to 200
-						: ( (x < 210 || x > 430) && (h > 170 || h < 15) && s > 75 && s < 161 && v > 100 && v < 200) ? 1 // 235 -> 161
-						: 0;
+//assign red_detect = (x >= 210 && x <= 430) && ((h > 170 || h < 25) && s > 149 && s < 232 && v > 125 && v <= 200) ? 1 // changed max v from 245 to 200
+//						: ( (x < 210 || x > 430) && (h > 170 || h < 15) && s > 75 && s < 161 && v > 100 && v < 200) ? 1 // 235 -> 161
+//						: 0;
+
+assign red_detect = ((h > 170 || h < 15) && s > 75 && s < 232 && v > 100 && v <= 200) ? 1 : 0;
+
 						
 assign blue_detect = (h > 90 && h < 120 && s > 76 && s < 195 && v > 25 && v < 128) ? 1 : 0; // good - check previous commits for recent values
 assign green_detect = (h > 60 && h < 80 && s > 75 && s < 200 && v > 50 && v < 128) ? 1 : 0; // good (h > 115 && h < 135 && s > 200 && v > 115 && v < 135)
@@ -588,7 +591,7 @@ wire msg_buf_empty;
 always@(*) begin	//Write words to FIFO as state machine advances
 	case(msg_state)
 		4'b0000: begin
-			msg_buf_in = {5'b0, y_xmax, 5'b0, y_ymax};
+			msg_buf_in = 32'b0;
 			msg_buf_wr = 1'b0;
 		end
 		4'b0001: begin
@@ -596,11 +599,11 @@ always@(*) begin	//Write words to FIFO as state machine advances
 			msg_buf_wr = 1'b1;
 		end
 		4'b0010: begin
-			msg_buf_in = {5'b0, r_xmin, 5'b0, r_ymin};	//Top left coordinate
+			msg_buf_in = {5'b0, r_xmin, 5'b0, r_ymin};	//Bottom left coordinate
 			msg_buf_wr = 1'b1;
 		end
 		4'b0011: begin
-			msg_buf_in = {5'b0, r_xmax, 5'b0, r_ymax}; //Bottom right coordinate
+			msg_buf_in = {5'b0, r_xmax, 5'b0, r_ymax}; //Top right coordinate
 			msg_buf_wr = 1'b1;
 		end
 		4'b0100: begin
@@ -608,11 +611,11 @@ always@(*) begin	//Write words to FIFO as state machine advances
 			msg_buf_wr = 1'b1;
 		end
 		4'b0101: begin
-			msg_buf_in = {5'b0, g_xmin, 5'b0, g_ymin};	//Top left coordinate
+			msg_buf_in = {5'b0, g_xmin, 5'b0, g_ymin};	//Bottom left coordinate
 			msg_buf_wr = 1'b1;
 		end
 		4'b0110: begin
-			msg_buf_in = {5'b0, g_xmax, 5'b0, g_ymax}; //Bottom right coordinate
+			msg_buf_in = {5'b0, g_xmax, 5'b0, g_ymax}; //Top right coordinate
 			msg_buf_wr = 1'b1;
 		end
 		4'b0111: begin
@@ -620,11 +623,11 @@ always@(*) begin	//Write words to FIFO as state machine advances
 			msg_buf_wr = 1'b1;
 		end
 		4'b1000: begin
-			msg_buf_in = {5'b0, b_xmin, 5'b0, b_ymin};	//Top left coordinate
+			msg_buf_in = {5'b0, b_xmin, 5'b0, b_ymin};	//Bottom left coordinate
 			msg_buf_wr = 1'b1;
 		end
 		4'b1001: begin
-			msg_buf_in = {5'b0, b_xmax, 5'b0, b_ymax}; //Bottom right coordinate
+			msg_buf_in = {5'b0, b_xmax, 5'b0, b_ymax}; //Top right coordinate
 			msg_buf_wr = 1'b1;
 		end
 		4'b1010: begin
@@ -632,11 +635,11 @@ always@(*) begin	//Write words to FIFO as state machine advances
 			msg_buf_wr = 1'b1;
 		end
 		4'b1011: begin
-			msg_buf_in = {5'b0, v_xmin, 5'b0, v_ymin};	//Top left coordinate
+			msg_buf_in = {5'b0, v_xmin, 5'b0, v_ymin};	//Bottom left coordinate
 			msg_buf_wr = 1'b1;
 		end
 		4'b1100: begin
-			msg_buf_in = {5'b0, v_xmax, 5'b0, v_ymax}; //Bottom right coordinate
+			msg_buf_in = {5'b0, v_xmax, 5'b0, v_ymax}; //Top right coordinate
 			msg_buf_wr = 1'b1;
 		end
 		4'b1101: begin
@@ -644,11 +647,11 @@ always@(*) begin	//Write words to FIFO as state machine advances
 			msg_buf_wr = 1'b1;
 		end
 		4'b1110: begin
-			msg_buf_in = {5'b0, y_xmin, 5'b0, y_ymin};	//Top left coordinate
+			msg_buf_in = {5'b0, y_xmin, 5'b0, y_ymin};	//Bottom left coordinate
 			msg_buf_wr = 1'b1;
 		end
 		4'b1111: begin
-			msg_buf_in = {5'b0, y_xmax, 5'b0, y_ymax}; //Bottom right coordinate
+			msg_buf_in = {5'b0, y_xmax, 5'b0, y_ymax}; //Top right coordinate
 			msg_buf_wr = 1'b1;
 		end
 	endcase
