@@ -9,7 +9,6 @@ body {
     width: 100% ;
     /*border: 10px solid rgb(109, 67, 15);*/
     /*border-radius: 20px;*/
-    background: rgb(192, 120, 33);
     margin: 1% auto;
     overflow: scroll;
     /*box-sizing: border-box;*/
@@ -21,6 +20,9 @@ body {
     width: 32%;
     height: 380px;
     border-radius: 15px 30px;
+    border-width: 2px;
+    border-color: #4b5783;
+    border-style: solid;
     background: #25242c;
     margin: 8px ;
     box-sizing: border-box;
@@ -213,6 +215,9 @@ label{
 	height: 50px;
 	background: #25242c;
 	border-radius: 50px;
+    border-width: 4px;
+    border-color: #4b5783;
+    border-style: solid;
 	position: relative;
     bottom: 4%;
     display: inline-block;
@@ -297,8 +302,8 @@ label:active:after {
     bottom: 9%;
     margin-top: -2%;
     margin-left: 15.5%;
-    border-width: 4px;
-    border-color:#ffebdb;
+    border-width: 5px;
+    border-color: #4b5783;
     border-style: solid;
     padding: 2% 0% 2% 0%;
     border-radius: 2%;
@@ -352,16 +357,20 @@ button:active {
 /* ------------------------------ */
 .speed-control{
     height: 30%;
-    width: 50%;
+    width: 45%;
     margin-left: 15.5%;
     text-align: center;
     position: relative;
     background: none;
     border-width: 4px;
-    border-color:#ffebdb;
+    border-color: #4b5783;
     border-style: solid;
     border-radius: 2%;
     background-color: #25242c;
+    font-size: 90%;
+    padding: 2.5%;
+    padding-top: 1%;
+    padding-bottom:1%;
 
 }
 
@@ -447,14 +456,17 @@ input[type=range]:disabled::-moz-range-thumb {
 #map{
     height: 90%;
     width: 100%;
-    border-radius: 200px;
     margin: 0 auto;
     position: relative;
     bottom: 3%;
+    border-width: 7px;
+    border-color: #4b5783;
+    border-style: solid;
+    border-radius: 1%;
 }
 
 #live-map-txt{
-    font-size: 45px;
+    font-size: 40px;
     vertical-align: text-top;
     margin: 0 auto;
     padding-bottom: 0;
