@@ -380,6 +380,36 @@
 
             }
 
+            function ballNotification(){
+                //add notification function
+            }
+
+            async function updateUsingFromVision(url="http://localhost:9000/api/vision"){
+                let res = await fetch(url);
+                let ballData = await (res.json());
+                let _color;
+                if(ballData[ballColor]=='r'){
+                    _color = 'Red';
+                }else if(ballData[ballColor]=='g'){
+                    _color = 'Green';
+                }else if(ballData[ballColor]=='b'){
+                    _color = 'Blue';
+                }else if(ballData[ballColor]=='v'){
+                    _color = 'Violet';
+                }else if(ballData[ballColor]=='y'){
+                    _color = 'Yellow';
+                }
+                addBallCoordinates(
+                    ballData[xCoordinate],
+                    ballData[yCoordinate],
+                    _color
+                );
+            }
+
+            function moveToClick(){
+                //manual move to point on graph feature
+            } 
+
 
         </script>
 
