@@ -214,8 +214,9 @@ label{
 	background: #25242c;
 	border-radius: 50px;
 	position: relative;
-    bottom: -2%;
+    bottom: 4%;
     display: inline-block;
+    margin-bottom: 1%;
 }
 
 label:after {
@@ -253,10 +254,9 @@ label:active:after {
 }
 
 .switch-div{
-    /* position: relative;
-    left: 4%;
-    bottom: 105%; */
-    font-size: 32px;
+    position: relative;
+    right: 3%;
+    font-size: 40px;
     font-weight: 50;
     text-align: center;
     width: 70%;
@@ -272,16 +272,17 @@ label:active:after {
 } 
 
 #manual-warning{
-    width:90%;
+    width:95%;
     padding-left: 5%;
-    margin-top: 0;
+    margin-top: 2%;
+    margin-left: -0.5%;
     height: 50%;
 }
 
 #manual-warning-text{
     background-color: #ffebdb;
     color: rgb(255, 49, 49);
-    font-size: 45%;
+    font-size: 50%;
     border-radius: 3px;
     vertical-align: text-top;
 
@@ -291,10 +292,11 @@ label:active:after {
 /* ------------------------------ */
 .keypad{
     height: 80%;
-    width: 55%;
-    position: flex;
-    margin-top: 0;
-    margin-left: 17%;
+    width: 50%;
+    position: relative;
+    bottom: 9%;
+    margin-top: -2%;
+    margin-left: 15.5%;
     border-width: 4px;
     border-color:#ffebdb;
     border-style: solid;
@@ -310,7 +312,7 @@ button {
     border: 5px #ffebdb;
     cursor:pointer;
     color:#ffebdb;
-    font-size: 350%;
+    font-size: 300%;
     text-align: center;
 }
 
@@ -329,15 +331,20 @@ button {
 #stop-key{
     font-size: 100%;
     border: 2px #ffebdb solid;
-    width: 26%;
+    height: 10%;
+    width: 23%;
     border-radius: 50%;
-    padding: 9% 0;
+    padding: 7% 0;
     vertical-align: middle;
+    margin: 0 1%;
+    margin-top: 1%;
     transform: translateY(-10%);
 }
 
 button:active {
-    background-color: #3f3a3a46;
+    background-color: #45485e94;
+    border: 2px blue solid;
+    border-radius: 2px;
     transform: translateY(4%);
 }
 /* ------------------------------ */
@@ -345,8 +352,8 @@ button:active {
 /* ------------------------------ */
 .speed-control{
     height: 30%;
-    width: 55%;
-    margin-left: 17%;
+    width: 50%;
+    margin-left: 15.5%;
     text-align: center;
     position: relative;
     background: none;

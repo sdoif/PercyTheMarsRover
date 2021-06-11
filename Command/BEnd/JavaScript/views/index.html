@@ -104,7 +104,7 @@
                     </div>
                     <div class="slider" id="acc-slider">
                         <div id="min-slider-val">6.0 </div>
-                        <input type="range" min="6.0" max="16.5" step="0.1" value="6.0" id = 'speed-slider' oninput="updateSpeed();">
+                        <input type="range" min="0.0" max="16" step="0.1" value="0.0" id = 'speed-slider' oninput="updateSpeed();">
                         <div id="max-slider-val"> 16.5</div>
                     </div>
                 </div>
@@ -154,7 +154,11 @@
             function toggleMode(){
                 const modeSwitch = document.querySelector("#switch");
                 const inputVal = document.querySelector("#speed-slider"); 
-                const keypadButton = document.querySelector(".keypad-button"); 
+                const uButton = document.querySelector("#up-key"); 
+                const lButton = document.querySelector("#left-key"); 
+                const rButton = document.querySelector("#right-key"); 
+                const dButton = document.querySelector("#up-key"); 
+                const sButton = document.querySelector("#up-key"); 
                 const speedControlDiv = document.querySelector('#speed-control-id');     
                 if(modeSwitch.checked){
                     postData("http://localhost:9000/api/mode", {mode: 1});
@@ -162,7 +166,11 @@
                     alert('SWITCHING TO AUTONOMOUS: Keypad and speed slider are now disabled. Switch back to manual to resume use')
                     // if Autonomous 
                     inputVal.disabled=true;
-                    keypadButton.disabled=true;
+                    uButton.disabled=true;
+                    lButton.disabled=true;
+                    rButton.disabled=true;
+                    dButton.disabled=true;
+                    sButton.disabled=true;
  
                 }else{
                     postData("http://localhost:9000/api/mode", {mode: 0});
@@ -170,7 +178,11 @@
                     alert('SWITCHING TO MANUAL: Keypad and speed slider are now enabled')
                     //if Manual
                     inputVal.disabled=false;
-                    keypadButton.disabled=false;
+                    uButton.disabled=false;
+                    lButton.disabled=false;
+                    rButton.disabled=false;
+                    dButton.disabled=false;
+                    sButton.disabled=false;
                 }
             }
 
@@ -266,7 +278,7 @@
                     let layout = { 
                         height: 275, 
                         width: 550, 
-                        paper_bgcolor: "#35499b", 
+                        paper_bgcolor: "#25242c", 
                         margin: { t: 0, b: 0 }, 
                         font: { color: "#ffebdb", family: "Roboto Mono" }
                     };
@@ -386,9 +398,9 @@
                 let roverData = await (res.json());
                 console.log(roverData);
                 updateDirectionAuto(roverData['gear']);
-                updateRoverCoordinates(roverData['xCoordinate'],roverData['yCoordinate']);
-                updateDistanceTraveled(roverData['distanceTravelled']);
-                updateSpeedAuto(roverData['speed']);
+                updateRoverCoordinates(Number(roverData['xCoordinate']),Number(roverData['yCoordinate']));
+                updateDistanceTraveled(Number(roverData['distanceTravelled']));
+                updateSpeedAuto(Number(roverData['speed']));
 
 
             }
@@ -405,7 +417,7 @@
             
             let init_speed = 6;
 
-            let _fromCommand = setInterval( updateUsingFromCommand ,3000);
+            let _fromCommand = setInterval( updateUsingFromCommand ,100);
 
         //  Speedometer 
             let data = [{
