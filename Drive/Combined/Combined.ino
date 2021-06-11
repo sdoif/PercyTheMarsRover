@@ -323,34 +323,53 @@ Serial.print('\n');
   Serial.println("v[0] = "+String(v[0]));
   Serial.println("v[1] = "+String(v[1]));
   Serial.println("c[0] = "+String(c[0]));
-  
+
+  //autonomous mode finite state machine
   if(c[0] == '1'){
+    
+    //rover starts if SMPS output is close to vref so that speed is constant during motion
     if(vb >= vref - 0.2){
-     if(v[0] != '1'){
-        Serial.println("scan_state = "+String(scan_state));    
+
+     //if there are still balls to be found in the field
+     if(v[0] != '1'){   
+      
+        //iterates twice and calls the 360 scan function each time
+        //scan_state counts the number of iterations
         if(scan_state < 2){
           rover_scan_zero(v[1]);
           s_0 = rover_scan_zero(v[1]);
         }  
+
+        //sets the mode to "go" for the start of the next scan function
         if(scan_state == 2){
            v[1] = 'g';
            delay(500);
            scan_state = 3;
-        }   
+        }
+
+        //calls the scan function which finalises when rover faces desired ball
         if(scan_state == 3){
           rover_scan_one(v[1]);
           s_1 = rover_scan_one(v[1]);
         }  
+
+        //sets the mode to "go" for the start of the next function
         if(scan_state == 4){
             v[1] = 'g';
             delay(500);
             scan_state = 5;
         }    
+
+        //calls function which takes the rover to the ball it's facing
         if(scan_state ==5){
+            //corrects the position of the rover to follow a straight line
             reach_forward(v[1]);
             f = reach_forward(v[1]);
         }    
-        if((scan_state == 6)&&f){
+
+        //set counter back to zero returning to intial state of the FSM
+        //loop until all the balls have been located
+        if((scan_state == 6)&&f){  
             scan_state = 0;
             delay(500);
             v[1] = 'g';
@@ -362,7 +381,7 @@ Serial.print('\n');
        
     }else{
       brake();}
-      
+  //manual mode   
   }else if(c[0] == '0'){
     if(vb >= vref - 0.2){
       rover_manual(c[1]);
@@ -371,7 +390,6 @@ Serial.print('\n');
     }
   }
 
-  
     
   prev_val_y = total_y;
   prev_val_x = total_x;
@@ -398,7 +416,7 @@ Serial.print('\n');
 
     loop_counter ++;
 
-    if(loop_counter == 10){
+    if(loop_counter == 5){
       Serial.print("data = ");
       for(int i = 0; i<6; i++){
         Serial.print(data_command[i]);
