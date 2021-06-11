@@ -3,9 +3,10 @@ const path = require('path');
 const mqtt = require('mqtt');
 const bp = require('body-parser')
 const { response } = require('express');
+const { Console } = require('console');
 
 const app = express();
-const client = mqtt.connect('mqtt://3.87.147.76', {clientId:"node"});
+const client = mqtt.connect('mqtt://35.178.136.139', {clientId:"node"});
 app.use(express.urlencoded({extended: true}));
 app.use(bp.json())
 app.use(bp.urlencoded({ extended: true }))
@@ -30,6 +31,8 @@ let roverStatus = {
     distanceTravelled: 0,
     speed: 0
 }
+
+let roverStatusInit = roverStatus;
 
 const server = app.listen(9000, (err) => {
     if(err){
@@ -140,19 +143,26 @@ client.on('connect', () =>{
     client.subscribe('test', () => {
         console.log('Subscribed to test');
     });
+
+    client.subscribe('drive', () => {
+        console.log('Subscribed to drive');
+    });
 });
 
 
 
 client.on('message', (topic, message, packet) => {
-    console.log(`Recieved message from ${topic} - ${message} `);
+    console.log(`Recieved message from ${topic} - ${message.toString()} `);
+    strMessage = message.toString();
+    console.log(strMessage)
     if(topic === "drive"){
-        let values = message.split("/");
-        roverStatus.gear = values[0];
-        roverStatus.xCoordinate = values[1];
-        roverStatus.yCoordinate = values[2];
-        roverStatus.distanceTravelled = values[3];
-        roverStatus.speed = values[4];
+        let values = strMessage.split("/");
+        roverStatus.gear = (values[1]);
+        roverStatus.xCoordinate = (values[2])=undefined? roverStatus.xCoordinate : (values[2]) ;
+        roverStatus.yCoordinate = (values[3])=undefined? roverStatus.yCoordinate : (values[3]) ;
+        roverStatus.distanceTravelled = (values[4])=undefined? roverStatus.distanceTravelled : (values[4]) ;
+        roverStatus.speed = (values[5])=undefined? roverStatus.speed : (values[5]) ;
+        console.log("Rover status changed to: ", roverStatus);
     }
     
 });
