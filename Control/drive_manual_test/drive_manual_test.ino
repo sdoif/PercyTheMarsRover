@@ -12,7 +12,7 @@
 WiFiClient wificlient;
 PubSubClient mqttclient(wificlient);
 long lastMsg = 0;
-char msg[90], fromDrive[80], fromVision[20];
+char msg[90], fromDrive[80], fromVision[50];
 char toVision[36], toCommand[44];
 char toDrive[5] = {'0','x','0','0','0'};
 int value = 0;
@@ -150,6 +150,12 @@ void clearmsg(){
   }
 }
 
+void clearfromVision(){
+  for(int i = 0; i < 50; i++){
+    fromVision[i] = NULL;
+  }
+}
+
 void loop() {
 
   if(WiFi.status() != WL_CONNECTED){
@@ -220,8 +226,16 @@ void loop() {
     }
     Serial.print("Received from vision: ");
     Serial.println(fromVision);
-    Serial2.print("v" + String(fromVision));
-    
+    if(fromVision[0] = 'c'){
+      byte buffer2[50];
+      for(int i = 0; i < 50; i++){
+        buffer2[i] = byte(fromVision[i]);
+      }
+      mqttclient.publish("vision", buffer2, 50);
+    }else{
+      Serial2.print("v" + String(fromVision));
+    }
+    clearfromVision;
   }
 
   if(Serial.available()){
