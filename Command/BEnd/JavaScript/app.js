@@ -38,7 +38,10 @@ let ballStatus={
     currX: 0,
     currY: 0,
     theta: 0,
-    distance: 0
+    distance: 0,
+    ballX: 0,
+    ballY: 0,
+    ballsSeen: []
 }
 
 let roverStatusInit = roverStatus;
@@ -78,9 +81,14 @@ app.get('/api/roverStats', (req, res) => {
     res.send(JSON.stringify(roverStatus));
 });
 
-app.get('/api/ballStatus', (req, res) => {
-    console.log("Requested ballStatus");
-    res.send(JSON.stringify(ballStatus));
+app.get('/api/newballStatus', (req, res) => {
+    let newBallStatus = {
+        ballXCoord = ballStatus.ballX,
+        ballYCoord = ballStatus.ballY,
+        color = ballStatus.color
+    }
+    console.log("Requested newBallStatus");
+    res.send(JSON.stringify(newBallStatus));
 });
 
 app.post('/api/direction', (req, res) => {
@@ -182,16 +190,25 @@ client.on('message', (topic, message, packet) => {
         roverStatus.speed = (values[5])=undefined? roverStatus.speed : (values[5]) ;
         console.log("Rover status changed to: ", roverStatus);
     }else if(topic === "vision"){
-        //let frontend know it is time to make a request
-        roverStatus.ballsSeen++;
-        //parse values from vision to make them ready for getting
-        let values = strMessage.split("/");
-        ballStatus.color = (values[1]);
-        ballStatus.theta = (values[2]);
-        ballStatus.currX = (values[3]);
-        ballStatus.currY = (values[4]);
-        ballStatus.distance = (values[5]);
-        console.log("Rover status changed to: ", roverStatus);
+        if(ballStatus.ballsSeen.includes(values[1])){
+            //already seen that ball before
+            console.log('Vision is sending a previously seen ball')
+        }else{
+            //let frontend know it is time to make a request
+            roverStatus.ballsSeen++;
+            //parse values from vision to make them ready for getting
+            let values = strMessage.split("/");
+            ballStatus.color = (values[1]);
+            ballStatus.theta = (values[2]);
+            ballStatus.currX = (values[3]);
+            ballStatus.currY = (values[4]);
+            ballStatus.distance = (values[5]);
+            //Calculate ball coordinates
+            ballStatus.ballX = ballStatus[currX] + (ballStatus[distance] * Math.cos(ballStatus[theta])) ;
+            ballStatus.ballY = ballStatus[currY] + (ballStatus[distance] * Math.sin(ballStatus[theta])) ;;
+
+            console.log("New ball alert! : ", ballStatus);
+        }
     }
     
 });
