@@ -20,7 +20,7 @@ int bytein = 0;
 int _index = 0;
 String add;
 String correct;
-const char* serverip = "35.178.136.139"; // aws server ip
+const char* serverip = "18.134.3.99"; // aws server ip
 
 
 // setup always runs at the start
@@ -213,14 +213,15 @@ void loop() {
 
   if(Serial1.available()){
     int k = 0;
-    while(Serial1.available()){
-      bytein = Serial1.read();
-      fromVision[k] = char(bytein);
-      k++;
-    }
+//    while(Serial1.available()){
+//      bytein = Serial1.read();
+//      fromVision[k] = char(bytein);
+//      k++;
+//    }
+    String temp = Serial1.readString();
     Serial.print("Received from vision: ");
-    Serial.println(fromVision);
-    Serial2.print("v" + String(fromVision));
+    Serial.println(temp);
+    Serial2.print("v" + temp);
     
   }
 
