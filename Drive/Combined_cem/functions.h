@@ -80,6 +80,8 @@ int pwml = 9;                     //pin to control left wheel speed using pwm
 
 unsigned long ref_time = 0;
 unsigned long reff_time = 0;
+unsigned long ref1_time = 0;
+unsigned long reff1_time = 0;
 
 float new_origin;
 int loop_count = 0;
@@ -88,11 +90,14 @@ int prev_val_x = 0;
 int min_y = 0;
 int min_x = 0;
 int actual_y_prev = 0;
-int testing_x=15;
-int testing_y=11;
+int testing_x=-19;
+int testing_y=15;
 int __iter = 0;
+int __iter1 = 0;
 float total_distance=0;
-
+float xcorcur = 0;
+float ycorcur = 0;
+int stopgoto = 0;
 int found = 0;
 
 int search_x = 0;
@@ -100,9 +105,11 @@ int search_y = 0;
 int _iter_scan = 0;
 int _iter_short = 0;
 int _iter = 0;
+int _iter1 = 0;
 
 int counter_x = 0;
 int counter_y = 0;
+
 
 int total_x_distance = 0;
 int total_y_distance = 0;
@@ -126,6 +133,8 @@ int actual_x_short = 0;
 int actual_x_scan = 0;
 int actual_y = 0;
 int actual_x = 0;
+int startOfgoTo = 0;
+
 
 float distance_x=0;
 float distance_y=0;
@@ -382,21 +391,63 @@ return new_angle;
   return new_angle;
 }
 }
-bool gotocoordinate(int xx, int yy, float current_angle, float currrent_r){
+void movebycoordinate(int xx, int yy, float current_angle, float currrent_r){
+  int x = xx*10;
+  int y = yy*10;
+  double angle = atan2(yy,xx);
+  float angle_new = change_angle(angle);
+  float rr = sqrt(sq(xx)+sq(yy));
+  float r = rr*10;
+  if((angle_new-0.12<current_angle)&&(angle_new+0.12>current_angle)){
+  if(r>currrent_r){
+    if(__iter1==0){
+      reff1_time = millis();
+      __iter1=1;
+    }
+    if(millis()-reff1_time < 500){
+      forward();
+    }else if(((millis()-reff1_time) >= 500)&&((millis()-reff1_time) <= 2000)){
+  brake();
+  
+  }else if((millis()-reff1_time) > 2000){
+   __iter1 = 0;
+  }
+  }
+  else if(r<=currrent_r){
+    brake();
+    }
+}else if(angle_new-0.12>current_angle){
+ if(_iter1 == 0){
+    ref1_time = millis();
+      _iter1 = 1;
+  }
+  if((millis()-ref1_time) < 500){
+    left();
+  }else if(((millis()-ref1_time) >= 500)&&((millis()-ref1_time) <= 2000)){
+    brake();
+  }else if((millis()-ref_time) > 2000){
+   _iter1 = 0;
+  }
+}else if(angle_new+0.12<current_angle){
+   right();
+}
+}
+
+bool gotocoordinate(int xx, int yy, float current_angle, float currrent_r, float currentx, float currenty){
+if(stopgoto==0){
 int x = xx*10;
 int y = yy*10;
-double angle = atan2(yy,xx);
+int diff_y;
+int diff_x;
+if(startOfgoTo == 0){
+ diff_x = xx-currentx;
+ diff_y = yy-currenty;
+startOfgoTo++;
+}
+double angle = atan2(diff_y,diff_x);
 float angle_new = change_angle(angle);
-//if(angle<0){
-//  angle = angle+(2*PI);
-//}
-//  if(angle_old<0){
-//  angle = angle_old + (2*PI);
-//  }else if(angle_old>=0){
-//    angle = angle_old;
-//  }
 float angle_deg = angle_new*(180/PI);
-float rr = sqrt(sq(xx)+sq(yy));
+float rr = sqrt(sq(diff_x)+sq(diff_y));
 float r = rr*10;
 Serial.println("Target angle=");
 Serial.print(angle_deg);
@@ -420,6 +471,8 @@ if((angle_new-0.12<current_angle)&&(angle_new+0.12>current_angle)){
   }
   else if(r<=currrent_r){
     brake();
+    startOfgoTo = 0;
+    stopgoto++;
     }
 }else if(angle_new-0.12>current_angle){
  if(_iter == 0){
@@ -440,8 +493,10 @@ if((angle_new-0.12<current_angle)&&(angle_new+0.12>current_angle)){
    right();
 }
 
+}else{
+  brake();
+  }
 }
-
 
 
 
