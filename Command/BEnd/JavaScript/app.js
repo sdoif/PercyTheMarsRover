@@ -147,6 +147,10 @@ client.on('connect', () =>{
     client.subscribe('drive', () => {
         console.log('Subscribed to drive');
     });
+
+    client.subscribe('vision', () => {
+        console.log('Subscribed to vision');
+    });
 });
 
 
@@ -163,6 +167,8 @@ client.on('message', (topic, message, packet) => {
         roverStatus.distanceTravelled = (values[4])=undefined? roverStatus.distanceTravelled : (values[4]) ;
         roverStatus.speed = (values[5])=undefined? roverStatus.speed : (values[5]) ;
         console.log("Rover status changed to: ", roverStatus);
+    }else if(topic === "vision"){
+        
     }
     
 });
