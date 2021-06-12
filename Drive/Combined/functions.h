@@ -80,6 +80,9 @@ bool s_0;
 bool s_1;
 bool f;
 
+int s_0_int = 0;
+int s_1_int = 0;
+
 int loop_counter = 0;
 
 float x_to_command = 0;
@@ -315,7 +318,7 @@ void sampling(){
     ////dtostrf(_speed.toDouble(),4,1,__speed);
     Serial.println("vref_set = "+String(vref));
   }else{
-    vref = 1.5;
+    vref = 1.6;
   }
   sensorValue3 = analogRead(A3); //sample Vpd
   current_mA = ina219.getCurrent_mA(); // sample the inductor current (via the sensor chip)
@@ -487,9 +490,10 @@ bool rover_scan_one(char _mode){
     Serial.println("Scan_one = STOP");
     scan_state = 4;
     Serial.println("_mode_one = "+String(_mode));
-    delay(500);
+    s_1_int = 1;
     return true;
   }else if((_mode == 'g')&&s_0){
+    s_1_int = 0;
     left();
     return false;
   }
@@ -499,14 +503,14 @@ bool rover_scan_zero(char _mode){
   if(_iter_scan == 0){
     actual_x_first = abs(actual_x);
   }
-  if(abs(actual_x) >= 800 +actual_x_first){
+  if(abs(actual_x) >= 650 +actual_x_first){
     brake();
     if((_iter_scan == 1)||(_iter_scan == 2)){
       scan_state++;
       _iter_scan = 0;
     }
     Serial.println("scan_state_zero = "+String(scan_state));
-    delay(500);
+    s_0_int = 1;
     return true;
   }else if((_mode == 's')&&(!s_0)){
     brake();
@@ -521,6 +525,7 @@ bool rover_scan_zero(char _mode){
     return false;
   }else{
     if((_mode == 'g')&&(!s_0)){
+      s_0_int = 0;
       left();
       _iter_scan = 1;
       return false;

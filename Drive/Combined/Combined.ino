@@ -408,8 +408,8 @@ Serial.print('\n');
     data_command[4] = fixed_size(total);
     data_command[5] = fixed_size(voltage2speed(vref));
 
-    data_vision[1] = String(s_0);
-    data_vision[2] = String(s_1);
+    data_vision[1] = String(s_0_int);
+    data_vision[2] = String(s_1_int);
     data_vision[3] = fixed_size(theta_store);
     data_vision[4] = fixed_size(xcal_total_store);
     data_vision[5] = fixed_size(ycal_total_store);
