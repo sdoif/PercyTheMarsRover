@@ -27,8 +27,8 @@
                 <div class="battery">
                     <div class="battery-shell"><div id="battery-level"></div></div>
                     <div class="battery-lid"></div>
-                    <p id='battery-percent'> &#9735;50% </p>
-                    <p id='battery-ttl'> 29 mins until full </p>
+                    <p id='battery-percent'> <span id = 'cnc'>&#9735;</span><span id='pc-val'>0</span></p>
+                    <p id='battery-ttl'> <span id='time-till'> 40</span>mins<span id='time-state'> until full </span> </p>
                 </div>
             </section>
             
@@ -116,12 +116,12 @@
 
                 <div class = 'speed-control' id='speed-control-id'>
                     <div class="slider" id="curr-val">
-                        <span id="curr-speed-text">Speed (cm/s) :&nbsp;<span id="curr-speed-val">6.0</span></span>
+                        <span id="curr-speed-text">Speed (cm/s) :&nbsp;<span id="curr-speed-val">0</span></span>
                     </div>
                     <div class="slider" id="acc-slider">
-                        <div id="min-slider-val">6.0 </div>
-                        <input type="range" min="6.0" max="16.5" step="0.1" value="6.0" id = 'speed-slider' oninput="updateSpeed();">
-                        <div id="max-slider-val"> 16.5</div>
+                        <div id="min-slider-val">0 </div>
+                        <input type="range" min="0.0" max="16.0" step="0.1" value="0.0" id = 'speed-slider' oninput="updateSpeed();">
+                        <div id="max-slider-val"> 16</div>
                     </div>
                 </div>
 
@@ -424,7 +424,37 @@
 
             function moveToClick(){
                 //manual move to point on graph feature
-            } 
+            }
+            
+            function updateEnergyStatus(cnc, percentage, time){
+                let lightning = document.querySelector('#cnc');
+                let state = document.querySelector('#time-state');
+                let percentValue = document.querySelector('#pc-val');
+                let timeValue = document.querySelector('#time-till');
+                let batteryLevel = document.querySelector('#battery-level');
+                //Update state: Charging or not Charging
+                if(cnc === 'c'){
+                    lightning.style.display = "inline";
+                    state.textContent = " until full";
+                }else if( cnc = 'nc'){
+                    lightning.style.display = "none";
+                    state.textContent = " remaining";
+                }
+
+                timeValue.textContent = time>0? String(time)+' ' : "0 ";
+                percentValue.textContent = percentage>0? String(percentage)+'%': "0%";
+                batteryLevel.style.width = percentValue.textContent;
+                
+                if(percentage<=20){
+                    batteryLevel.style.backgroundColor = "red";
+                }else if((percentage>20)&&(percentage<60)){
+                    batteryLevel.style.backgroundColor = "yellow";
+                }else{
+                    batteryLevel.style.backgroundColor = "green";
+                }
+
+                //Update percentage and color
+            }
 
 
         </script>
@@ -437,7 +467,7 @@
             const URL = "http://"+HOST+":"+PORT;
             //const recieved = fetchData("http://localhost:9000/api/test")
             
-            let init_speed = 6;
+            let init_speed = 0;
 
             let _fromCommand = setInterval( updateUsingFromCommand ,5000);
 
