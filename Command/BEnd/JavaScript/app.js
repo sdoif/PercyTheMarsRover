@@ -6,7 +6,7 @@ const { response } = require('express');
 const { Console } = require('console');
 
 const app = express();
-const client = mqtt.connect('mqtt://35.178.136.139', {clientId:"node"});
+const client = mqtt.connect('mqtt://18.134.3.99', {clientId:"node"});
 app.use(express.urlencoded({extended: true}));
 app.use(bp.json())
 app.use(bp.urlencoded({ extended: true }))
@@ -29,7 +29,16 @@ let roverStatus = {
     xCoordinate: 0,
     yCoordinate: 0,
     distanceTravelled: 0,
-    speed: 0
+    speed: 0,
+    ballsSeen: 0
+}
+
+let ballStatus={
+    color: '',
+    currX: 0,
+    currY: 0,
+    theta: 0,
+    distance: 0
 }
 
 let roverStatusInit = roverStatus;
@@ -67,6 +76,11 @@ app.get('/api/test', (req, res) => {
 app.get('/api/roverStats', (req, res) => {
     console.log("Requested roverStatus");
     res.send(JSON.stringify(roverStatus));
+});
+
+app.get('/api/ballStatus', (req, res) => {
+    console.log("Requested ballStatus");
+    res.send(JSON.stringify(ballStatus));
 });
 
 app.post('/api/direction', (req, res) => {
@@ -168,7 +182,16 @@ client.on('message', (topic, message, packet) => {
         roverStatus.speed = (values[5])=undefined? roverStatus.speed : (values[5]) ;
         console.log("Rover status changed to: ", roverStatus);
     }else if(topic === "vision"){
-        
+        //let frontend know it is time to make a request
+        roverStatus.ballsSeen++;
+        //parse values from vision to make them ready for getting
+        let values = strMessage.split("/");
+        ballStatus.color = (values[1]);
+        ballStatus.theta = (values[2]);
+        ballStatus.currX = (values[3]);
+        ballStatus.currY = (values[4]);
+        ballStatus.distance = (values[5]);
+        console.log("Rover status changed to: ", roverStatus);
     }
     
 });
