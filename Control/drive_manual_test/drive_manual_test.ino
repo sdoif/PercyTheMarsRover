@@ -244,8 +244,7 @@ void loop() {
       receivedFromVision = 1;
       String temp2 = temp.substring(5);
       temp2.toCharArray(fromVision, temp2.length());
-      Serial2.print("v" + temp.substring(0,4));
-
+      Serial2.print(temp.substring(0,4));
 
     }else{
       Serial.print("Here we are");
