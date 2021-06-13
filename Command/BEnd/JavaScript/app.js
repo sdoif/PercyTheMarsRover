@@ -35,8 +35,8 @@ let roverStatus = {
 
 let ballStatus={
     color: '',
-    currX: 0,
-    currY: 0,
+    currentX: 0,
+    currentY: 0,
     theta: 0,
     distance: 0,
     ballX: 0,
@@ -57,10 +57,10 @@ const server = app.listen(9000, (err) => {
 });
 
 app.use( (req,res,next) =>{
-    console.log('Request made ');
-    console.log('Host: ', req.hostname);
-    console.log('Path; ', req.path);
-    console.log('Method: ', req.method);
+    // console.log('Request made ');
+    // console.log('Host: ', req.hostname);
+    // console.log('Path; ', req.path);
+    // console.log('Method: ', req.method);
     next();
 });
 
@@ -68,7 +68,6 @@ app.get('/', (req, res) => {
 
     res.sendFile('./views/index.html', { root: __dirname });
     console.log(req.url);
-
 });
 
 app.get('/api/test', (req, res) => {
@@ -79,7 +78,7 @@ app.get('/api/test', (req, res) => {
 });
 
 app.get('/api/roverStats', (req, res) => {
-    console.log("Requested roverStatus");
+    //console.log("Requested roverStatus");
     res.send(JSON.stringify(roverStatus));
 });
 
@@ -91,8 +90,10 @@ app.get('/api/ballStatus', (req, res) => {
         ballNum : ballStatus.count,
         archive: allBallsSeen
     }
-    console.log("Requested ballStatus");
-    res.send(JSON.stringify(newBallStatus));
+    //cconsole.log("Requested ballStatus");
+    if(newBallStatus.color==='r'||'g'||'y'||'b'||'v'){
+        res.send(JSON.stringify(newBallStatus));
+    }
 });
 
 app.post('/api/direction', (req, res) => {
@@ -196,11 +197,11 @@ client.on('message', (topic, message, packet) => {
     }else if(topic === "vision"){
         console.log(`Recieved message from ${topic} - ${strMessage}`);
         //parse values from vision to make them ready for getting
-        ballStatus.color = (values[4]);
-        ballStatus.theta = Number(values[1]);
-        ballStatus.currentX = Number(values[2]);
-        ballStatus.currentY = Number(values[3]);
-        ballStatus.distance = Number(values[5]);
+        ballStatus.color = (values[6]);
+        ballStatus.theta = Number(values[3]);
+        ballStatus.currentX = Number(values[4]);
+        ballStatus.currentY = Number(values[5]);
+        ballStatus.distance = Number(values[7]);
         //Calculate ball coordinates
         ballStatus.ballX = ballStatus.currentX + (ballStatus.distance * Math.cos(ballStatus.theta)) ;
         ballStatus.ballY = ballStatus.currentY + (ballStatus.distance * Math.sin(ballStatus.theta)) ;
