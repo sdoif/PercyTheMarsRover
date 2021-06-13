@@ -226,8 +226,8 @@ void loop() {
       for(int i = 0; i < 50; i++){
         buffer2[i] = byte(ballCoordinates[i]);
       }
-      receivedFromVision = 0;
       mqttclient.publish("vision", buffer2, 50);
+      receivedFromVision = 0;
     }
 
     Serial.print("toVision = "+String(toVision));
@@ -240,11 +240,14 @@ void loop() {
     Serial.print("Received from vision: ");
     Serial.println(temp);
     if(temp[0] == 'c'){
+      Serial.print("Actually here");
       receivedFromVision = 1;
-      temp.toCharArray(fromVision, temp.legnth());
-    }else{
+      temp.toCharArray(fromVision, temp.length());
 
+    }else{
+      Serial.print("Here we are");
       Serial2.print("v" + temp);
+
     }
     clearfromVision();    
   }
