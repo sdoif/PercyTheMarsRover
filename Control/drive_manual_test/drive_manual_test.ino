@@ -11,15 +11,13 @@
 
 WiFiClient wificlient;
 PubSubClient mqttclient(wificlient);
-long lastMsg = 0;
-char msg[90], fromDrive[80], fromVision[50];
-char toVision[36], toCommand[44];
+char msg[90], fromDrive[80], fromVision[50], toVision[36], toCommand[44], ballCoordinates[50];
 char toDrive[5] = {'0','x','0','0','0'};
 int value = 0;
 int bytein = 0;
 int _index = 0;
-String add;
-String correct;
+int receivedFromVision = 0;
+String add, correct;
 const char* serverip = "18.134.3.99"; // aws server ip
 
 
@@ -46,6 +44,7 @@ void setup() {
       Serial.println("Client connection failed");
     }
     delay(1000);
+
     if(mqttclient.subscribe("direction")){
       Serial.println("Subscribed to direction");
     }else{
@@ -100,18 +99,17 @@ void callback(char* topic, byte* message, unsigned int length) {
   Serial.println();
   String _topic = String(topic);
   //send whatever direction command we receive as its already good!
-  if(_topic=="test"){
+  if(_topic == "test"){
        Serial.print(messageTemp);
-  }else if (_topic=="mode"){
+  }else if (_topic == "mode"){
       toDrive[0] = messageTemp[0];
       Serial2.print("c" + String(toDrive));
       Serial.print("c" + String(toDrive));
-  }else if(_topic=="direction"){
+  }else if(_topic == "direction"){
       toDrive[1] = messageTemp[0];
       Serial2.print("c" + String(toDrive));  
       Serial.print("c" + String(toDrive));
-  }else if(_topic=="speed"){
-    Serial.println("HERE --> speed");
+  }else if(_topic == "speed"){
      toDrive[2] = messageTemp[0];
      toDrive[3] = messageTemp[1];
      toDrive[4] = messageTemp[2];
@@ -185,10 +183,9 @@ void loop() {
     }
 
     Serial.println("add = " + add);
-    
     _index = add.indexOf('c');
-      
     correct = "";
+
     for(int i = _index; i < _index + 80; i++){
       correct = correct + add[i];
     }
@@ -201,18 +198,32 @@ void loop() {
     for(int i = 44; i < 80; i++){
       toVision[i-44] = correct[i];
     }
-
-    
     for(int i = 1; i<44; i++){
       Serial.print(toCommand[i]);
     }
     Serial.println();
+
     byte buffer[44];
     for(int i = 0; i < 44; i++){
       buffer[i] = byte(toCommand[i]);
     }
     mqttclient.publish("drive", buffer, 44);
     Serial1.print(toVision);
+    if(receivedFromVision){
+      for(int i = 0; i < 36; i++){
+        ballCoordinates[i] = toVision[i];
+      }
+      for(int i = 36; i < 50; i++){
+        ballCoordinates[i] = fromVision[i-35];
+      }
+      byte buffer2[50];
+      for(int i = 0; i < 50; i++){
+        buffer2[i] = byte(ballCoordinates[i]);
+      }
+      receivedFromVision = 0;
+      mqttclient.publish("vision", buffer2, 50);
+    }
+
     Serial.print("toVision = "+String(toVision));
   }
 
@@ -222,12 +233,8 @@ void loop() {
     String temp = Serial1.readString();
     Serial.print("Received from vision: ");
     Serial.println(temp);
-    if(temp[0] = 'c'){
-      byte buffer2[50];
-      for(int i = 0; i < 50; i++){
-        buffer2[i] = byte(temp[i]);
-      }
-      mqttclient.publish("vision", buffer2, 50);
+    if(temp[0] == 'c'){
+      receivedFromVision = 1;
     }else{
       Serial.println(temp);
       Serial2.print("v" + temp);
