@@ -163,7 +163,7 @@ bool distance_check_z1(int distance){
 }
 
 bool distance_check_z2(int distance){
-	if (distance >= 80 && distance <= 150){
+	if (distance >= 80 && distance <= 200){
 		return TRUE;
 	}else{
 		return FALSE;
@@ -207,12 +207,13 @@ bool go_towards(Ball *ball, FILE* fp){
 	int distance;
 
 	if(ball->colour == 'R'){
-		while ((IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_STATUS)>>8) & 0xff) {
-
+		printf("Going towards red\n");
+		while (1) {
+			//printf("Started while loop\n");
 			// Update the boundary box co-ordinates
 			verilog_word = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
 			if (verilog_word == EEE_IMGPROC_MSG_START_R){ // If the incoming string == RBB
-				// Print on a newline
+				printf("Detected the start of red coordinates\n");
 				int r_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (top left coordinate)
 				int r_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (bottom right coordinate)
 
@@ -224,14 +225,15 @@ bool go_towards(Ball *ball, FILE* fp){
 
 				// Measure angle and correct if needed to
                 int middle_pix = (r_right_x + r_left_x) / 2;
-                if (middle_pix < 240){
-					fprintf(fp, "0s");
-					fprintf(fp, "0l");
-                }else if(middle_pix > 400){
-					fprintf(fp, "0s");
-					fprintf(fp, "0r");
+                printf("middle pixel : %i\n", middle_pix);
+                if (middle_pix < 280){
+					fprintf(fp, "v0s\n");
+					fprintf(fp, "v0l\n");
+                }else if(middle_pix > 360){
+					fprintf(fp, "v0s\n");
+					fprintf(fp, "v0r\n");
 				}else{
-					fprintf(fp, "0g");
+					fprintf(fp, "v0g\n");
 				}
 
 				// If we can make a valid decision measurement, make it
@@ -239,16 +241,18 @@ bool go_towards(Ball *ball, FILE* fp){
 					distance = distance_calc(r_left_x, r_right_x, r_left_y, r_right_y);
 					if (distance < 60 && distance > 30){
 						// Update members
+						fprintf(fp, "v0s\n");
 						ball->distance = distance;
 						ball->seen = TRUE;
+						fprintf(fp, "c/r/%i\n", distance);
 						return TRUE;
 					}
 				}
     	   	}
 		}
 	}else if(ball->colour == 'G'){
-		while ((IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_STATUS)>>8) & 0xff) {
-
+		printf("Going towards green\n");
+		while (1) {
 			// Update the boundary box co-ordinates
 			int verilog_word = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
 			if (verilog_word == EEE_IMGPROC_MSG_START_G){ // If the incoming string == RBB
@@ -265,41 +269,36 @@ bool go_towards(Ball *ball, FILE* fp){
 
 				// Measure angle and correct if needed to
                 int middle_pix = (g_right_x + g_left_x) / 2;
-                if (middle_pix < 240){
-					fprintf(fp, "0s");
-					fprintf(fp, "0l");
-                }else if(middle_pix > 400){
-					fprintf(fp, "0s");
-					fprintf(fp, "0r");
+                if (middle_pix < 280){
+					fprintf(fp, "v0s\n");
+					fprintf(fp, "v0l\n");
+                }else if(middle_pix > 360){
+					fprintf(fp, "v0s\n");
+					fprintf(fp, "v0r\n");
 				}else{
-					fprintf(fp, "0g");
+					fprintf(fp, "v0g\n");
 				}
 
 				// If we can make a valid decision measurement, make it
 				if(is_ball(g_left_x, g_right_x, g_left_y, g_right_y) && is_in_centre_range(g_left_x, g_right_x)){
 					distance = distance_calc(g_left_x, g_right_x, g_left_y, g_right_y);
-					if (distance < 50 && distance > 30){
+					if (distance < 60 && distance > 30){
 						// Update members
+						fprintf(fp, "v0s\n");
 						ball->distance = distance;
 						ball->seen = TRUE;
-
-						// ball->x_coord = int_x + distance*cos(int_theta);
-						// ball->y_coord = int_y + distance*sin(int_theta);
-						// fprintf(fp, "v/x/%d/y/%d/r", ball->x_coord, ball->y_coord);
-
+						fprintf(fp, "c/g/%i\n", distance);
 						return TRUE;
 					}
 				}
     	   	}
 		}
 	}else if(ball->colour == 'B'){
-		while ((IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_STATUS)>>8) & 0xff) {
-
+		printf("Going towards blue\n");
+		while (1) {
 			// Update the boundary box co-ordinates
 			int verilog_word = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
 			if (verilog_word == EEE_IMGPROC_MSG_START_B){ // If the incoming string == RBB
-				// Print on a newline
-				printf("\n");
 				int b_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (top left coordinate)
 				int b_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (bottom right coordinate)
 
@@ -311,28 +310,24 @@ bool go_towards(Ball *ball, FILE* fp){
 
 				// Measure angle and correct if needed to
                 int middle_pix = (b_right_x + b_left_x) / 2;
-                if (middle_pix < 240){
-					fprintf(fp, "0s");
-					fprintf(fp, "0l");
-                }else if(middle_pix > 400){
-					fprintf(fp, "0s");
-					fprintf(fp, "0r");
+                if (middle_pix < 280){
+					fprintf(fp, "v0s\n");
+					fprintf(fp, "v0l\n");
+                }else if(middle_pix > 360){
+					fprintf(fp, "v0s\n");
+					fprintf(fp, "v0r\n");
 				}else{
-					fprintf(fp, "0g");
+					fprintf(fp, "v0g\n");
 				}
 
 				// If we can make a valid decision measurement, make it
 				if(is_ball(b_left_x, b_right_x, b_left_y, b_right_y) && is_in_centre_range(b_left_x, b_right_x)){
 					distance = distance_calc(b_left_x, b_right_x, b_left_y, b_right_y);
-					if (distance < 50 && distance > 30){
-						// Update members
+					if (distance < 60 && distance > 30){
+						fprintf(fp, "v0s\n");
 						ball->distance = distance;
 						ball->seen = TRUE;
-
-						// ball->x_coord = int_x + distance*cos(int_theta);
-						// ball->y_coord = int_y + distance*sin(int_theta);
-						// fprintf(fp, "v/x/%d/y/%d/r", ball->x_coord, ball->y_coord);
-
+						fprintf(fp, "c/r/%i\n", distance);
 						return TRUE;
 					}
 				}
@@ -387,13 +382,11 @@ bool go_towards(Ball *ball, FILE* fp){
     	   	}
 		}
 	}*/else if(ball->colour == 'Y'){
-		while ((IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_STATUS)>>8) & 0xff) {
-
+		printf("Going towards yellow\n");
+		while (1) {
 			// Update the boundary box co-ordinates
 			int verilog_word = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
 			if (verilog_word == EEE_IMGPROC_MSG_START_Y){ // If the incoming string == RBB
-				// Print on a newline
-				printf("\n");
 				int y_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (top left coordinate)
 				int y_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (bottom right coordinate)
 
@@ -405,35 +398,37 @@ bool go_towards(Ball *ball, FILE* fp){
 
 				// Measure angle and correct if needed to
                 int middle_pix = (y_right_x + y_left_x) / 2;
-                if (middle_pix < 240){
-					fprintf(fp, "0s");
-					fprintf(fp, "0l");
-                }else if(middle_pix > 400){
-					fprintf(fp, "0s");
-					fprintf(fp, "0r");
+                if (middle_pix < 280){
+					fprintf(fp, "v0s\n");
+					fprintf(fp, "v0l\n");
+                }else if(middle_pix > 360){
+					fprintf(fp, "v0s\n");
+					fprintf(fp, "v0r\n");
 				}else{
-					fprintf(fp, "0g");
+					fprintf(fp, "v0g\n");
 				}
 
 				// If we can make a valid decision measurement, make it
 				if(is_ball(y_left_x, y_right_x, y_left_y, y_right_y) && is_in_centre_range(y_left_x, y_right_x)){
 					distance = distance_calc(y_left_x, y_right_x, y_left_y, y_right_y);
-					if (distance < 50 && distance > 30){
+					if (distance < 60 && distance > 30){
+						fprintf(fp, "v0s\n");
 						// Update members
 						ball->distance = distance;
 						ball->seen = TRUE;
-
-						// ball->x_coord = int_x + distance*cos(int_theta);
-						// ball->y_coord = int_y + distance*sin(int_theta);
-						// fprintf(fp, "v/x/%d/y/%d/r", ball->x_coord, ball->y_coord);
+						fprintf(fp, "c/y/%i\n", distance);
 
 						return TRUE;
 					}
 				}
     	   	}
+			// Need to read the next few messages to restart the while loop
+			IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
+			IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
+			IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
 		}
 	}
-	printf("Invalid ball colour\n");
+	printf("Reaching return 0\n");
 	return 0;
 }
 
@@ -609,10 +604,11 @@ int main()
 			float int_x;
 			float int_y;
 
-			if((count % 100) == 0){
-			incomingChar = fgetc(fp);
+			//if((count % 3) == 0){
+			//incomingChar = fgetc(fp);
 			//printf("Received : %c\n", incomingChar);
 
+			/*
 			if (incomingChar == 'v'){ // detected beginning of my info
 			   	incomingChar = fgetc(fp); // grab a '/'
 				//printf("detected a v\n");
@@ -623,9 +619,9 @@ int main()
 			   	}
 				state1_array[1] = state1;
 	        	incomingChar = fgetc(fp); // Grabs a '/'
-			   	//printf("state1 : %c\n", state1);
+			   	printf("state1 : %c\n", state1);
 	        	state2 = fgetc(fp);
-	        	//printf("state2 : %c\n", state2);
+	        	printf("state2 : %c\n", state2);
 			//}
 	        	incomingChar = fgetc(fp); // Grabs a '/'
 	        	//printf("should be a +: %c\n", incomingChar);
@@ -639,7 +635,7 @@ int main()
 			    }
 			    //printf("theta: %s\n", theta);
 			    int_theta = atof(theta);
-			    //printf("int theta : %f\n", int_theta);
+			    printf("int theta : %f\n", int_theta);
 
 			    incomingChar = fgetc(fp); // read the first digit
 			    while(incomingChar != '/'){ // read chars and append to string until we reach the end of the line
@@ -650,7 +646,7 @@ int main()
 			        incomingChar = fgetc(fp);
 	        	}
 			    int_x = atof(x_coordinate);
-			    //printf("int x : %f\n", int_x);
+			    printf("int x : %f\n", int_x);
 
 
 			    incomingChar = fgetc(fp); // read the first digit
@@ -665,7 +661,8 @@ int main()
 			    //printf("int y : %f\n", int_y);
 
 			}
-			}
+			*/
+			//}
 			//printf("Finished reading info\n");
 
 			// ---------- End of analysing incoming chars from Control ---------
@@ -773,7 +770,7 @@ int main()
 					// Check what zone that distance corresponds to
 					if (distance_check_z1(distance) == 1){
 						printf("Distance in accurate distance range\n");
-						fprintf(fp, "c/r/%d/%d/%d/%d/\n", int_theta, int_x, int_y, distance);
+						fprintf(fp, "c/r/%d\n", distance);
 						//printf("c/r/theta/x/y/distance");
 						redBall_ptr->distance = distance;
 						redBall_ptr->seen = TRUE;
@@ -799,15 +796,10 @@ int main()
 					// Check what zone that distance corresponds to
 					if (distance_check_z1(distance) == 1){
 						printf("Distance in accurate distance range\n");
-						fprintf(fp, "c/g/%d/%d/%d/%d/\n", int_theta, int_x, int_y, distance);
-						//fprintf(fp, "v/g/%d\n", distance);
+						fprintf(fp, "c/g/%d\n", distance);
 						greenBall_ptr->distance = distance;
 						greenBall_ptr->seen = TRUE;
 						balls_detected++;
-
-//						greenBall_ptr->x_coord = int_x + distance*cos(int_theta);
-//						greenBall_ptr->y_coord = int_y + distance*sin(int_theta);
-//						fprintf(fp, "v/x/%d/y/%d/g", greenBall_ptr->x_coord, greenBall_ptr->y_coord);
 					}else{
 						greenBall_ptr->seen = FALSE;
 					}
@@ -822,14 +814,10 @@ int main()
 					// Check what zone that distance corresponds to
 					if (distance_check_z1(distance) == 1){
 						printf("Distance in accurate distance range\n");
-						fprintf(fp, "c/b/%d/%d/%d/%d/\n", int_theta, int_x, int_y, distance);
+						fprintf(fp, "c/b/%d\n", distance);
 						blueBall_ptr->distance = distance;
 						blueBall_ptr->seen = TRUE;
 						balls_detected++;
-
-//						blueBall_ptr->x_coord = int_x + distance*cos(int_theta);
-//						blueBall_ptr->y_coord = int_y + distance*sin(int_theta);
-//						fprintf(fp, "v/x/%d/y/%d/b", blueBall_ptr->x_coord, blueBall_ptr->y_coord);
 					}else{
 						blueBall_ptr->seen = FALSE;
 					}
@@ -857,9 +845,6 @@ int main()
 						// int x;
 						// int y;
 						// int theta;
-						// violetBall_ptr->x_coord = int_x + distance*cos(int_theta);
-						// violetBall_ptr->y_coord = int_y + distance*sin(int_theta);
-						// fprintf(fp, "v/x/%d/y/%d/v", violetBall_ptr->x_coord, violetBall_ptr->y_coord);
 					}else{
 						violetBall_ptr->seen = FALSE;
 					}
@@ -875,14 +860,10 @@ int main()
 					// Check what zone that distance corresponds to
 					if (distance_check_z1(distance) == 1){
 						printf("Distance in accurate distance range\n");
-						fprintf(fp, "c/y/%d/%d/%d/%d/\n", int_theta, int_x, int_y, distance);
+						fprintf(fp, "c/y/%d\n", distance);
 						yellowBall_ptr->distance = distance;
 						yellowBall_ptr->seen = TRUE;
 						balls_detected++;
-
-//						yellowBall_ptr->x_coord = int_x + distance*cos(int_theta);
-//						yellowBall_ptr->y_coord = int_y + distance*sin(int_theta);
-//						fprintf(fp, "v/x/%d/y/%d/y", yellowBall_ptr->x_coord, yellowBall_ptr->y_coord);
 					}else{
 						yellowBall_ptr->seen = FALSE;
 					}
@@ -896,40 +877,49 @@ int main()
 					IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
 				}
 			}else if(state == 1){ // 2nd scan/vague distance
-
+				//printf("Entered 2nd scan\n");
 				// If we've finished the full 360
-				if(state1 == 1){ // fill with char that we expect once the full 360 for stage 2 is done
+				if(s2_balls_detected == 4){//state1 == 1){ // fill with char that we expect once the full 360 for stage 2 is done
 					if (s2_balls_detected == 0){ // no vague distances
 						state = 2; // advance to stage 2
 					}else{ // go to the closest ball
-						s2_balls_detected = 0; // reset counter for future 2nd scans
+						//s2_balls_detected = 0; // reset counter for future 2nd scans
 
 						if (closestBall->colour == 'R'){
+							printf("Closest ball is red\n");
 							if ((redBall_ptr->seen == FALSE) && is_ball(r_left_x, r_right_x, r_left_y, r_right_y) && is_in_centre_range(r_left_x, r_right_x)){
 								fprintf(fp, "v%is\n", foundbit);
 								// Rover then starts to go towards the ball; set off function that corrects the angle
 								if (go_towards(closestBall, fp)){ // returns true if we've reached the ball and measured the distance
-									fprintf(fp, "c/r/%d/%d/%d/%d/\n", int_theta, int_x, int_y, closestBall->distance);
 									balls_detected++;
 									state = 0;
+									s2_balls_detected = 0;
+									closestBall = NULL;
+									printf("Reset the closest ball\n");
 								}
 							}
 						}else if(closestBall->colour == 'G'){
+							printf("Closest ball is green\n");
 							if ((greenBall_ptr->seen == FALSE) && is_ball(g_left_x, g_right_x, g_left_y, g_right_y) && is_in_centre_range(g_left_x, g_right_x)){
 								fprintf(fp, "v%is\n", foundbit);
 								if(go_towards(closestBall, fp)){
-									fprintf(fp, "c/g/%d/%d/%d/%d/\n", int_theta, int_x, int_y, closestBall->distance);
 									balls_detected++;
 									state = 0;
+									s2_balls_detected = 0;
+									closestBall = NULL;
+									printf("Reset the closest ball\n");
 								}
 							}
 						}else if(closestBall->colour == 'B'){
+							printf("Closest ball is blue\n");
 							if ((blueBall_ptr->seen == FALSE) && is_ball(b_left_x, b_right_x, b_left_y, b_right_y) && is_in_centre_range(b_left_x, b_right_x)){
 								fprintf(fp, "v%is\n", foundbit);
 								if(go_towards(closestBall, fp)){
-									fprintf(fp, "c/b/%d/%d/%d/%d/\n", int_theta, int_x, int_y, closestBall->distance);
 									balls_detected++;
 									state = 0;
+									s2_balls_detected = 0;
+									closestBall = NULL;
+									printf("Reset the closest ball\n");
 								}
 							}
 						}/*else if(closestBall->colour == 'V'){
@@ -941,32 +931,36 @@ int main()
 								}
 							}
 						}*/else if(closestBall->colour == 'Y'){
+							printf("Closest ball is yellow\n");
 							if ((yellowBall_ptr->seen == FALSE) && is_ball(y_left_x, y_right_x, y_left_y, y_right_y) && is_in_centre_range(y_left_x, y_right_x)){
 								fprintf(fp, "v%is\n", foundbit);
 								if(go_towards(closestBall, fp)){
-									fprintf(fp, "c/y/%d/%d/%d/%d/\n", int_theta, int_x, int_y, closestBall->distance);
 									balls_detected++;
 									state = 0;
+									s2_balls_detected = 0;
+									closestBall = NULL;
+									printf("Reset the closest ball\n");
 								}
 							}
 						}
-						// Reset closestBall for future 2nd scans
-						closestBall = NULL;
 					}
 				}
 
 				// While doing the full 360
 				if((redBall_ptr->seen == FALSE) && (redBall_ptr->seen2 == FALSE) && is_ball(r_left_x, r_right_x, r_left_y, r_right_y) && is_in_centre_range(r_left_x, r_right_x)){
+					printf("2nd scan : Red ball detected\n");
 					fprintf(fp, "v%is\n", foundbit);
 
 					distance = distance_calc(r_left_x, r_right_x, r_left_y, r_right_y);
-
+					printf("Distance : %i\n", distance);
 					// Check what zone that distance corresponds to
 					if (distance_check_z2(distance) == 1){
+						printf("Red ball is in zone 2\n");
 						redBall_ptr->distance = distance;
 						s2_balls_detected++;
 
 						if (distance < closestBall->distance){
+							printf("Red ball is the new closest distance\n");
 							closestBall = &redBall;
 							//closestBall_ptr->distance = distance;
 						}
@@ -974,16 +968,19 @@ int main()
 					redBall_ptr->seen2 = TRUE;
 					fprintf(fp, "v%ig\n", foundbit);
 				}else if((greenBall_ptr->seen == FALSE) && (greenBall_ptr->seen2 == FALSE) && is_ball(g_left_x, g_right_x, g_left_y, g_right_y) && is_in_centre_range(g_left_x, g_right_x)){
+					printf("2nd scan : Green ball detected\n");
 					fprintf(fp, "v%is\n", foundbit);
 
 					distance = distance_calc(g_left_x, g_right_x, g_left_y, g_right_y);
-
+					printf("Distance : %i\n", distance);
 					// Check what zone that distance corresponds to
 					if (distance_check_z2(distance) == 1){
+						printf("Green ball is in zone 2\n");
 						greenBall_ptr->distance = distance;
 						s2_balls_detected++;
 
 						if (distance < closestBall->distance){
+							printf("Green ball is the new closest ball\n");
 							closestBall = &greenBall;
 							//closestBall_ptr->distance = distance;
 						}
@@ -992,16 +989,20 @@ int main()
 					greenBall_ptr->seen2 = TRUE;
 					fprintf(fp, "v%ig\n", foundbit);
 				}else if((blueBall_ptr->seen == FALSE) && (blueBall_ptr->seen2 == FALSE) && is_ball(b_left_x, b_right_x, b_left_y, b_right_y) && is_in_centre_range(b_left_x, b_right_x)){
+					printf("2nd scan : Blue ball detected\n");
 					fprintf(fp, "v%is\n", foundbit);
 
 					distance = distance_calc(b_left_x, b_right_x, b_left_y, b_right_y);
+					printf("Distance : %i\n", distance);
 
 					// Check what zone that distance corresponds to
 					if (distance_check_z2(distance) == 1){
+						printf("Blue ball is in zone 2\n");
 						blueBall_ptr->distance = distance;
 						s2_balls_detected++;
 
 						if (distance < closestBall->distance){
+							printf("Blue ball is the new closest ball\n");
 							closestBall = &blueBall;
 							//closestBall_ptr->distance = distance;
 						}
@@ -1031,16 +1032,20 @@ int main()
 
 					fprintf(fp, "v%ig\n", foundbit);
 				} */else if ((yellowBall_ptr->seen == FALSE) && (yellowBall_ptr->seen2 == FALSE) && is_ball(y_left_x, y_right_x, y_left_y, y_right_y) && is_in_centre_range(y_left_x, y_right_x)){
+					printf("2nd scan : Yellow ball detected\n");
 					fprintf(fp, "v%is\n", foundbit);
 
 					distance = distance_calc(y_left_x, y_right_x, y_left_y, y_right_y);
+					printf("Distance : %i\n", distance);
 
 					// Check what zone that distance corresponds to
 					if (distance_check_z2(distance) == 1){
+						printf("Yellow ball is in zone 2\n");
 						yellowBall_ptr->distance = distance;
 						s2_balls_detected++;
 
 						if (distance < closestBall->distance){
+							printf("Yellow ball is the new closest ball\n");
 							closestBall = &yellowBall;
 							//closestBall_ptr->distance = distance;
 						}
@@ -1051,19 +1056,23 @@ int main()
 				}
 			}else if(state == 2){ // Scan until we see the first ball
 				if ((redBall_ptr->seen == FALSE) && is_ball(r_left_x, r_right_x, r_left_y, r_right_y) && is_in_centre_range(r_left_x, r_right_x)){
+					printf("s2 : first ball seen is red\n");
 					fprintf(fp, "v%is\n", foundbit);
 					fprintf(fp, "v%ig\n", foundbit);
 
 					if (go_towards(&redBall, fp) == TRUE){
+						printf("Reached red\n");
 						balls_detected++;
 						state = 0; // to repeat the 1st scan and loop back
 					}
 
 				} else if ((greenBall_ptr->seen == FALSE) && is_ball(g_left_x, g_right_x, g_left_y, g_right_y) && is_in_centre_range(g_left_x, g_right_x)){
+					printf("s2 : first ball seen is green\n");
 					fprintf(fp, "v%is\n", foundbit);
 					fprintf(fp, "v%ig\n", foundbit);
 
 					if (go_towards(&greenBall, fp) == TRUE){
+						printf("Reached green\n");
 						balls_detected++;
 						state = 0; // to repeat the 1st scan and loop back
 					}
@@ -1073,6 +1082,7 @@ int main()
 					fprintf(fp, "v%ig\n", foundbit);
 
 					if (go_towards(&blueBall, fp) == TRUE){
+						printf("Reached blue\n");
 						balls_detected++;
 						state = 0; // to repeat the 1st scan and loop back
 					}
@@ -1090,6 +1100,7 @@ int main()
 					fprintf(fp, "v%ig\n", foundbit);
 
 					if (go_towards(&yellowBall, fp) == TRUE){
+						printf("Reached yellow ball\n");
 						balls_detected++;
 						state = 0; // to repeat the 1st scan and loop back
 					}
