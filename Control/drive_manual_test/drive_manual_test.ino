@@ -11,7 +11,7 @@
 
 WiFiClient wificlient;
 PubSubClient mqttclient(wificlient);
-char msg[90], fromDrive[80], fromVision[50], toVision[36], toCommand[44], ballCoordinates[50];
+char msg[90], fromDrive[80], fromVision[50], toVision[36], toCommand[44], ballCoordinates[50], readVision[20];
 char toDrive[5] = {'0','x','0','0','0'};
 int value = 0;
 int bytein = 0;
@@ -197,7 +197,7 @@ void loop() {
     for(int i = 44; i < 80; i++){
       toVision[i-44] = correct[i];
     }
-    for(int i = 1; i<44; i++){
+    for(int i = 1; i < 44; i++){
       Serial.print(toCommand[i]);
     }
     Serial.println();
@@ -219,10 +219,15 @@ void loop() {
 
 
   if(Serial1.available()){
-
-    String temp = Serial1.readString();
+    int i = 0;
+    while(Serial1.available()){
+      bytein = Serial1.read();
+      readVision[i] = char(bytein);
+      i++;
+    }
+    String temp = String(readVision);
     Serial.print("Received from vision: ");
-    Serial.println(temp);
+    Serial.println(readVision);
     if(temp[4] == 'c'){
       Serial.print("Actually here");
       String temp2 = temp.substring(4);
@@ -243,7 +248,7 @@ void loop() {
 
     }else{
       Serial.print("Here we are");
-      Serial2.print("v" + temp);
+      Serial2.print("v" + String(readVision));
 
     }
     clearfromVision();    
