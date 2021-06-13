@@ -69,7 +69,7 @@
                 </div>
                 <div class='current-trip' id='q1'>
                     <h2>Time of Trip</h2>
-                    <p id >0 mins</p>  
+                    <p><span id = 'time'>0</span> mins</p>  
                 </div>
                 <div class='current-trip' id='q3'>
                     <h2>Current Gear</h2>
@@ -77,7 +77,7 @@
                 </div>
                 <div class='current-trip' id='q4'>
                     <h2>Live Coordinates</h2>
-                    <p id='currentCoord'>(0, 0)</p> 
+                    <p id='currentCoord'>(<span id='x-coord'>0</span>, <span id='y-coord'>0</span>)</p> 
                 </div>
             </section>
             </div>
@@ -179,7 +179,7 @@
                 if(modeSwitch.checked){
                     postData("http://localhost:9000/api/mode", {mode: 1});
                     console.log('Switched mode to: Autonomous');
-                    alert('SWITCHING TO AUTONOMOUS: Keypad and speed slider are now disabled. Switch back to manual to resume use')
+                    //alert('SWITCHING TO AUTONOMOUS: Keypad and speed slider are now disabled. Switch back to manual to resume use')
                     // if Autonomous 
                     inputVal.disabled=true;
                     uButton.disabled=true;
@@ -192,7 +192,7 @@
                 }else{
                     postData("http://localhost:9000/api/mode", {mode: 0});
                     console.log('Switched mode to: Manual');
-                    alert('SWITCHING TO MANUAL: Keypad and speed slider are now enabled')
+                    //alert('SWITCHING TO MANUAL: Keypad and speed slider are now enabled')
                     //if Manual
                     inputVal.disabled=false;
                     uButton.disabled=false;
@@ -358,23 +358,25 @@
                 //console.log(plotDiv)
                 Plotly.update(plotDiv, dataUpdate,{} ,[0])
 
-                const currCoord = document.querySelector('#currentCoord');
+                document.querySelector('#x-coord').textContent=xCoord;
+                document.querySelector('#y-coord').textContent=yCoord;
             }
 
             function addBallCoordinates(xCoord, yCoord, colorBall){
-                let newBall ={
-                    x:[xCoord],
-                    y:[yCoord],
-                    mode: 'markers',
-                    marker: {
-                        size: 15,
-                        color: `${colorBall}`
-                    },
-                    type: 'scatter',
-                    name: `${colorBall}`,
-                };
+                    ballsSeen.push(colorBall);
+                    let newBall ={
+                        x:[xCoord],
+                        y:[yCoord],
+                        mode: 'markers',
+                        marker: {
+                            size: 15,
+                            color: `${colorBall}`
+                        },
+                        type: 'scatter',
+                        name: `${colorBall}`,
+                    };
 
-                Plotly.addTraces(plotDiv, newBall);
+                    Plotly.addTraces(plotDiv, newBall);
             }
 
             async function fetchData(url=''){
@@ -385,13 +387,14 @@
 
             }
 
-            async function updateUsingFromCommand(url="http://localhost:9000/api/roverStats"){
+            async function updateUsingFromDrive(url="http://localhost:9000/api/roverStats"){
                 let res = await fetch(url);
                 let roverData = await (res.json());
                 updateDirectionAuto(roverData['gear']);
                 updateRoverCoordinates(roverData['xCoordinate'],roverData['yCoordinate']);
                 updateDistanceTraveled(roverData['distanceTravelled']);
                 updateSpeedAuto(roverData['speed']);
+                updateTime();
 
 
             }
@@ -400,26 +403,45 @@
                 //add notification function
             }
 
-            async function updateUsingFromVision(url="http://localhost:9000/api/vision"){
+            async function updateUsingFromVision(url="http://localhost:9000/api/ballStatus"){
                 let res = await fetch(url);
                 let ballData = await (res.json());
-                let _color;
-                if(ballData[ballColor]=='r'){
-                    _color = 'Red';
-                }else if(ballData[ballColor]=='g'){
-                    _color = 'Green';
-                }else if(ballData[ballColor]=='b'){
-                    _color = 'Blue';
-                }else if(ballData[ballColor]=='v'){
-                    _color = 'Violet';
-                }else if(ballData[ballColor]=='y'){
-                    _color = 'Yellow';
+
+                if(ballsSeenCount===ballData.ballNum){
+                    console.log('No new ball data');
+                }else{
+                    let _color;
+                    if(ballData.color=='r'){
+                        _color = 'Red';
+                    }else if(ballData.color=='g'){
+                        _color = 'Green';
+                    }else if(ballData.color=='b'){
+                        _color = 'Blue';
+                    }else if(ballData.color=='v'){
+                        _color = 'Violet';
+                    }else if(ballData.color=='y'){
+                        _color = 'Yellow';
+                    }
+                
+                    if(ballsSeen.includes(_color)){
+                        console.log('Ball Already Plotted')
+                    }else{
+                        ballsSeenCount++;
+                        ballsSeen.push(_color);
+                        ballHistory = ballData.archive;
+
+                        addBallCoordinates(
+                            ballData.ballXCoord,
+                            ballData.ballYCoord,
+                            _color
+                        );
+                    }
                 }
-                addBallCoordinates(
-                    ballData[xCoordinate],
-                    ballData[yCoordinate],
-                    _color
-                );
+            }
+
+            function updateTime(){
+                _time += (1/600);
+                document.querySelector('#time').textContent=Math.round(_time);
             }
 
             function moveToClick(){
@@ -444,7 +466,7 @@
                 timeValue.textContent = time>0? String(time)+' ' : "0 ";
                 percentValue.textContent = percentage>0? String(percentage)+'%': "0%";
                 batteryLevel.style.width = percentValue.textContent;
-                
+
                 if(percentage<=20){
                     batteryLevel.style.backgroundColor = "red";
                 }else if((percentage>20)&&(percentage<60)){
@@ -454,6 +476,11 @@
                 }
 
                 //Update percentage and color
+            }
+
+            function updateFromAll(){
+                updateUsingFromDrive();
+                updateUsingFromVision();
             }
 
 
@@ -468,8 +495,13 @@
             //const recieved = fetchData("http://localhost:9000/api/test")
             
             let init_speed = 0;
-
-            let _fromCommand = setInterval( updateUsingFromCommand ,5000);
+            let ballsSeenCount = 0;
+            let ballsSeen = [];
+            let ballHistory = [];
+            let _time = 0;
+            updateEnergyStatus('c', 52, 29);
+            let _fromCommand = setInterval( 
+                updateFromAll ,100);
 
         //  Speedometer 
             let data = [{
