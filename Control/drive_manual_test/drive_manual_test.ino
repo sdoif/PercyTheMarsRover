@@ -11,7 +11,7 @@
 
 WiFiClient wificlient;
 PubSubClient mqttclient(wificlient);
-char msg[90], fromDrive[80], fromVision[50], toVision[36], toCommand[44], ballCoordinates[50];
+char msg[90], fromDrive[80], fromVision[50], toVision[6], toCommand[44], ballCoordinates[50];
 char toDrive[5] = {'0','x','0','0','0'};
 int value = 0;
 int bytein = 0;
@@ -195,7 +195,7 @@ void loop() {
     for(int i = 1; i < 44; i++){
       toCommand[i] = correct[i];
     }
-    for(int i = 44; i < 80; i++){
+    for(int i = 44; i < 50; i++){
       toVision[i-44] = correct[i];
     }
     for(int i = 1; i<44; i++){
@@ -208,13 +208,19 @@ void loop() {
       buffer[i] = byte(toCommand[i]);
     }
     mqttclient.publish("drive", buffer, 44);
+
+    char toVision2[3];
+    toVision2[0] = toVision[0];
+    toVision2[1] = toVision[2];
+    toVision2[3] = toVision[4];
     Serial1.print(toVision);
+    
     if(receivedFromVision){
       for(int i = 0; i < 36; i++){
         ballCoordinates[i] = toVision[i];
       }
       for(int i = 36; i < 50; i++){
-        ballCoordinates[i] = fromVision[i-35];
+        ballCoordinates[i] = fromVision[i-34];
       }
       byte buffer2[50];
       for(int i = 0; i < 50; i++){
