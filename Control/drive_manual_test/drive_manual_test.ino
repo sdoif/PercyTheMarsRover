@@ -240,7 +240,6 @@ void loop() {
         buffer2[i] = byte(ballCoordinates[i]);
       }
       mqttclient.publish("vision", buffer2, 50);
-    }
 
     }else{
       Serial.print("Here we are");
