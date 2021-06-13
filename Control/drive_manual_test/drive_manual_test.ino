@@ -241,8 +241,9 @@ void loop() {
     Serial.println(temp);
     if(temp[0] == 'c'){
       receivedFromVision = 1;
+      temp.toCharArray(fromVision, temp.legnth());
     }else{
-      Serial.println(temp);
+
       Serial2.print("v" + temp);
     }
     clearfromVision();    
