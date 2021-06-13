@@ -11,12 +11,11 @@
 
 WiFiClient wificlient;
 PubSubClient mqttclient(wificlient);
-char msg[90], fromDrive[80], fromVision[50], toVision[6], toCommand[44], ballCoordinates[50];
+char msg[90], fromDrive[80], fromVision[50], toVision[36], toCommand[44], ballCoordinates[50];
 char toDrive[5] = {'0','x','0','0','0'};
 int value = 0;
 int bytein = 0;
 int _index = 0;
-int receivedFromVision = 0;
 String add, correct;
 const char* serverip = "18.134.3.99"; // aws server ip
 
@@ -195,7 +194,7 @@ void loop() {
     for(int i = 1; i < 44; i++){
       toCommand[i] = correct[i];
     }
-    for(int i = 44; i < 50; i++){
+    for(int i = 44; i < 80; i++){
       toVision[i-44] = correct[i];
     }
     for(int i = 1; i<44; i++){
@@ -214,21 +213,6 @@ void loop() {
     toVision2[1] = toVision[2];
     toVision2[3] = toVision[4];
     Serial1.print(toVision2);
-    
-    if(receivedFromVision){
-      for(int i = 0; i < 36; i++){
-        ballCoordinates[i] = toVision[i];
-      }
-      for(int i = 36; i < 50; i++){
-        ballCoordinates[i] = fromVision[i-34];
-      }
-      byte buffer2[50];
-      for(int i = 0; i < 50; i++){
-        buffer2[i] = byte(ballCoordinates[i]);
-      }
-      mqttclient.publish("vision", buffer2, 50);
-      receivedFromVision = 0;
-    }
 
     Serial.print("toVision = "+String(toVision));
   }
@@ -241,10 +225,22 @@ void loop() {
     Serial.println(temp);
     if(temp[4] == 'c'){
       Serial.print("Actually here");
-      receivedFromVision = 1;
-      String temp2 = temp.substring(5);
+      String temp2 = temp.substring(4);
       temp2.toCharArray(fromVision, temp2.length());
       Serial2.print(temp.substring(0,4));
+
+      for(int i = 0; i < 36; i++){
+        ballCoordinates[i] = toVision[i];
+      }
+      for(int i = 36; i < 50; i++){
+        ballCoordinates[i] = fromVision[i-34];
+      }
+      byte buffer2[50];
+      for(int i = 0; i < 50; i++){
+        buffer2[i] = byte(ballCoordinates[i]);
+      }
+      mqttclient.publish("vision", buffer2, 50);
+    }
 
     }else{
       Serial.print("Here we are");
