@@ -243,7 +243,8 @@ void loop() {
       Serial.print("Received from vision: ");
       clearReadVision();
       Serial.println(temp);
-      if(temp[0] == 'c'){
+      Serial.println("temp 0 = "+String(temp.charAt(1)));
+      if(temp.charAt(1) == 'c'){
         Serial.print("Actually here");
         temp.toCharArray(fromVision, temp.length());
         for(int i = 0; i < 36; i++){
@@ -255,6 +256,10 @@ void loop() {
         byte buffer2[50];
         for(int i = 0; i < 50; i++){
           buffer2[i] = byte(ballCoordinates[i]);
+        }
+        Serial.print("buffer2 = ");
+        for(int i = 0; i< 50; i++){
+          Serial.print(buffer2[i]);
         }
         mqttclient.publish("vision", buffer2, 50);
 
