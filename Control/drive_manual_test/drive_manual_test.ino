@@ -239,7 +239,7 @@ void loop() {
     String temp = Serial1.readString();
     Serial.print("Received from vision: ");
     Serial.println(temp);
-    if(temp[5] == 'c'){
+    if(temp[4] == 'c'){
       Serial.print("Actually here");
       receivedFromVision = 1;
       String temp2 = temp.substring(5);
