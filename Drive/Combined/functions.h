@@ -80,6 +80,7 @@ bool s_0;
 bool s_1;
 bool f;
 
+char prev_mode = 'g';
 int __iter1 = 0;
 int _iter1 = 0;
 int stopgoto = 0;
@@ -104,11 +105,12 @@ unsigned long reff_time = 0;
 unsigned long ref_time = 0;
 unsigned long reff1_time = 0;
 unsigned long ref1_time = 0;
+unsigned long ref_time_scan = 0;
 
 int c_new = 0;
 int v_new = 0;
 char _mode;
-char c[5] = {'0','x','0','0','0'};
+char c[5] = {'1','x','0','0','0'};
 char v[2] = {'0', 'g'};
 
 char gear = 'x';
@@ -131,6 +133,8 @@ int _iter_scan = 0;
 int _iter_speed = 0;
 int __iter = 0;
 int _iter = 0;
+int _iter_turn = 0;
+int stop_count = 1;
 
 int scan_state = 0;
 
@@ -145,6 +149,7 @@ int total_x1_distance = 0;
 int total_y1_distance = 0;
 int total_x1 = 0;
 int total_y1 = 0;
+
 
 int x=0;
 int y=0;
@@ -567,6 +572,9 @@ bool rover_scan_zero(char _mode){
   if(_iter_scan == 0){
     actual_x_first = abs(actual_x);
   }
+  if(_iter_turn == 0){
+    ref_time_scan = millis();
+  }
   Serial.print("actual_x_first = "+String(actual_x_first));
   if(abs(actual_x) >= 610 +actual_x_first){
     brake();
@@ -580,22 +588,34 @@ bool rover_scan_zero(char _mode){
     delay(1000);
     return true;
   }else if((_mode == 's')&&(!s_0)){
-    brake();
-    if((prev_val_x == total_x)&&(_iter_scan == 1)){
-      theta_store = store_angle(actual_x);
-      r_store = float(actual_y);
-      xcal_total_store = xcal_total;
-      ycal_total_store = ycal_total;
-      _iter_scan = 2;
-    }
+    //if((prev_val_x == total_x)&&(_iter_scan == 1)){
+//      theta_store = store_angle(actual_x);
+//      r_store = float(actual_y);
+//      xcal_total_store = xcal_total;
+//      ycal_total_store = ycal_total;
+//      _iter_scan = 2;
+//      stop_count = 1;
+    //}
     Serial.println("Scan_zero = STOP");
     return false;
   }else{
     if((_mode == 'g')&&(!s_0)){
-      s_0_int = 0;
-      left();
-      _iter_scan = 1;
-      return false;
+      if(prev_mode == 's'){
+        brake();
+        delay(1500);
+        theta_store = store_angle(actual_x);
+        r_store = float(actual_y);
+        xcal_total_store = xcal_total;
+        ycal_total_store = ycal_total;
+        _iter_scan = 2;
+        left();
+        return false;
+      }else{
+        s_0_int = 0;
+        left();
+        _iter_scan = 1;
+        return false;
+      }
     }
   }
 }

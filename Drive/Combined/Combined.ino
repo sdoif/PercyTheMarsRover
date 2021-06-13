@@ -406,6 +406,8 @@ Serial.println(actual_x);
   prev_val_y = total_y;
   prev_val_x = total_x;
   actual_y_prev = actual_y;
+  prev_mode = v[1];
+  Serial.println("prev_mode = "+String(prev_mode));
 
 //      Serial.println("angle = "+String(angle));
 //      Serial.println("angle_corrected = "+String(angle_corrected));
