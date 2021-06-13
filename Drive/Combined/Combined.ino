@@ -150,11 +150,17 @@ total_y1_distance = total_y1_distance + abs(distance_y);
 total_x_distance = 10*total_x1_distance/157; //Conversion from counts per inch to mm (400 counts per inch)
 total_y_distance = 10*total_y1_distance/157; //Conversion from counts per inch to mm (400 counts per inch)
 
-total = sqrt(float((total_x_distance/10)^2)+float((total_y_distance/10)^2));
+    distance_xx = (10*distance_x/157)/10;
+    distance_yy = (10*distance_y/157)/10;
+    total_distance = fabs(distance_yy) + total_distance;
+    Serial.println("distance_x = "+String(distance_x));
+    Serial.println("distance_y = "+String(distance_y));
+    Serial.println("distance_xx = "+String(distance_xx));
+    Serial.println("distance_yy = "+String(distance_yy));
+    Serial.println("Total distance travelled =" +String(total_distance));
 
 Serial.println("Distance_x_total = " + String(total_x_distance));
 Serial.println("Distance_y_total = " + String(total_y_distance));
-Serial.println("Total = " + String(total));
 Serial.print('\n');
 
   //counter stuff
@@ -248,13 +254,13 @@ Serial.print('\n');
 //Serial.println(counter_x);
 //Serial.print('\n');
 //
-//Serial.print('\n');
-//Serial.print("Actual y = ");
-//Serial.println(actual_y);
-//
-//Serial.print('\n');
-//Serial.print("Actual x = ");
-//Serial.println(actual_x);
+Serial.print('\n');
+Serial.print("Actual y = ");
+Serial.println(actual_y);
+
+Serial.print('\n');
+Serial.print("Actual x = ");
+Serial.println(actual_x);
 //
 //Serial.print('\n');
 //Serial.print("prev x = ");
@@ -385,6 +391,12 @@ Serial.print('\n');
   }else if(c[0] == '0'){
     if(vb >= vref - 0.2){
       rover_manual(c[1]);
+      float angle = store_angle(actual_x);
+      xcorcur = xcoordinatefinder(actual_y_prev, actual_y, angle);
+      ycorcur = ycoordinatefinder(actual_y_prev, actual_y, angle);
+      if((testing_x != 0)||(testing_y != 0)){
+        gotocoordinate(testing_x, testing_y, angle, actual_y, xcorcur, ycorcur);
+      }
     }else{
       brake();
     }
@@ -405,7 +417,7 @@ Serial.print('\n');
 
     data_command[2] = fixed_size(x_to_command);
     data_command[3] = fixed_size(y_to_command);
-    data_command[4] = fixed_size(total);
+    data_command[4] = fixed_size(total_distance);
     data_command[5] = fixed_size(voltage2speed(vref));
 
     data_vision[1] = String(s_0_int);
@@ -414,9 +426,6 @@ Serial.print('\n');
     data_vision[4] = fixed_size(xcal_total_store);
     data_vision[5] = fixed_size(ycal_total_store);
 
-    loop_counter ++;
-
-    if(loop_counter == 5){
       Serial.print("data = ");
       for(int i = 0; i<6; i++){
         Serial.print(data_command[i]);
@@ -424,13 +433,13 @@ Serial.print('\n');
         Serial1.print('/');
         Serial.print('/');
       } 
+      
       for(int i = 0; i<6; i++){
         Serial1.print(data_vision[i]);
         Serial.print(data_vision[i]);
         Serial1.print('/');
         Serial.print('/');
       }
-      loop_counter = 0;
-    }  
+
 
 }

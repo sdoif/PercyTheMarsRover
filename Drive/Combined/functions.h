@@ -80,8 +80,20 @@ bool s_0;
 bool s_1;
 bool f;
 
+int __iter1 = 0;
+int _iter1 = 0;
+int stopgoto = 0;
+float distance_xx=0;
+float distance_yy=0;
+float total_distance=0;
+float xcorcur = 0;
+float ycorcur = 0;
+int testing_x = 0;
+int testing_y = 0;
+
 int s_0_int = 0;
 int s_1_int = 0;
+int startOfgoTo = 0;
 
 int loop_counter = 0;
 
@@ -90,6 +102,8 @@ float y_to_command = 0;
 
 unsigned long reff_time = 0;
 unsigned long ref_time = 0;
+unsigned long reff1_time = 0;
+unsigned long ref1_time = 0;
 
 int c_new = 0;
 int v_new = 0;
@@ -131,7 +145,6 @@ int total_x1_distance = 0;
 int total_y1_distance = 0;
 int total_x1 = 0;
 int total_y1 = 0;
-float total = 0;
 
 int x=0;
 int y=0;
@@ -426,61 +439,110 @@ float change_angle(float angle){
     return new_angle;
   }
 }
-bool gotocoordinate(int xx, int yy, float current_angle, float currrent_r){
+void movebycoordinate(int xx, int yy, float current_angle, float currrent_r){
   int x = xx*10;
   int y = yy*10;
   double angle = atan2(yy,xx);
   float angle_new = change_angle(angle);
-  //if(angle<0){
-  //  angle = angle+(2*PI);
-  //}
-  //  if(angle_old<0){
-  //  angle = angle_old + (2*PI);
-  //  }else if(angle_old>=0){
-  //    angle = angle_old;
-  //  }
-  float angle_deg = angle_new*(180/PI);
   float rr = sqrt(sq(xx)+sq(yy));
   float r = rr*10;
-  Serial.println("Target angle=");
-  Serial.print(angle_deg);
-  Serial.print("Target distance=");
-  Serial.print(r);
-  
   if((angle_new-0.12<current_angle)&&(angle_new+0.12>current_angle)){
-    if(r>currrent_r){
-      if(__iter==0){
-        reff_time = millis();
-        __iter=1;
-      }
-      if(millis()-reff_time < 500){
-        forward();
-      }else if(((millis()-reff_time) >= 500)&&((millis()-reff_time) <= 2000)){
-        brake();
-    
-      }else if((millis()-reff_time) > 2000){
-        __iter = 0;
-      }
-    }else if(r<=currrent_r){
-      brake();
-      }
-    }else if(angle_new-0.12>current_angle){
-      if(_iter == 0){
-        ref_time = millis();
-        Serial.println("ref_time = "+String(ref_time));
-          _iter = 1;
-      }
-  //Serial.println("_iter = "+String(_iter));
-   // Serial.println("time = "+String(millis()));
-    if((millis()-ref_time) < 500){
-      left();
-    }else if(((millis()-ref_time) >= 500)&&((millis()-ref_time) <= 2000)){
-      brake();
-    }else if((millis()-ref_time) > 2000){
-     _iter = 0;
+  if(r>currrent_r){
+    if(__iter1==0){
+      reff1_time = millis();
+      __iter1=1;
     }
-  }else if(angle_new+0.12<current_angle){
-     right();
+    if(millis()-reff1_time < 500){
+      forward();
+    }else if(((millis()-reff1_time) >= 500)&&((millis()-reff1_time) <= 2000)){
+  brake();
+  
+  }else if((millis()-reff1_time) > 2000){
+   __iter1 = 0;
+  }
+  }
+  else if(r<=currrent_r){
+    brake();
+    }
+}else if(angle_new-0.12>current_angle){
+ if(_iter1 == 0){
+    ref1_time = millis();
+      _iter1 = 1;
+  }
+  if((millis()-ref1_time) < 500){
+    left();
+  }else if(((millis()-ref1_time) >= 500)&&((millis()-ref1_time) <= 2000)){
+    brake();
+  }else if((millis()-ref_time) > 2000){
+   _iter1 = 0;
+  }
+}else if(angle_new+0.12<current_angle){
+   right();
+}
+}
+
+bool gotocoordinate(int xx, int yy, float current_angle, float currrent_r, float currentx, float currenty){
+if(stopgoto==0){
+int x = xx*10;
+int y = yy*10;
+int diff_y;
+int diff_x;
+if(startOfgoTo == 0){
+ diff_x = xx-currentx;
+ diff_y = yy-currenty;
+startOfgoTo++;
+}
+double angle = atan2(diff_y,diff_x);
+float angle_new = change_angle(angle);
+float angle_deg = angle_new*(180/PI);
+float rr = sqrt(sq(diff_x)+sq(diff_y));
+float r = rr*10;
+Serial.println("Target angle=");
+Serial.print(angle_deg);
+Serial.print("Target distance=");
+Serial.print(r);
+
+if((angle_new-0.12<current_angle)&&(angle_new+0.12>current_angle)){
+  if(r>currrent_r){
+    if(__iter==0){
+      reff_time = millis();
+      __iter=1;
+    }
+    if(millis()-reff_time < 500){
+      forward();
+    }else if(((millis()-reff_time) >= 500)&&((millis()-reff_time) <= 2000)){
+  brake();
+  
+  }else if((millis()-reff_time) > 2000){
+   __iter = 0;
+  }
+  }
+  else if(r<=currrent_r){
+    brake();
+    startOfgoTo = 0;
+    stopgoto++;
+    }
+}else if(angle_new-0.12>current_angle){
+ if(_iter == 0){
+    ref_time = millis();
+    Serial.println("ref_time = "+String(ref_time));
+      _iter = 1;
+  }
+//Serial.println("_iter = "+String(_iter));
+ // Serial.println("time = "+String(millis()));
+  if((millis()-ref_time) < 500){
+    left();
+  }else if(((millis()-ref_time) >= 500)&&((millis()-ref_time) <= 2000)){
+    brake();
+  }else if((millis()-ref_time) > 2000){
+   _iter = 0;
+  }
+}else if(angle_new+0.12<current_angle){
+   right();
+}
+
+}else{
+  brake();
   }
 }
 
@@ -491,6 +553,7 @@ bool rover_scan_one(char _mode){
     scan_state = 4;
     Serial.println("_mode_one = "+String(_mode));
     s_1_int = 1;
+    delay(1000);
     return true;
   }else if((_mode == 'g')&&s_0){
     s_1_int = 0;
@@ -500,10 +563,12 @@ bool rover_scan_one(char _mode){
 }
 
 bool rover_scan_zero(char _mode){
+  Serial.print("_iter_scan = "+String(_iter_scan));
   if(_iter_scan == 0){
     actual_x_first = abs(actual_x);
   }
-  if(abs(actual_x) >= 650 +actual_x_first){
+  Serial.print("actual_x_first = "+String(actual_x_first));
+  if(abs(actual_x) >= 610 +actual_x_first){
     brake();
     if((_iter_scan == 1)||(_iter_scan == 2)){
       scan_state++;
@@ -511,6 +576,8 @@ bool rover_scan_zero(char _mode){
     }
     Serial.println("scan_state_zero = "+String(scan_state));
     s_0_int = 1;
+    Serial1.print(data_vision[1]);
+    delay(1000);
     return true;
   }else if((_mode == 's')&&(!s_0)){
     brake();
@@ -565,6 +632,7 @@ bool reach_forward(char _mode){
         r_store = float(actual_y);
         xcal_total_store = xcal_total;
         ycal_total_store = ycal_total;
+        delay(1000);
         return true;
     }else if((_mode == 'r')&&s_1){
         right();
