@@ -153,6 +153,11 @@ void clearfromVision(){
   }
 }
 
+void clearReadVision(){
+  for(int i = 0; i < 20; i++)
+  readVision[i] = NULL;
+}
+
 void loop() {
 
   if(WiFi.status() != WL_CONNECTED){
@@ -227,7 +232,8 @@ void loop() {
     }
     String temp = String(readVision);
     Serial.print("Received from vision: ");
-    Serial.println(readVision);
+    clearReadVision();
+    Serial.println(temp);
     if(temp[4] == 'c'){
       Serial.print("Actually here");
       String temp2 = temp.substring(4);
@@ -248,7 +254,7 @@ void loop() {
 
     }else{
       Serial.print("Here we are");
-      Serial2.print("v" + String(readVision));
+      Serial2.print("v" + temp);
 
     }
     clearfromVision();    
