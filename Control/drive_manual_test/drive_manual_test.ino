@@ -213,7 +213,7 @@ void loop() {
     toVision2[0] = toVision[0];
     toVision2[1] = toVision[2];
     toVision2[3] = toVision[4];
-    Serial1.print(toVision);
+    Serial1.print(toVision2);
     
     if(receivedFromVision){
       for(int i = 0; i < 36; i++){
