@@ -16,6 +16,8 @@ char toDrive[5] = {'0','x','0','0','0'};
 int value = 0;
 int bytein = 0;
 int _index = 0;
+int endMessage = 0;
+int visionIt = 0;
 String add, correct;
 const char* serverip = "18.134.3.99"; // aws server ip
 
@@ -224,40 +226,47 @@ void loop() {
 
 
   if(Serial1.available()){
-    int i = 0;
+
     while(Serial1.available()){
       bytein = Serial1.read();
-      readVision[i] = char(bytein);
-      i++;
+      readVision[visionIt] = char(bytein);
+      visionIt++;
+      if(char(bytein) == '!'){
+        endMessage = 1;
+        visionIt = 0;
+        break;
+      }
     }
-    String temp = String(readVision);
-    Serial.print("Received from vision: ");
-    clearReadVision();
-    Serial.println(temp);
-    if(temp[4] == 'c'){
-      Serial.print("Actually here");
-      String temp2 = temp.substring(4);
-      temp2.toCharArray(fromVision, temp2.length());
-      Serial2.print(temp.substring(0,4));
+    if(endMessage){
 
-      for(int i = 0; i < 36; i++){
-        ballCoordinates[i] = toVision[i];
-      }
-      for(int i = 36; i < 50; i++){
-        ballCoordinates[i] = fromVision[i-34];
-      }
-      byte buffer2[50];
-      for(int i = 0; i < 50; i++){
-        buffer2[i] = byte(ballCoordinates[i]);
-      }
-      mqttclient.publish("vision", buffer2, 50);
+      String temp = String(readVision);
+      Serial.print("Received from vision: ");
+      clearReadVision();
+      Serial.println(temp);
+      if(temp[0] == 'c'){
+        Serial.print("Actually here");
+        temp.toCharArray(fromVision, temp.length());
+        for(int i = 0; i < 36; i++){
+          ballCoordinates[i] = toVision[i];
+        }
+        for(int i = 36; i < 50; i++){
+          ballCoordinates[i] = fromVision[i-34];
+        }
+        byte buffer2[50];
+        for(int i = 0; i < 50; i++){
+          buffer2[i] = byte(ballCoordinates[i]);
+        }
+        mqttclient.publish("vision", buffer2, 50);
 
-    }else{
-      Serial.print("Here we are");
-      Serial2.print("v" + temp);
+      }else{
+        Serial.print("Here we are");
+        Serial2.print("v" + temp);
 
-    }
-    clearfromVision();    
+      }
+
+      clearfromVision();   
+
+    } 
   }
 
   if(Serial.available()){
