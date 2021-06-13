@@ -6,7 +6,7 @@ const { response } = require('express');
 const { Console } = require('console');
 
 const app = express();
-const client = mqtt.connect('mqtt://35.178.136.139', {clientId:"node"});
+const client = mqtt.connect('mqtt://18.134.3.99', {clientId:"node"});
 app.use(express.urlencoded({extended: true}));
 app.use(bp.json())
 app.use(bp.urlencoded({ extended: true }))
@@ -29,8 +29,22 @@ let roverStatus = {
     xCoordinate: 0,
     yCoordinate: 0,
     distanceTravelled: 0,
-    speed: 0
+    speed: 0,
+    ballsSeen: 0
 }
+
+let ballStatus={
+    color: '',
+    currX: 0,
+    currY: 0,
+    theta: 0,
+    distance: 0,
+    ballX: 0,
+    ballY: 0,
+    count: 0
+}
+
+let allBallsSeen=[];
 
 let roverStatusInit = roverStatus;
 
@@ -67,6 +81,18 @@ app.get('/api/test', (req, res) => {
 app.get('/api/roverStats', (req, res) => {
     console.log("Requested roverStatus");
     res.send(JSON.stringify(roverStatus));
+});
+
+app.get('/api/ballStatus', (req, res) => {
+    let newBallStatus = {
+        ballXCoord : ballStatus.ballX,
+        ballYCoord : ballStatus.ballY,
+        color : ballStatus.color,
+        ballNum : ballStatus.count,
+        archive: allBallsSeen
+    }
+    console.log("Requested ballStatus");
+    res.send(JSON.stringify(newBallStatus));
 });
 
 app.post('/api/direction', (req, res) => {
@@ -156,9 +182,9 @@ client.on('connect', () =>{
 
 
 client.on('message', (topic, message, packet) => {
-    console.log(`Recieved message from ${topic} - ${message.toString()} `);
     strMessage = message.toString();
-    console.log(strMessage)
+    //console.log(strMessage)
+    let values = strMessage.split("/");
     if(topic === "drive"){
         let values = strMessage.split("/");
         roverStatus.gear = (values[1]);
@@ -166,9 +192,22 @@ client.on('message', (topic, message, packet) => {
         roverStatus.yCoordinate = (values[3])=undefined? roverStatus.yCoordinate : (values[3]) ;
         roverStatus.distanceTravelled = (values[4])=undefined? roverStatus.distanceTravelled : (values[4]) ;
         roverStatus.speed = (values[5])=undefined? roverStatus.speed : (values[5]) ;
-        console.log("Rover status changed to: ", roverStatus);
+        //console.log("Rover status changed to: ", roverStatus);
     }else if(topic === "vision"){
-        
+        console.log(`Recieved message from ${topic} - ${strMessage}`);
+        //parse values from vision to make them ready for getting
+        ballStatus.color = (values[4]);
+        ballStatus.theta = Number(values[1]);
+        ballStatus.currentX = Number(values[2]);
+        ballStatus.currentY = Number(values[3]);
+        ballStatus.distance = Number(values[5]);
+        //Calculate ball coordinates
+        ballStatus.ballX = ballStatus.currentX + (ballStatus.distance * Math.cos(ballStatus.theta)) ;
+        ballStatus.ballY = ballStatus.currentY + (ballStatus.distance * Math.sin(ballStatus.theta)) ;
+        //let frontend know it is time to make a request
+        ballStatus.count++;
+        allBallsSeen.push({color: ballStatus.color, xCoordinate: ballStatus.ballX, yCoordinate: ballStatus.ballY})
+        console.log("New ball alert! : ", ballStatus);
     }
     
 });
