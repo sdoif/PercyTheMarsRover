@@ -206,213 +206,157 @@ bool go_towards(Ball *ball, FILE* fp){
 	int verilog_word;
 	int distance;
 
-	if(ball->colour == 'R'){
-		printf("Going towards red\n");
-		while (1) {
-			//printf("Started while loop\n");
-			// Update the boundary box co-ordinates
-			verilog_word = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
-			if (verilog_word == EEE_IMGPROC_MSG_START_R){ // If the incoming string == RBB
-				//printf("Detected the start of red coordinates\n");
-				int r_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (top left coordinate)
-				int r_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (bottom right coordinate)
+	int r_topleft, g_topleft, b_topleft, v_topleft, y_topleft;
+	int r_bottomright, g_bottomright, b_bottomright, v_bottomright, y_bottomright;
 
-				int r_left_x = (r_topleft)>>16; // extracting the top 16 bits
-				int r_right_x = (r_bottomright)>>16;
+	int r_left_x, g_left_x, b_left_x, v_left_x, y_left_x;
+	int r_right_x, g_right_x, b_right_x, v_right_x, y_right_x;
+	int r_left_y, g_left_y, b_left_y, v_left_y, y_left_y;
+	int r_right_y, g_right_y, b_right_y, v_right_y, y_right_y;
 
-				int r_left_y = (r_topleft & 0x0000ffff);
-				int r_right_y = (r_bottomright & 0x0000ffff);
+	while ((IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_STATUS)>>8) & 0xff){
+		//printf("Started while loop\n");
+		// Update the boundary box co-ordinates
+		verilog_word = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
+		if (verilog_word == EEE_IMGPROC_MSG_START_R){ // If the incoming string == RBB
+			//printf("Detected the start of red coordinates\n");
+			r_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (top left coordinate)
+			r_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (bottom right coordinate)
 
-				// Measure angle and correct if needed to
-                int middle_pix = (r_right_x + r_left_x) / 2;
-                printf("middle pixel : %i\n", middle_pix);
-                if (middle_pix < 280){
+			r_left_x = (r_topleft)>>16; // extracting the top 16 bits
+			r_right_x = (r_bottomright)>>16;
+
+			r_left_y = (r_topleft & 0x0000ffff);
+			r_right_y = (r_bottomright & 0x0000ffff);
+		}else if (verilog_word == EEE_IMGPROC_MSG_START_G){ // If the incoming string == RBB
+			g_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (top left coordinate)
+			g_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (bottom right coordinate)
+
+			g_left_x = (g_topleft)>>16; // extracting the top 16 bits
+			g_right_x = (g_bottomright)>>16;
+
+			g_left_y = (g_topleft & 0x0000ffff);
+			g_right_y = (g_bottomright & 0x0000ffff);
+		}else if (verilog_word == EEE_IMGPROC_MSG_START_B){ // If the incoming string == RBB
+			b_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (top left coordinate)
+			b_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (bottom right coordinate)
+
+			b_left_x = (b_topleft)>>16; // extracting the top 16 bits
+			b_right_x = (b_bottomright)>>16;
+
+			b_left_y = (b_topleft & 0x0000ffff);
+			b_right_y = (b_bottomright & 0x0000ffff);
+		}else if (verilog_word == EEE_IMGPROC_MSG_START_Y){ // If the incoming string == RBB
+			y_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (top left coordinate)
+			y_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (bottom right coordinate)
+
+			y_left_x = (y_topleft)>>16; // extracting the top 16 bits
+			y_right_x = (y_bottomright)>>16;
+
+			y_left_y = (y_topleft & 0x0000ffff);
+			y_right_y = (y_bottomright & 0x0000ffff);
+		}
+
+		if(is_ball(r_left_x, r_right_x, r_left_y, r_right_y) && is_in_centre_range(r_left_x, r_right_x)){
+			if(ball->colour == 'R'){ // if we are supposed to be going towards red
+				printf("Going towards red\n");
+				int middle_pix = (r_right_x + r_left_x) / 2;
+				printf("middle pixel : %i\n", middle_pix);
+				if (middle_pix < 280){
 					fprintf(fp, "v0l!\n");
-                }else if(middle_pix > 360){
+				}else if(middle_pix > 360){
 					fprintf(fp, "v0r!\n");
 				}else{
 					fprintf(fp, "v0g!\n");
 				}
 
-				// If we can make a valid decision measurement, make it
-				if(is_ball(r_left_x, r_right_x, r_left_y, r_right_y) && is_in_centre_range(r_left_x, r_right_x)){
-					distance = distance_calc(r_left_x, r_right_x, r_left_y, r_right_y);
-					if (distance < 80 && distance > 30){
-						// Update members
-						fprintf(fp, "v0s!\n");
-						ball->distance = distance;
-						ball->seen = TRUE;
-						fprintf(fp, "c/r/%i/!\n", distance);
-						return TRUE;
-					}
+				distance = distance_calc(r_left_x, r_right_x, r_left_y, r_right_y);
+				if (distance < 80 && distance > 30){
+					// Update members
+					fprintf(fp, "v0s!\n");
+					ball->distance = distance;
+					ball->seen = TRUE;
+					fprintf(fp, "c/r/%i/!\n", distance);
+					return TRUE;
 				}
-    	   	}
-		}
-	}else if(ball->colour == 'G'){
-		printf("Going towards green\n");
-		while (1) {
-			// Update the boundary box co-ordinates
-			int verilog_word = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
-			if (verilog_word == EEE_IMGPROC_MSG_START_G){ // If the incoming string == RBB
-				int g_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (top left coordinate)
-				int g_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (bottom right coordinate)
-
-				int g_left_x = (g_topleft)>>16; // extracting the top 16 bits
-				int g_right_x = (g_bottomright)>>16;
-
-				int g_left_y = (g_topleft & 0x0000ffff);
-				int g_right_y = (g_bottomright & 0x0000ffff);
-
+			}else{ // if we aren't supposed to be going towards this colour
+				// Find the actions we are supposed to do when encountering a ball
+			}
+		}else if(is_ball(g_left_x, g_right_x, g_left_y, g_right_y) && is_in_centre_range(g_left_x, g_right_x)){
+			if(ball->colour == 'G'){
+				printf("Going towards green\n");
 				// Measure angle and correct if needed to
-                int middle_pix = (g_right_x + g_left_x) / 2;
-                if (middle_pix < 280){
+				int middle_pix = (g_right_x + g_left_x) / 2;
+				if (middle_pix < 280){
 					fprintf(fp, "v0l!\n");
-                }else if(middle_pix > 360){
+				}else if(middle_pix > 360){
+					fprintf(fp, "v0r!\n");
+				}else{
+					fprintf(fp, "v0g!\n");
+				}
+				distance = distance_calc(g_left_x, g_right_x, g_left_y, g_right_y);
+				if (distance < 60 && distance > 30){
+					// Update members
+					fprintf(fp, "v0s!\n");
+					ball->distance = distance;
+					ball->seen = TRUE;
+					fprintf(fp, "c/g/%i/!\n", distance);
+					return TRUE;
+				}
+			}else{
+
+			}
+		}else if(is_ball(b_left_x, b_right_x, b_left_y, b_right_y) && is_in_centre_range(b_left_x, b_right_x)){
+			if(ball->colour == 'B'){
+				printf("Going towards blue\n");
+				// Measure angle and correct if needed to
+			    int middle_pix = (b_right_x + b_left_x) / 2;
+			    if (middle_pix < 280){
+					fprintf(fp, "v0l!\n");
+			    }else if(middle_pix > 360){
 					fprintf(fp, "v0r!\n");
 				}else{
 					fprintf(fp, "v0g!\n");
 				}
 
-				// If we can make a valid decision measurement, make it
-				if(is_ball(g_left_x, g_right_x, g_left_y, g_right_y) && is_in_centre_range(g_left_x, g_right_x)){
-					distance = distance_calc(g_left_x, g_right_x, g_left_y, g_right_y);
-					if (distance < 60 && distance > 30){
-						// Update members
-						fprintf(fp, "v0s!\n");
-						ball->distance = distance;
-						ball->seen = TRUE;
-						fprintf(fp, "c/g/%i/!\n", distance);
-						return TRUE;
-					}
+				distance = distance_calc(b_left_x, b_right_x, b_left_y, b_right_y);
+				if (distance < 60 && distance > 30){
+					fprintf(fp, "v0s!\n");
+					ball->distance = distance;
+					ball->seen = TRUE;
+					fprintf(fp, "c/r/%i/!\n", distance);
+					return TRUE;
 				}
-    	   	}
-		}
-	}else if(ball->colour == 'B'){
-		printf("Going towards blue\n");
-		while (1) {
-			// Update the boundary box co-ordinates
-			int verilog_word = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
-			if (verilog_word == EEE_IMGPROC_MSG_START_B){ // If the incoming string == RBB
-				int b_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (top left coordinate)
-				int b_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (bottom right coordinate)
+			}else{
 
-				int b_left_x = (b_topleft)>>16; // extracting the top 16 bits
-				int b_right_x = (b_bottomright)>>16;
-
-				int b_left_y = (b_topleft & 0x0000ffff);
-				int b_right_y = (b_bottomright & 0x0000ffff);
-
+			}
+		}else if(is_ball(y_left_x, y_right_x, y_left_y, y_right_y) && is_in_centre_range(y_left_x, y_right_x)){
+			if(ball->colour == 'Y'){
+				printf("Going towards yellow\n");
 				// Measure angle and correct if needed to
-                int middle_pix = (b_right_x + b_left_x) / 2;
-                if (middle_pix < 280){
+				int middle_pix = (y_right_x + y_left_x) / 2;
+				if (middle_pix < 280){
 					fprintf(fp, "v0l!\n");
-                }else if(middle_pix > 360){
+				}else if(middle_pix > 360){
 					fprintf(fp, "v0r!\n");
 				}else{
 					fprintf(fp, "v0g!\n");
 				}
 
-				// If we can make a valid decision measurement, make it
-				if(is_ball(b_left_x, b_right_x, b_left_y, b_right_y) && is_in_centre_range(b_left_x, b_right_x)){
-					distance = distance_calc(b_left_x, b_right_x, b_left_y, b_right_y);
-					if (distance < 60 && distance > 30){
-						fprintf(fp, "v0s!\n");
-						ball->distance = distance;
-						ball->seen = TRUE;
-						fprintf(fp, "c/r/%i/!\n", distance);
-						return TRUE;
-					}
+				distance = distance_calc(y_left_x, y_right_x, y_left_y, y_right_y);
+				if (distance < 60 && distance > 30){
+					fprintf(fp, "v0s!\n");
+					// Update members
+					ball->distance = distance;
+					ball->seen = TRUE;
+					fprintf(fp, "c/y/%i/!\n", distance);
+					return TRUE;
 				}
-    	   	}
+			}else{
+
+			}
 		}
-	}/*else if(ball->colour == 'V'){
-		int v_d[5];
-		while ((IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_STATUS)>>8) & 0xff) {
-
-			// Update the boundary box co-ordinates
-			int verilog_word = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
-			if (verilog_word == EEE_IMGPROC_MSG_START_V){ // If the incoming string == RBB
-				// Print on a newline
-				printf("\n");
-				int v_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (top left coordinate)
-				int v_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (bottom right coordinate)
-
-				int v_left_x = (v_topleft)>>16; // extracting the top 16 bits
-				int v_right_x = (v_bottomright)>>16;
-
-				int v_left_y = (v_topleft & 0x0000ffff);
-				int v_right_y = (v_bottomright & 0x0000ffff);
-
-				// Measure angle and correct if needed to
-                int middle_pix = (v_right_x + v_left_x) / 2;
-                if (middle_pix < 240){
-					fprintf(fp, "0s");
-					fprintf(fp, "0l");
-                }else if(middle_pix > 400){
-					fprintf(fp, "0s");
-					fprintf(fp, "0r");
-				}else{
-					fprintf(fp, "0g");
-				}
-
-				// If we can make a valid decision measurement, make it
-				if(is_ball(v_left_x, v_right_x, v_left_y, v_right_y) && is_in_centre_range(v_left_x, v_right_x)){
-					distance = distance_calc(v_left_x, v_right_x, v_left_y, v_right_y);
-					if (distance < 50 && distance > 30){
-						// Update members
-						ball->distance = distance;
-						ball->seen = TRUE;
-						return TRUE;
-					}
-				}
-
-    	   	}
-		}
-	}*/else if(ball->colour == 'Y'){
-		printf("Going towards yellow\n");
-		while (1) {
-			// Update the boundary box co-ordinates
-			int verilog_word = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
-			if (verilog_word == EEE_IMGPROC_MSG_START_Y){ // If the incoming string == RBB
-				int y_topleft = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (top left coordinate)
-				int y_bottomright = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG); // Grab the next word (bottom right coordinate)
-
-				int y_left_x = (y_topleft)>>16; // extracting the top 16 bits
-				int y_right_x = (y_bottomright)>>16;
-
-				int y_left_y = (y_topleft & 0x0000ffff);
-				int y_right_y = (y_bottomright & 0x0000ffff);
-
-				// Measure angle and correct if needed to
-                int middle_pix = (y_right_x + y_left_x) / 2;
-                if (middle_pix < 280){
-					fprintf(fp, "v0l!\n");
-                }else if(middle_pix > 360){
-					fprintf(fp, "v0r!\n");
-				}else{
-					fprintf(fp, "v0g!\n");
-				}
-
-				// If we can make a valid decision measurement, make it
-				if(is_ball(y_left_x, y_right_x, y_left_y, y_right_y) && is_in_centre_range(y_left_x, y_right_x)){
-					distance = distance_calc(y_left_x, y_right_x, y_left_y, y_right_y);
-					if (distance < 60 && distance > 30){
-						fprintf(fp, "v0s!\n");
-						// Update members
-						ball->distance = distance;
-						ball->seen = TRUE;
-						fprintf(fp, "c/y/%i/!\n", distance);
-
-						return TRUE;
-					}
-				}
-    	   	}
-			// Need to read the next few messages to restart the while loop
-			IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
-			IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
-			IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
-		}
-	}
+	} // end of while loop
 	printf("Reaching return 0\n");
 	return 0;
 }
@@ -568,10 +512,10 @@ int main()
 	      	MIPI_BIN_LEVEL(bin_level);
 	      	usleep(500000);
 	    }
-		int count = 0;
+//		int count = 0;
        	//Read messages from the image processor and print them on the terminal
        	while ((IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_STATUS)>>8) & 0xff) {	//Find out if there are words to read
-    		count++;
+    		//count++;
        		//printf("Starting while loop\n");
        		//Get next word from message buffer (Verilog)
 			int word = IORD(EEE_IMGPROC_0_BASE,EEE_IMGPROC_MSG);
