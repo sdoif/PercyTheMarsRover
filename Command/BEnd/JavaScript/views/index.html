@@ -362,15 +362,15 @@
                 document.querySelector('#y-coord').textContent=yCoord;
             }
 
-            function addBallCoordinates(xCoord, yCoord, colorBall){
+            function addBallCoordinates(xCoord, yCoord, hexcode, colorBall){
                     ballsSeen.push(colorBall);
                     let newBall ={
                         x:[xCoord],
                         y:[yCoord],
                         mode: 'markers',
                         marker: {
-                            size: 15,
-                            color: `${colorBall}`
+                            size: 20,
+                            color: `${hexcode}`
                         },
                         type: 'scatter',
                         name: `${colorBall}`,
@@ -410,31 +410,46 @@
                 if(ballsSeenCount===ballData.ballNum){
                     console.log('No new ball data');
                 }else{
+                    let colorhex;
                     let _color;
+                    let isAColor = false;
                     if(ballData.color=='r'){
-                        _color = 'Red';
+                        colorhex = '#FF0000';
+                        _color='Red';
+                        isAColor = true;
                     }else if(ballData.color=='g'){
-                        _color = 'Green';
+                        colorhex = '#008080';
+                        _color='Green';
+                        isAColor = true;
                     }else if(ballData.color=='b'){
-                        _color = 'Blue';
+                        colorhex = '#0000CD';
+                        _color='Blue';
+                        isAColor = true;
                     }else if(ballData.color=='v'){
-                        _color = 'Violet';
+                        colorhex = '#C71585';
+                        _color='Violet';
+                        isAColor = true;
                     }else if(ballData.color=='y'){
-                        _color = 'Yellow';
+                        colorhex = '#FFFC33';
+                        _color='Yellow';
+                        isAColor = true;
                     }
                 
                     if(ballsSeen.includes(_color)){
                         console.log('Ball Already Plotted')
-                    }else{
+                    }else if(isAColor){
                         ballsSeenCount++;
-                        ballsSeen.push(_color);
+                        ballsSeen.push(ballData.color);
                         ballHistory = ballData.archive;
 
                         addBallCoordinates(
                             ballData.ballXCoord,
                             ballData.ballYCoord,
+                            colorhex,
                             _color
                         );
+                    }else{
+                        console.log('undefined color detected');
                     }
                 }
             }
@@ -534,32 +549,13 @@
                 y:[0],
                 mode: 'markers',
                 marker: {
-                    size: 25,
+                    size: 30,
                     color: 'black'
                 },
                 type: 'scatter',
                 name: 'Rover'
             };
 
-            let redBall ={
-                x:[-4],
-                y:[-7],
-                mode: 'markers',
-                marker: {
-                    size: 15
-                },
-                type: 'scatter'
-            };
-
-            let blueBall ={
-                x:[6],
-                y:[8],
-                mode: 'markers',
-                marker: {
-                    size: 15
-                },
-                type: 'scatter'
-            };
 
             let data1 = [rover]//, virtualHeatmap];
 
