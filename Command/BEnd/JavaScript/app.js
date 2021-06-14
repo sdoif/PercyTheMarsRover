@@ -35,13 +35,16 @@ let roverStatus = {
 
 let ballStatus={
     color: '',
-    currentX: 0,
-    currentY: 0,
-    theta: 0,
     distance: 0,
     ballX: 0,
     ballY: 0,
     count: 0
+}
+
+let roverBallOrientation={
+    theta: 0,
+    xCoord: 0,
+    yCoord: 0
 }
 
 let allBallsSeen=[];
@@ -201,21 +204,20 @@ client.on('message', (topic, message, packet) => {
     }else if(topic === "vision"){
         console.log(`Recieved message from ${topic} - ${strMessage}`);
         //parse values from vision to make them ready for getting
-        ballStatus.color = (values[6]);
-        ballStatus.theta = Number(values[3]);
-        ballStatus.currentX = Number(values[4]);
-        ballStatus.currentY = Number(values[5]);
-        ballStatus.distance = Number(values[7]);
+        ballStatus.color = (values[1]);
+        ballStatus.distance = Number(values[2]);
         //Calculate ball coordinates
-        ballStatus.ballX = ballStatus.currentX + (ballStatus.distance * Math.cos(ballStatus.theta)) ;
-        ballStatus.ballY = ballStatus.currentY + (ballStatus.distance * Math.sin(ballStatus.theta)) ;
+        ballStatus.ballX = roverBallOrientation.xCoord + (ballStatus.distance * Math.cos(roverBallOrientation.theta)) ;
+        ballStatus.ballY = roverBallOrientation.yCoord + (ballStatus.distance * Math.sin(roverBallOrientation.theta)) ;
         //let frontend know it is time to make a request
         ballStatus.count++;
         allBallsSeen.push({color: ballStatus.color, xCoordinate: ballStatus.ballX, yCoordinate: ballStatus.ballY})
         console.log("New ball alert! : ", ballStatus);
     }else if(topic === "ball"){
         console.log(`Recieved message from ${topic} - ${strMessage}`);
-
+        roverBallOrientation.theta = Number(values[1]);
+        roverBallOrientation.xCoord = Number(values[2]);
+        roverBallOrientation.yCoord = Number(values[3]);
     }
     
 });
