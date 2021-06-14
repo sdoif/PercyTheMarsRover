@@ -175,7 +175,8 @@ volatile int xydat[2];
 int tdistance = 0;
 
 String data_command[6] = {"c", "0", "0", "0", "0", "0"};
-String data_vision[6] = {"v", "0", "0", "0", "0", "0"};
+String data_vision[3] = {"v", "0", "0"};
+String data_coord[4] = {"b","0", "0", "0"};
 
 String fixed_size(float num){
   int num_length = String(num).length();

@@ -61,9 +61,11 @@ void setup()
     Serial.println("Mouse cam failed to init");
     while(1);
   }  
+  
   mousecam_write_reg(11, 7);
   mousecam_write_reg(25, 126);
   mousecam_write_reg(26, 14);
+  
 }
 
 
@@ -417,6 +419,8 @@ Serial.println(actual_x);
 //      Serial.println("cart_x = "+String(cart_x));
 //      Serial.println("cart_y = "+String(cart_y));
 
+    data_command[0] = "c";
+    data_command[1] = gear;
     data_command[2] = fixed_size(x_to_command);
     data_command[3] = fixed_size(y_to_command);
     data_command[4] = fixed_size(total_distance);
@@ -424,9 +428,9 @@ Serial.println(actual_x);
 
     data_vision[1] = String(s_0_int);
     data_vision[2] = String(s_1_int);
-    data_vision[3] = fixed_size(theta_store);
-    data_vision[4] = fixed_size(xcal_total_store);
-    data_vision[5] = fixed_size(ycal_total_store);
+    data_coord[1] = fixed_size(theta_store);
+    data_coord[2] = fixed_size(xcal_total_store);
+    data_coord[3] = fixed_size(ycal_total_store);
 
       Serial.print("data = ");
       for(int i = 0; i<6; i++){
@@ -435,13 +439,24 @@ Serial.println(actual_x);
         Serial1.print('/');
         Serial.print('/');
       } 
+      Serial1.print("!");
+      Serial.print("!");
       
-      for(int i = 0; i<6; i++){
+      for(int i = 0; i<3; i++){
         Serial1.print(data_vision[i]);
         Serial.print(data_vision[i]);
+      }
+      Serial1.print("!");
+      Serial.print("!");
+
+      for(int i = 0; i<4; i++){
+        Serial1.print(data_coord[i]);
+        Serial.print(data_coord[i]);
         Serial1.print('/');
         Serial.print('/');
       }
+      Serial1.print("!");
+      Serial.print("!");
 
 
 }
