@@ -196,10 +196,10 @@ client.on('message', (topic, message, packet) => {
     if(topic === "drive"){
         let values = strMessage.split("/");
         roverStatus.gear = (values[1]);
-        roverStatus.xCoordinate = (values[2])=undefined? roverStatus.xCoordinate : (values[2]) ;
-        roverStatus.yCoordinate = (values[3])=undefined? roverStatus.yCoordinate : (values[3]) ;
-        roverStatus.distanceTravelled = (values[4])=undefined? roverStatus.distanceTravelled : (values[4]) ;
-        roverStatus.speed = (values[5])=undefined? roverStatus.speed : (values[5]) ;
+        roverStatus.xCoordinate = (values[2])===undefined? roverStatus.xCoordinate : Number(values[2]) ;
+        roverStatus.yCoordinate = (values[3])===undefined? roverStatus.yCoordinate : Number(values[3]) ;
+        roverStatus.distanceTravelled = (values[4])===undefined? roverStatus.distanceTravelled : Number(values[4]) ;
+        roverStatus.speed = (values[5])===undefined? roverStatus.speed : Number(values[5]) ;
         //console.log("Rover status changed to: ", roverStatus);
     }else if(topic === "vision"){
         console.log(`Recieved message from ${topic} - ${strMessage}`);
@@ -207,8 +207,8 @@ client.on('message', (topic, message, packet) => {
         ballStatus.color = (values[1]);
         ballStatus.distance = Number(values[2]);
         //Calculate ball coordinates
-        ballStatus.ballX = roverBallOrientation.xCoord + (ballStatus.distance * Math.cos(roverBallOrientation.theta)) ;
-        ballStatus.ballY = roverBallOrientation.yCoord + (ballStatus.distance * Math.sin(roverBallOrientation.theta)) ;
+        ballStatus.ballX = roverStatus.xCoordinate  + (ballStatus.distance * Math.cos(roverBallOrientation.theta)) ;
+        ballStatus.ballY = roverStatus.yCoordinate + (ballStatus.distance * Math.sin(roverBallOrientation.theta)) ;
         //let frontend know it is time to make a request
         ballStatus.count++;
         allBallsSeen.push({color: ballStatus.color, xCoordinate: ballStatus.ballX, yCoordinate: ballStatus.ballY})
