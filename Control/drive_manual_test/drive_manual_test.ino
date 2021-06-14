@@ -86,12 +86,12 @@ int setupwifi()
     return 0;
 }
 
-void callback(char* topic, byte* message, unsigned int length) {
+void callback(char* topic, byte* message, unsigned int _length) {
   Serial.print("Message arrived on topic: ");
   Serial.print(topic);
   Serial.print(". Message: ");
   String messageTemp;
-  for (int i = 0; i < length; i++) {
+  for (int i = 0; i < _length; i++) {
     Serial.print((char)message[i]);
     messageTemp += (char)message[i];
   }
@@ -209,11 +209,11 @@ void loop() {
     }
     Serial.println();
 
-    byte buffer[44];
+    byte buffer1[44];
     for(int i = 0; i < 44; i++){
-      buffer[i] = byte(toCommand[i]);
+      buffer1[i] = byte(toCommand[i]);
     }
-    mqttclient.publish("drive", buffer, 44);
+    mqttclient.publish("drive", buffer1, 44);
 
     char toVision2[3];
     toVision2[0] = toVision[0];
@@ -251,7 +251,7 @@ void loop() {
           ballCoordinates[i] = toVision[i];
         }
         for(int i = 36; i < 50; i++){
-          ballCoordinates[i] = fromVision[i-34];
+          ballCoordinates[i] = fromVision[i-33];
         }
         byte buffer2[50];
         for(int i = 0; i < 50; i++){
@@ -263,14 +263,13 @@ void loop() {
         }
         mqttclient.publish("vision", buffer2, 50);
 
-      }else{
+      }else if(temp.charAt(1) == 'v'){
         Serial.print("Here we are");
-        Serial2.print("v" + temp);
-
+        Serial2.print(temp.substring(1));
       }
 
       clearfromVision();   
-
+      endMessage = 0;
     } 
   }
 
