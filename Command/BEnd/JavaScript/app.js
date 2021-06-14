@@ -178,6 +178,10 @@ client.on('connect', () =>{
     client.subscribe('vision', () => {
         console.log('Subscribed to vision');
     });
+
+    client.subscribe('ball', () => {
+        console.log('Subscribed to ball');
+    });
 });
 
 
