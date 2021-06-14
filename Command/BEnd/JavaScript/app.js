@@ -209,6 +209,9 @@ client.on('message', (topic, message, packet) => {
         ballStatus.count++;
         allBallsSeen.push({color: ballStatus.color, xCoordinate: ballStatus.ballX, yCoordinate: ballStatus.ballY})
         console.log("New ball alert! : ", ballStatus);
+    }else if(topic === "ball"){
+        console.log(`Recieved message from ${topic} - ${strMessage}`);
+
     }
     
 });

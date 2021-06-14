@@ -11,13 +11,14 @@
 
 WiFiClient wificlient;
 PubSubClient mqttclient(wificlient);
-char msg[90], fromDrive[80], fromVision[50], toVision[36], toCommand[44], ballCoordinates[50], readVision[20];
+char msg[90], fromDrive[50], toVision[36], toCommand[44], ballCoordinates[50], readVision[20];
 char toDrive[5] = {'0','x','0','0','0'};
-int value = 0;
 int bytein = 0;
 int _index = 0;
-int endMessage = 0;
+int endVisionMessage = 0;
+int endDriveMessage = 0;
 int visionIt = 0;
+int driveIt = 0;
 String add, correct;
 const char* serverip = "18.134.3.99"; // aws server ip
 
@@ -149,15 +150,15 @@ void clearmsg(){
   }
 }
 
-void clearfromVision(){
-  for(int i = 0; i < 50; i++){
-    fromVision[i] = NULL;
-  }
-}
-
 void clearReadVision(){
   for(int i = 0; i < 20; i++)
   readVision[i] = NULL;
+}
+
+void clearFromDrive(){
+  for(int i = 0; i < 50; i++){
+    fromDrive[i] = NULL;
+  }
 }
 
 void loop() {
@@ -173,111 +174,72 @@ void loop() {
   
   mqttclient.loop();
 
-  if(Serial2.available() > 79){
-
-      for(int i = 0; i < 80 ; i++){
-        bytein = Serial2.read();
-        msg[i] = char(bytein);
+  if(Serial2.available()){
+    char readchar;
+    while(Serial2.available()){
+      readchar = Serial2.read();
+      if(readchar == '!'){
+        endDriveMessage = 1;
+        driveIt = 0;
+        break;
       }
+      fromDrive[driveIt] = readchar;
+      driveIt++;
+    }
 
-    add = "";
+    if(endDriveMessage){
 
-    for(int i = 0; i < 2; i++){
-      for(int i = 0; i<80; i++){
-        add = add + msg[i];
+      if(fromDrive[0] == 'c'){
+        mqttclient.publish("drive", fromDrive, 50);
+      }else if(fromDrive[0] == 'v'){
+        char toVision2[3];
+        toVision2[0] = fromDrive[0];
+        toVision2[1] = fromDrive[1];
+        toVision2[2] = fromDrive[2];
+        Serial1.print(toVision2);
+      }else if(fromDrive[0] == 'b'){
+        mqttclient.publish("ball", fromDrive, 50);
       }
+      clearFromDrive();
+      endDriveMessage = 0;
     }
-
-    Serial.println("add = " + add);
-    _index = add.indexOf('c');
-    correct = "";
-
-    for(int i = _index; i < _index + 80; i++){
-      correct = correct + add[i];
-    }
-
-    Serial.println("correct = " + correct);
-
-    for(int i = 1; i < 44; i++){
-      toCommand[i] = correct[i];
-    }
-    for(int i = 44; i < 80; i++){
-      toVision[i-44] = correct[i];
-    }
-    for(int i = 1; i < 44; i++){
-      Serial.print(toCommand[i]);
-    }
-    Serial.println();
-
-    byte buffer1[44];
-    for(int i = 0; i < 44; i++){
-      buffer1[i] = byte(toCommand[i]);
-    }
-    mqttclient.publish("drive", buffer1, 44);
-
-    char toVision2[3];
-    toVision2[0] = toVision[0];
-    toVision2[1] = toVision[2];
-    toVision2[3] = toVision[4];
-    Serial1.print(toVision2);
-
-    Serial.print("toVision = "+String(toVision));
   }
 
-
   if(Serial1.available()){
-
+    char readchar;
     while(Serial1.available()){
-      bytein = Serial1.read();
-      readVision[visionIt] = char(bytein);
-      visionIt++;
-      if(char(bytein) == '!'){
-        endMessage = 1;
+      readchar = Serial1.read();
+      if(readchar == '!'){
+        endVisionMessage = 1;
         visionIt = 0;
         break;
       }
+      readVision[visionIt] = readchar;
+      visionIt++;
     }
-    if(endMessage){
 
-      String temp = String(readVision);
+    if(endVisionMessage){
+
       Serial.print("Received from vision: ");
-      clearReadVision();
-      Serial.println(temp);
-      Serial.println("temp 0 = "+String(temp.charAt(1)));
-      if(temp.charAt(1) == 'c'){
-        Serial.print("Actually here");
-        temp.toCharArray(fromVision, temp.length());
-        for(int i = 0; i < 36; i++){
-          ballCoordinates[i] = toVision[i];
-        }
-        for(int i = 36; i < 50; i++){
-          ballCoordinates[i] = fromVision[i-33];
-        }
-        byte buffer2[50];
-        for(int i = 0; i < 50; i++){
-          buffer2[i] = byte(ballCoordinates[i]);
-        }
-        Serial.print("buffer2 = ");
-        for(int i = 0; i< 50; i++){
-          Serial.print(buffer2[i]);
-        }
-        mqttclient.publish("vision", buffer2, 50);
+      Serial.println(readVision);
 
-      }else if(temp.charAt(1) == 'v'){
-        Serial.print("Here we are");
-        Serial2.print(temp.substring(1));
+      if(readVision[0] == 'c'){
+        mqttclient.publish("vision", readVision, 20);
+      }else if(readVision[0] == 'v'){
+        Serial2.print(readVision);
       }
 
-      clearfromVision();   
-      endMessage = 0;
+      clearReadVision();
+      endVisionMessage = 0;
     } 
   }
 
   if(Serial.available()){
     int i = 0;
+    char readChar;
     while(Serial.available()){
-      bytein = Serial.read();
-      msg[i] = char(bytein);
+      readChar = Serial.read();
+      msg[i] = readChar;
       i++;
     }
     mqttclient.publish("test", msg);
