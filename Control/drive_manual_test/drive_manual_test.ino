@@ -188,15 +188,18 @@ void loop() {
     }
 
     if(endDriveMessage){
-
+      
+      Serial.print("From Drive: ");
+      Serial.println(fromDrive);
+      
       if(fromDrive[0] == 'c'){
         mqttclient.publish("drive", fromDrive, 50);
       }else if(fromDrive[0] == 'v'){
-        char toVision2[3];
-        toVision2[0] = fromDrive[0];
-        toVision2[1] = fromDrive[1];
-        toVision2[2] = fromDrive[2];
-        Serial1.print(toVision2);
+        Serial.print(fromDrive);
+        //Serial1.print(fromDrive[0]);
+        Serial1.print(fromDrive[1]);
+        //Serial1.print(fromDrive[2]);
+
       }else if(fromDrive[0] == 'b'){
         mqttclient.publish("ball", fromDrive, 50);
       }
@@ -206,15 +209,19 @@ void loop() {
   }
 
   if(Serial1.available()){
-    char readchar;
+    char readChar;
+    Serial.print("hi");
+  
     while(Serial1.available()){
-      readchar = Serial1.read();
-      if(readchar == '!'){
+      readChar = Serial1.read();
+      Serial.print("Char from Vision");
+      Serial.println(readChar);
+      if(readChar == '!'){
         endVisionMessage = 1;
         visionIt = 0;
         break;
       }
-      readVision[visionIt] = readchar;
+      readVision[visionIt] = readChar;
       visionIt++;
     }
 
@@ -223,9 +230,9 @@ void loop() {
       Serial.print("Received from vision: ");
       Serial.println(readVision);
 
-      if(readVision[0] == 'c'){
+      if(readVision[1] == 'c'){
         mqttclient.publish("vision", readVision, 20);
-      }else if(readVision[0] == 'v'){
+      }else if((readVision[1] == 'v')||(readVision[0] == 'v')){
         Serial2.print(readVision);
       }
 

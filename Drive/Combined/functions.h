@@ -106,6 +106,7 @@ unsigned long ref_time = 0;
 unsigned long reff1_time = 0;
 unsigned long ref1_time = 0;
 unsigned long ref_time_scan = 0;
+unsigned long ref_time_s = 0;
 
 int c_new = 0;
 int v_new = 0;
@@ -132,6 +133,7 @@ int rover_length = 73;
 int _iter_scan = 0;
 int _iter_speed = 0;
 int __iter = 0;
+int _iter_s = 0;
 int _iter = 0;
 int _iter_turn = 0;
 int stop_count = 1;
@@ -175,7 +177,7 @@ volatile int xydat[2];
 int tdistance = 0;
 
 String data_command[6] = {"c", "0", "0", "0", "0", "0"};
-String data_vision[3] = {"v", "0", "0"};
+String data_vision[2] = {"v", "0"};
 String data_coord[4] = {"b","0", "0", "0"};
 
 String fixed_size(float num){
@@ -553,7 +555,7 @@ if((angle_new-0.12<current_angle)&&(angle_new+0.12>current_angle)){
 }
 
 bool rover_scan_one(char _mode){
-  if((_mode == 's')&&s_0){
+  if((_mode == 's')&&(scan_state == 3)){
     brake();
     Serial.println("Scan_one = STOP");
     scan_state = 4;
@@ -561,7 +563,7 @@ bool rover_scan_one(char _mode){
     s_1_int = 1;
     delay(1000);
     return true;
-  }else if((_mode == 'g')&&s_0){
+  }else if((_mode == 'g')&&(scan_state == 3)){
     s_1_int = 0;
     left();
     return false;
@@ -603,13 +605,22 @@ bool rover_scan_zero(char _mode){
     if((_mode == 'g')&&(!s_0)){
       if(prev_mode == 's'){
         brake();
-        delay(1500);
-        theta_store = store_angle(actual_x);
-        r_store = float(actual_y);
-        xcal_total_store = xcal_total;
-        ycal_total_store = ycal_total;
-        _iter_scan = 2;
-        left();
+        //delay(1500);
+        if(_iter_s==0){
+          ref_time_s = millis();
+          _iter_s=1;
+        }
+        if(millis()-ref_time_s < 1500){
+          brake();
+        }else{
+          _iter_s = 0;
+          theta_store = store_angle(actual_x);
+          r_store = float(actual_y);
+          xcal_total_store = xcal_total;
+          ycal_total_store = ycal_total;
+          _iter_scan = 2;
+          left();
+        }
         return false;
       }else{
         s_0_int = 0;
