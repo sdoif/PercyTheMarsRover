@@ -463,7 +463,7 @@
                 //manual move to point on graph feature
             }
             
-            function updateEnergyStatus(cnc, percentage, time){
+            function updateChargeStatus(cnc, percentage, time){
                 let lightning = document.querySelector('#cnc');
                 let state = document.querySelector('#time-state');
                 let percentValue = document.querySelector('#pc-val');
@@ -493,9 +493,22 @@
                 //Update percentage and color
             }
 
+            async function updateFromEnergy(url="http://localhost:9000/api/energyStatus"){
+                energyfetch++;
+                console.log(energyfetch);
+                if(energyfetch==10){
+                    let res = await fetch(url);
+                    let energyData = await (res.json());
+                    console.log("RECIEVED: ", energyData);
+                    updateChargeStatus('c', energyData.soc, energyData.ttf);
+                    energyfetch=0;
+                }
+            }
+
             function updateFromAll(){
                 updateUsingFromDrive();
                 updateUsingFromVision();
+                updateFromEnergy();
             }
 
 
@@ -514,7 +527,7 @@
             let ballsSeen = [];
             let ballHistory = [];
             let _time = 0;
-            updateEnergyStatus('c', 52, 29);
+            let energyfetch = 0;
             let _fromDrive = setInterval( 
                 updateFromAll ,100);
 
