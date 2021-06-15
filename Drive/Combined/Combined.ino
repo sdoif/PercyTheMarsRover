@@ -426,14 +426,16 @@ Serial.println(actual_x);
     data_command[4] = fixed_size(total_distance);
     data_command[5] = fixed_size(voltage2speed(vref));
 
-    data_vision[1] = String(s_0_int);
-    data_vision[2] = String(s_1_int);
-    data_coord[1] = fixed_size(theta_store);
-    data_coord[2] = fixed_size(xcal_total_store);
-    data_coord[3] = fixed_size(ycal_total_store);
+//    data_vision[1] = String(s_0_int);
+//    data_vision[2] = String(s_1_int);
 
-      Serial.print("data = ");
-      for(int i = 0; i<6; i++){
+    data_vision[1] = String(scan_state);
+
+    data_coord[1] = fixed_size(store_angle(actual_x));
+    data_coord[2] = fixed_size(x_to_command);
+    data_coord[3] = fixed_size(y_to_command);
+
+          for(int i = 0; i<6; i++){
         Serial.print(data_command[i]);
         Serial1.print(data_command[i]);
         Serial1.print('/');
@@ -441,22 +443,28 @@ Serial.println(actual_x);
       } 
       Serial1.print("!");
       Serial.print("!");
-      
-      for(int i = 0; i<3; i++){
+
+                for(int i = 0; i<2; i++){
         Serial1.print(data_vision[i]);
         Serial.print(data_vision[i]);
       }
       Serial1.print("!");
       Serial.print("!");
+     
 
-      for(int i = 0; i<4; i++){
-        Serial1.print(data_coord[i]);
-        Serial.print(data_coord[i]);
-        Serial1.print('/');
-        Serial.print('/');
+            for(int i = 0; i<4; i++){
+          Serial1.print(data_coord[i]);
+          Serial.print(data_coord[i]);
+          Serial1.print('/');
+          Serial.print('/');
       }
-      Serial1.print("!");
-      Serial.print("!");
+        Serial1.print("!");
+        Serial.print("!");
+
+  //if((loop_counter % 5) == 0){
 
 
+  //}
+  
+  loop_counter++;
 }

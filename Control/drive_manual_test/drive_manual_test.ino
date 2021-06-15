@@ -1,8 +1,6 @@
 #include <WiFi.h>
 #include <Ethernet.h>
-#include <PubSubClient.h> // mqtt stuff
-
-//setting up global variables/objects
+#include <PubSubClient.h>
 
 #define visionIn 4
 #define visionOut 2
@@ -22,15 +20,12 @@ int driveIt = 0;
 String add, correct;
 const char* serverip = "18.134.3.99"; // aws server ip
 
-
-// setup always runs at the start
 void setup() {
   
     Serial.println("Start");
-    // Note the format for setting a serial port is as follows: Serial2.begin(baud-rate, protocol, RX pin, TX pin);
-    Serial1.begin(115200, SERIAL_8N1, visionIn, visionOut); // setting up uart port to speak with vision
-    Serial2.begin(115200, SERIAL_8N1, driveIn, driveOut); // setting up uart port to speak with drive
-    Serial.begin(115200); // sets baud rate
+    Serial1.begin(115200, SERIAL_8N1, visionIn, visionOut); 
+    Serial2.begin(115200, SERIAL_8N1, driveIn, driveOut);
+    Serial.begin(115200);
     delay(10);
     Serial.println("Connecting to wifi");
 
@@ -45,7 +40,8 @@ void setup() {
     if(!mqttclient.connect("esp32")){
       Serial.println("Client connection failed");
     }
-    delay(1000);
+
+    delay(10);
 
     if(mqttclient.subscribe("direction")){
       Serial.println("Subscribed to direction");
@@ -75,10 +71,9 @@ void setup() {
 
 int setupwifi()
 {
-    // We start by connecting to a WiFi network
-    WiFi.begin("Selin", "selinuygun"); // connects to wifi idk how to connect to imperial wifi as it needs authentication
+    WiFi.begin("Selin", "selinuygun");
     Serial.print("Waiting for WiFi... "); 
-    while(WiFi.status() != WL_CONNECTED) { // this just tries to connect to wifi i guess
+    while(WiFi.status() != WL_CONNECTED) {
         Serial.print(".");
         delay(500);
     }
@@ -122,13 +117,10 @@ void callback(char* topic, byte* message, unsigned int _length) {
 }
 
 void reconnect() {
-  // Loop until we're reconnected
   while (!mqttclient.connected()) {
     Serial.print("Attempting MQTT connection...");
-    // Attempt to connect
     if (mqttclient.connect("esp32")) {
       Serial.println("Connected to Broker");
-      // Subscribe
       Serial.println("Subscribing to Topics");
       mqttclient.subscribe("direction");
       mqttclient.subscribe("speed");
@@ -138,7 +130,6 @@ void reconnect() {
       Serial.print("failed, rc=");
       Serial.print(mqttclient.state());
       Serial.println(" try again in 3 seconds");
-      // Wait 3 seconds before retrying
       delay(3000);
     }
   }
@@ -188,15 +179,18 @@ void loop() {
     }
 
     if(endDriveMessage){
-
+      
+      Serial.print("From Drive: ");
+      Serial.println(fromDrive);
+      
       if(fromDrive[0] == 'c'){
         mqttclient.publish("drive", fromDrive, 50);
       }else if(fromDrive[0] == 'v'){
-        char toVision2[3];
-        toVision2[0] = fromDrive[0];
-        toVision2[1] = fromDrive[1];
-        toVision2[2] = fromDrive[2];
-        Serial1.print(toVision2);
+        Serial.print(fromDrive);
+        //Serial1.print(fromDrive[0]);
+        Serial1.print(fromDrive[1]);
+        //Serial1.print(fromDrive[2]);
+
       }else if(fromDrive[0] == 'b'){
         mqttclient.publish("ball", fromDrive, 50);
       }
@@ -206,15 +200,19 @@ void loop() {
   }
 
   if(Serial1.available()){
-    char readchar;
+    char readChar;
+    Serial.print("hi");
+  
     while(Serial1.available()){
-      readchar = Serial1.read();
-      if(readchar == '!'){
+      readChar = Serial1.read();
+      Serial.print("Char from Vision");
+      Serial.println(readChar);
+      if(readChar == '!'){
         endVisionMessage = 1;
         visionIt = 0;
         break;
       }
-      readVision[visionIt] = readchar;
+      readVision[visionIt] = readChar;
       visionIt++;
     }
 
@@ -223,9 +221,9 @@ void loop() {
       Serial.print("Received from vision: ");
       Serial.println(readVision);
 
-      if(readVision[0] == 'c'){
+      if(readVision[1] == 'c'){
         mqttclient.publish("vision", readVision, 20);
-      }else if(readVision[0] == 'v'){
+      }else if((readVision[1] == 'v')||(readVision[0] == 'v')){
         Serial2.print(readVision);
       }
 
@@ -233,17 +231,4 @@ void loop() {
       endVisionMessage = 0;
     } 
   }
-
-  if(Serial.available()){
-    int i = 0;
-    char readChar;
-    while(Serial.available()){
-      readChar = Serial.read();
-      msg[i] = readChar;
-      i++;
-    }
-    mqttclient.publish("test", msg);
-    clearmsg();
-  }
-
 }
