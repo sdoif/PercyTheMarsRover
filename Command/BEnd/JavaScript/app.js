@@ -236,7 +236,7 @@ client.on('message', (topic, message, packet) => {
         console.log(`Recieved message from ${topic} - ${strMessage}`);
         //parse values from vision to make them ready for getting
         ballStatus.color = (values[1]);
-        ballStatus.distance = Number(values[2]);
+        ballStatus.distance = Number(values[2])+7.3;//adding distance from rover center to camera
         //Calculate ball coordinates
         ballStatus.ballX = roverStatus.xCoordinate  + (ballStatus.distance * Math.cos(roverBallOrientation.theta)) ;
         ballStatus.ballY = roverStatus.yCoordinate + (ballStatus.distance * Math.sin(roverBallOrientation.theta)) ;
