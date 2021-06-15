@@ -13,6 +13,10 @@ app.use(bp.urlencoded({ extended: true }))
 app.use(express.static(path.join(__dirname, 'views')));
 
 
+let soc = [];
+let ttf = [];
+let counterEnergy = 0;
+
 // placeholder for information stored
 let information = {
     battery: 0,
@@ -78,6 +82,12 @@ app.get('/api/test', (req, res) => {
     res.send(JSON.stringify('Testing'));
     console.log('entered test');
 
+});
+
+app.get('/api/energyStatus', (req, res) => {
+    //console.log("Requested energyStatus");
+    res.send(JSON.stringify({soc: soc[counterEnergy], ttf: ttf[counterEnergy] }));
+    counterEnergy++;
 });
 
 app.get('/api/roverStats', (req, res) => {
