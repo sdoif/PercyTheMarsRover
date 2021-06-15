@@ -2,8 +2,9 @@ const express = require('express');
 const path = require('path');
 const mqtt = require('mqtt');
 const bp = require('body-parser')
-const { response } = require('express');
+const { response, query } = require('express');
 const { Console } = require('console');
+const sqlite3 = require('sqlite3')
 
 const app = express();
 const client = mqtt.connect('mqtt://18.134.3.99', {clientId:"node"});
@@ -12,10 +13,9 @@ app.use(bp.json())
 app.use(bp.urlencoded({ extended: true }))
 app.use(express.static(path.join(__dirname, 'views')));
 
+let db = new sqlite3.Database(path.join(__dirname, '..', '..', 'database', 'energyDB.sl3'));
 
-let soc = [];
-let ttf = [];
-let counterEnergy = 0;
+let timeCounter = 1;
 
 // placeholder for information stored
 let information = {
@@ -84,10 +84,31 @@ app.get('/api/test', (req, res) => {
 
 });
 
+// schema
+// charging(
+//     time INTEGER PRIMARY KEY,
+//     soc INTEGER,
+//     ttf INTEGER
+//     );
+let sql = `SELECT soc, ttf FROM charging
+           WHERE time = ?;`;
+
+
 app.get('/api/energyStatus', (req, res) => {
-    //console.log("Requested energyStatus");
-    res.send(JSON.stringify({soc: soc[counterEnergy], ttf: ttf[counterEnergy] }));
-    counterEnergy++;
+    if(timeCounter<3063){
+        db.all(sql, [timeCounter], (err,row) => {
+            if(err){
+                console.log(err.message);
+            }
+            let queryRes = row[0];
+            console.log("ENERGY FETCHED as: ", queryRes);
+            //console.log("Requested energyStatus");
+            res.send(JSON.stringify(queryRes));
+        });
+        timeCounter++;
+    }else{
+        db.close();
+    }
 });
 
 app.get('/api/roverStats', (req, res) => {
