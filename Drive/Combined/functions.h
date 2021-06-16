@@ -107,6 +107,7 @@ unsigned long reff1_time = 0;
 unsigned long ref1_time = 0;
 unsigned long ref_time_scan = 0;
 unsigned long ref_time_s = 0;
+unsigned long ref_time_state = 0;
 
 int c_new = 0;
 int v_new = 0;
@@ -137,6 +138,7 @@ int _iter_s = 0;
 int _iter = 0;
 int _iter_turn = 0;
 int stop_count = 1;
+int _iter_state = 0;
 
 int scan_state = 0;
 

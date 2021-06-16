@@ -1,3 +1,12 @@
+/*
+ * Program written by Yue Zhu (yue.zhu18@imperial.ac.uk) in July 2020.
+ * pin6 is PWM output at 62.5kHz.
+ * duty-cycle saturation is set as 2% - 98%
+ * Control frequency is set as 1.25kHz. 
+*/
+
+
+
 #include "SPI.h"
 #include "functions.h"
 #include <Wire.h>
@@ -380,7 +389,17 @@ Serial.println(actual_x);
         if(scan_state == 6){  
             v[1] = 'g';
             delay(500);
-            scan_state = 0;
+            if(_iter_state==0){
+              ref_time_state = millis();
+              _iter_state=1;
+            }
+            if(millis()-ref_time_s <= 1500){
+              back();
+            }else if(millis()-ref_time_s > 1500){
+              brake();
+              _iter_state = 0;
+              scan_state = 0;
+            }
         }
 
     }else{
