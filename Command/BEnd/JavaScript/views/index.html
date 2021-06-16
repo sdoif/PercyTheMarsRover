@@ -27,8 +27,8 @@
                 <div class="battery">
                     <div class="battery-shell"><div id="battery-level"></div></div>
                     <div class="battery-lid"></div>
-                    <p id='battery-percent'> &#9735;50% </p>
-                    <p id='battery-ttl'> 29 mins until full </p>
+                    <p id='battery-percent'> <span id = 'cnc'>&#9735;</span><span id='pc-val'>0</span></p>
+                    <p id='battery-ttl'> <span id='time-till'> 40</span>mins<span id='time-state'> until full </span> </p>
                 </div>
             </section>
             
@@ -41,7 +41,7 @@
             </section>
 
             <section class = 'sub-sec'> 
-                <h2>Current Trip Details</h2> 
+                <!-- <h2>Current Trip Details</h2> 
                 <table>
                     <tr>
                         <td>Distance Traveled</td> 
@@ -62,7 +62,23 @@
                         <td>Current Coordinates</td>
                         <td id='currentCoord'>(0, 0)</td> 
                     </tr>
-                </table>
+                </table> -->
+                <div class='current-trip' id='q2'>
+                    <h2>Distance Traveled</h2> 
+                    <p id='distanceTraveled'>0m</p> 
+                </div>
+                <div class='current-trip' id='q1'>
+                    <h2>Time of Trip</h2>
+                    <p><span id = 'time'>0</span> mins</p>  
+                </div>
+                <div class='current-trip' id='q3'>
+                    <h2>Current Gear</h2>
+                    <p id="curr-gear">P</p> 
+                </div>
+                <div class='current-trip' id='q4'>
+                    <h2>Live Coordinates</h2>
+                    <p id='currentCoord'>(<span id='x-coord'>0</span>, <span id='y-coord'>0</span>)</p> 
+                </div>
             </section>
             </div>
         </section>
@@ -100,12 +116,12 @@
 
                 <div class = 'speed-control' id='speed-control-id'>
                     <div class="slider" id="curr-val">
-                        <span id="curr-speed-text">Speed (cm/s) :&nbsp;<span id="curr-speed-val">6.0</span></span>
+                        <span id="curr-speed-text">Speed (cm/s) :&nbsp;<span id="curr-speed-val">0</span></span>
                     </div>
                     <div class="slider" id="acc-slider">
-                        <div id="min-slider-val">6.0 </div>
-                        <input type="range" min="6.0" max="16.5" step="0.1" value="6.0" id = 'speed-slider' oninput="updateSpeed();">
-                        <div id="max-slider-val"> 16.5</div>
+                        <div id="min-slider-val">0 </div>
+                        <input type="range" min="0.0" max="16.0" step="0.1" value="0.0" id = 'speed-slider' oninput="updateSpeed();">
+                        <div id="max-slider-val"> 16</div>
                     </div>
                 </div>
 
@@ -154,23 +170,36 @@
             function toggleMode(){
                 const modeSwitch = document.querySelector("#switch");
                 const inputVal = document.querySelector("#speed-slider"); 
-                const keypadButton = document.querySelector(".keypad-button"); 
+                const uButton = document.querySelector("#up-key"); 
+                const lButton = document.querySelector("#left-key"); 
+                const rButton = document.querySelector("#right-key"); 
+                const dButton = document.querySelector("#up-key"); 
+                const sButton = document.querySelector("#up-key"); 
                 const speedControlDiv = document.querySelector('#speed-control-id');     
                 if(modeSwitch.checked){
                     postData("http://localhost:9000/api/mode", {mode: 1});
                     console.log('Switched mode to: Autonomous');
-                    alert('SWITCHING TO AUTONOMOUS: Keypad and speed slider are now disabled. Switch back to manual to resume use')
+                    //alert('SWITCHING TO AUTONOMOUS: Keypad and speed slider are now disabled. Switch back to manual to resume use')
                     // if Autonomous 
                     inputVal.disabled=true;
-                    keypadButton.disabled=true;
+                    uButton.disabled=true;
+                    lButton.disabled=true;
+                    rButton.disabled=true;
+                    dButton.disabled=true;
+                    sButton.disabled=true;
+
  
                 }else{
                     postData("http://localhost:9000/api/mode", {mode: 0});
                     console.log('Switched mode to: Manual');
-                    alert('SWITCHING TO MANUAL: Keypad and speed slider are now enabled')
+                    //alert('SWITCHING TO MANUAL: Keypad and speed slider are now enabled')
                     //if Manual
                     inputVal.disabled=false;
-                    keypadButton.disabled=false;
+                    uButton.disabled=false;
+                    lButton.disabled=false;
+                    rButton.disabled=false;
+                    dButton.disabled=false;
+                    sButton.disabled=false;
                 }
             }
 
@@ -266,7 +295,7 @@
                     let layout = { 
                         height: 275, 
                         width: 550, 
-                        paper_bgcolor: "#35499b", 
+                        paper_bgcolor: "#25242c", 
                         margin: { t: 0, b: 0 }, 
                         font: { color: "#ffebdb", family: "Roboto Mono" }
                     };
@@ -319,31 +348,6 @@
                 const _distance = document.querySelector("#distanceTraveled");
                 _distance.textContent=distance;
             }
-
-            function moveToClick(){
-                if(modeSwitch.checked==false)
-                {
-                    Plotly.d3.select(".plotly").on('click', function(d, i) {
-                    var e = Plotly.d3.event;
-                    var bg = document.getElementsByClassName('bg')[0];
-                    var x = ((e.layerX - bg.attributes['x'].value + 4) / (bg.attributes['width'].value)) * (myPlot.layout.xaxis.range[1] - myPlot.layout.xaxis.range[0]) + myPlot.layout.xaxis.range[0];
-                    var y = ((e.layerY - bg.attributes['y'].value + 4) / (bg.attributes['height'].value)) * (myPlot.layout.yaxis.range[0] - myPlot.layout.yaxis.range[1]) + myPlot.layout.yaxis.range[1]
-                    if (x.between(myPlot.layout.xaxis.range[0], myPlot.layout.xaxis.range[1]) &&
-                        y.between(myPlot.layout.yaxis.range[0], myPlot.layout.yaxis.range[1])) {
-                        Plotly.extendTraces(myPlot, {
-                        x: [
-                            [x]
-                        ],
-                        y: [
-                            [y]
-                        ]
-                        }, [3]);
-                    }
-                    });
-                }else{
-                    console.log('ERROR: Rover on Autonomous mission, await for end of mission or switch to manual'); 
-                }
-            }
             
             function updateRoverCoordinates(xCoord, yCoord){
                 // Plotly.update(graphDiv, data_update, layout_update, [, traceIndices])
@@ -354,23 +358,25 @@
                 //console.log(plotDiv)
                 Plotly.update(plotDiv, dataUpdate,{} ,[0])
 
-                const currCoord = document.querySelector('#currentCoord');
+                document.querySelector('#x-coord').textContent=xCoord;
+                document.querySelector('#y-coord').textContent=yCoord;
             }
 
-            function addBallCoordinates(xCoord, yCoord, colorBall){
-                let newBall ={
-                x:[xCoord],
-                y:[yCoord],
-                mode: 'markers',
-                marker: {
-                    size: 15,
-                    color: `${colorBall}`
-                },
-                type: 'scatter',
-                name: `${colorBall}`,
-                };
+            function addBallCoordinates(xCoord, yCoord, hexcode, colorBall){
+                    ballsSeen.push(colorBall);
+                    let newBall ={
+                        x:[xCoord],
+                        y:[yCoord],
+                        mode: 'markers',
+                        marker: {
+                            size: 20,
+                            color: `${hexcode}`
+                        },
+                        type: 'scatter',
+                        name: `${colorBall}`,
+                    };
 
-                Plotly.addTraces(plotDiv, newBall);
+                    Plotly.addTraces(plotDiv, newBall);
             }
 
             async function fetchData(url=''){
@@ -381,17 +387,130 @@
 
             }
 
-            async function updateUsingFromCommand(url="http://localhost:9000/api/roverStats"){
+            async function updateUsingFromDrive(url="http://localhost:9000/api/roverStats"){
                 let res = await fetch(url);
                 let roverData = await (res.json());
-                console.log(roverData);
                 updateDirectionAuto(roverData['gear']);
                 updateRoverCoordinates(roverData['xCoordinate'],roverData['yCoordinate']);
                 updateDistanceTraveled(roverData['distanceTravelled']);
                 updateSpeedAuto(roverData['speed']);
+                updateTime();
 
 
             }
+
+            function ballNotification(){
+                //add notification function
+            }
+
+            async function updateUsingFromVision(url="http://localhost:9000/api/ballStatus"){
+                let res = await fetch(url);
+                let ballData = await (res.json());
+
+                if(ballsSeenCount===ballData.ballNum){
+                    console.log('No new ball data');
+                }else{
+                    let colorhex;
+                    let _color;
+                    let isAColor = false;
+                    if(ballData.color=='r'){
+                        colorhex = '#FF0000';
+                        _color='Red';
+                        isAColor = true;
+                    }else if(ballData.color=='g'){
+                        colorhex = '#008080';
+                        _color='Green';
+                        isAColor = true;
+                    }else if(ballData.color=='b'){
+                        colorhex = '#0000CD';
+                        _color='Blue';
+                        isAColor = true;
+                    }else if(ballData.color=='v'){
+                        colorhex = '#C71585';
+                        _color='Violet';
+                        isAColor = true;
+                    }else if(ballData.color=='y'){
+                        colorhex = 'f5bd1f';
+                        _color='Yellow';
+                        isAColor = true;
+                    }
+                
+                    if(ballsSeen.includes(_color)){
+                        console.log('Ball Already Plotted')
+                    }else if(isAColor){
+                        ballsSeenCount++;
+                        ballsSeen.push(ballData.color);
+                        ballHistory = ballData.archive;
+
+                        addBallCoordinates(
+                            ballData.ballXCoord,
+                            ballData.ballYCoord,
+                            colorhex,
+                            _color
+                        );
+                    }else{
+                        console.log('undefined color detected');
+                    }
+                }
+            }
+
+            function updateTime(){
+                _time += (1/600);
+                document.querySelector('#time').textContent=Math.round(_time);
+            }
+
+            function moveToClick(){
+                //manual move to point on graph feature
+            }
+            
+            function updateChargeStatus(cnc, percentage, time){
+                let lightning = document.querySelector('#cnc');
+                let state = document.querySelector('#time-state');
+                let percentValue = document.querySelector('#pc-val');
+                let timeValue = document.querySelector('#time-till');
+                let batteryLevel = document.querySelector('#battery-level');
+                //Update state: Charging or not Charging
+                if(cnc === 'c'){
+                    lightning.style.display = "inline";
+                    state.textContent = " until full";
+                }else if( cnc = 'nc'){
+                    lightning.style.display = "none";
+                    state.textContent = " remaining";
+                }
+
+                timeValue.textContent = time>0? String(time)+' ' : "0 ";
+                percentValue.textContent = percentage>0? String(percentage)+'%': "0%";
+                batteryLevel.style.width = percentValue.textContent;
+
+                if(percentage<=20){
+                    batteryLevel.style.backgroundColor = "red";
+                }else if((percentage>20)&&(percentage<60)){
+                    batteryLevel.style.backgroundColor = "yellow";
+                }else{
+                    batteryLevel.style.backgroundColor = "green";
+                }
+
+                //Update percentage and color
+            }
+
+            async function updateFromEnergy(url="http://localhost:9000/api/energyStatus"){
+                energyfetch++;
+                console.log(energyfetch);
+                if(energyfetch==10){
+                    let res = await fetch(url);
+                    let energyData = await (res.json());
+                    console.log("RECIEVED: ", energyData);
+                    updateChargeStatus('c', energyData.soc, energyData.ttf);
+                    energyfetch=0;
+                }
+            }
+
+            function updateFromAll(){
+                updateUsingFromDrive();
+                updateUsingFromVision();
+                updateFromEnergy();
+            }
+
 
         </script>
 
@@ -403,9 +522,14 @@
             const URL = "http://"+HOST+":"+PORT;
             //const recieved = fetchData("http://localhost:9000/api/test")
             
-            let init_speed = 6;
-
-            let _fromCommand = setInterval( updateUsingFromCommand ,3000);
+            let init_speed = 0;
+            let ballsSeenCount = 0;
+            let ballsSeen = [];
+            let ballHistory = [];
+            let _time = 0;
+            let energyfetch = 0;
+            let _fromDrive = setInterval( 
+                updateFromAll ,100);
 
         //  Speedometer 
             let data = [{
@@ -438,34 +562,15 @@
                 y:[0],
                 mode: 'markers',
                 marker: {
-                    size: 25,
+                    size: 30,
                     color: 'black'
                 },
                 type: 'scatter',
                 name: 'Rover'
             };
 
-            let redBall ={
-                x:[-4],
-                y:[-7],
-                mode: 'markers',
-                marker: {
-                    size: 15
-                },
-                type: 'scatter'
-            };
 
-            let blueBall ={
-                x:[6],
-                y:[8],
-                mode: 'markers',
-                marker: {
-                    size: 15
-                },
-                type: 'scatter'
-            };
-
-            let data1 = [rover];
+            let data1 = [rover]//, virtualHeatmap];
 
             let layout1 = {
                 height: 700, 
@@ -484,13 +589,18 @@
                 data1,
                 layout1
                 );
+        
+            plotDiv.on('plotly_doubleclick', function(data){
+                if(document.querySelector("#switch").checked==false){    
+                    let xCoord2GT = data.points['x'];
+                    let yCoord2GT = data['points']['y'];
+                    console.log(xCoord2GT, yCoord2GT);
+                }else{
+                    console.log('ERROR: Rover on Autonomous mission, await for end of mission or switch to manual'); 
+                }
+            });
 
         </script>
-
-        <audio autoplay loop>
-            <source src = "Source/FILTERED_HIGHLIGHTS_-_Sol16RoverDriveHighlights.mp3" type = "audio/mp3">
-        </audio>
-
 
     </body>
 

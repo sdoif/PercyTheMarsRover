@@ -2,15 +2,20 @@ const express = require('express');
 const path = require('path');
 const mqtt = require('mqtt');
 const bp = require('body-parser')
-const { response } = require('express');
+const { response, query } = require('express');
+const { Console } = require('console');
+const sqlite3 = require('sqlite3')
 
 const app = express();
-const client = mqtt.connect('mqtt://3.91.160.250', {clientId:"node"});
+const client = mqtt.connect('mqtt://18.134.3.99', {clientId:"node"});
 app.use(express.urlencoded({extended: true}));
 app.use(bp.json())
 app.use(bp.urlencoded({ extended: true }))
 app.use(express.static(path.join(__dirname, 'views')));
 
+let db = new sqlite3.Database(path.join(__dirname, '..', '..', 'database', 'energyDB.sl3'));
+
+let timeCounter = 1;
 
 // placeholder for information stored
 let information = {
@@ -28,8 +33,27 @@ let roverStatus = {
     xCoordinate: 0,
     yCoordinate: 0,
     distanceTravelled: 0,
-    speed: 0
+    speed: 0,
+    ballsSeen: 0
 }
+
+let ballStatus={
+    color: '',
+    distance: 0,
+    ballX: 0,
+    ballY: 0,
+    count: 0
+}
+
+let roverBallOrientation={
+    theta: 0,
+    xCoord: 0,
+    yCoord: 0
+}
+
+let allBallsSeen=[];
+
+let roverStatusInit = roverStatus;
 
 const server = app.listen(9000, (err) => {
     if(err){
@@ -40,10 +64,10 @@ const server = app.listen(9000, (err) => {
 });
 
 app.use( (req,res,next) =>{
-    console.log('Request made ');
-    console.log('Host: ', req.hostname);
-    console.log('Path; ', req.path);
-    console.log('Method: ', req.method);
+    // console.log('Request made ');
+    // console.log('Host: ', req.hostname);
+    // console.log('Path; ', req.path);
+    // console.log('Method: ', req.method);
     next();
 });
 
@@ -51,7 +75,6 @@ app.get('/', (req, res) => {
 
     res.sendFile('./views/index.html', { root: __dirname });
     console.log(req.url);
-
 });
 
 app.get('/api/test', (req, res) => {
@@ -61,9 +84,50 @@ app.get('/api/test', (req, res) => {
 
 });
 
+// schema
+// charging(
+//     time INTEGER PRIMARY KEY,
+//     soc INTEGER,
+//     ttf INTEGER
+//     );
+let sql = `SELECT soc, ttf FROM charging
+           WHERE time = ?;`;
+
+
+app.get('/api/energyStatus', (req, res) => {
+    if(timeCounter<3063){
+        db.all(sql, [timeCounter], (err,row) => {
+            if(err){
+                console.log(err.message);
+            }
+            let queryRes = row[0];
+            console.log("ENERGY FETCHED as: ", queryRes);
+            //console.log("Requested energyStatus");
+            res.send(JSON.stringify(queryRes));
+        });
+        timeCounter++;
+    }else{
+        db.close();
+    }
+});
+
 app.get('/api/roverStats', (req, res) => {
-    console.log("Requested roverStatus");
+    //console.log("Requested roverStatus");
     res.send(JSON.stringify(roverStatus));
+});
+
+app.get('/api/ballStatus', (req, res) => {
+    let newBallStatus = {
+        ballXCoord : ballStatus.ballX,
+        ballYCoord : ballStatus.ballY,
+        color : ballStatus.color,
+        ballNum : ballStatus.count,
+        archive: allBallsSeen
+    }
+    //cconsole.log("Requested ballStatus");
+    if(newBallStatus.color==='r'||'g'||'y'||'b'||'v'){
+        res.send(JSON.stringify(newBallStatus));
+    }
 });
 
 app.post('/api/direction', (req, res) => {
@@ -140,19 +204,51 @@ client.on('connect', () =>{
     client.subscribe('test', () => {
         console.log('Subscribed to test');
     });
+
+    client.subscribe('drive', () => {
+        console.log('Subscribed to drive');
+    });
+
+    client.subscribe('vision', () => {
+        console.log('Subscribed to vision');
+    });
+
+    client.subscribe('ball', () => {
+        console.log('Subscribed to ball');
+    });
 });
 
 
 
 client.on('message', (topic, message, packet) => {
-    console.log(`Recieved message from ${topic} - ${message} `);
+    strMessage = message.toString();
+    //console.log(strMessage)
+    let values = strMessage.split("/");
     if(topic === "drive"){
-        let values = message.split("/");
-        roverStatus.gear = values[0];
-        roverStatus.xCoordinate = values[1];
-        roverStatus.yCoordinate = values[2];
-        roverStatus.distanceTravelled = values[3];
-        roverStatus.speed = values[4];
+        let values = strMessage.split("/");
+        roverStatus.gear = (values[1]);
+        roverStatus.xCoordinate = (values[2])===undefined? roverStatus.xCoordinate : Number(values[2]) ;
+        roverStatus.yCoordinate = (values[3])===undefined? roverStatus.yCoordinate : Number(values[3]) ;
+        roverStatus.distanceTravelled = (values[4])===undefined? roverStatus.distanceTravelled : Number(values[4]) ;
+        roverStatus.speed = (values[5])===undefined? roverStatus.speed : Number(values[5]) ;
+        //console.log("Rover status changed to: ", roverStatus);
+    }else if(topic === "vision"){
+        console.log(`Recieved message from ${topic} - ${strMessage}`);
+        //parse values from vision to make them ready for getting
+        ballStatus.color = (values[1]);
+        ballStatus.distance = Number(values[2])+7.3;//adding distance from rover center to camera
+        //Calculate ball coordinates
+        ballStatus.ballX = roverStatus.xCoordinate  + (ballStatus.distance * Math.cos(roverBallOrientation.theta)) ;
+        ballStatus.ballY = roverStatus.yCoordinate + (ballStatus.distance * Math.sin(roverBallOrientation.theta)) ;
+        //let frontend know it is time to make a request
+        ballStatus.count++;
+        allBallsSeen.push({color: ballStatus.color, xCoordinate: ballStatus.ballX, yCoordinate: ballStatus.ballY})
+        console.log("New ball alert! : ", ballStatus);
+    }else if(topic === "ball"){
+        console.log(`Recieved message from ${topic} - ${strMessage}`);
+        roverBallOrientation.theta = Number(values[1]);
+        roverBallOrientation.xCoord = Number(values[2]);
+        roverBallOrientation.yCoord = Number(values[3]);
     }
     
 });

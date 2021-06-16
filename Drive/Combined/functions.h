@@ -80,6 +80,22 @@ bool s_0;
 bool s_1;
 bool f;
 
+char prev_mode = 'g';
+int __iter1 = 0;
+int _iter1 = 0;
+int stopgoto = 0;
+float distance_xx=0;
+float distance_yy=0;
+float total_distance=0;
+float xcorcur = 0;
+float ycorcur = 0;
+int testing_x = 0;
+int testing_y = 0;
+
+int s_0_int = 0;
+int s_1_int = 0;
+int startOfgoTo = 0;
+
 int loop_counter = 0;
 
 float x_to_command = 0;
@@ -87,11 +103,15 @@ float y_to_command = 0;
 
 unsigned long reff_time = 0;
 unsigned long ref_time = 0;
+unsigned long reff1_time = 0;
+unsigned long ref1_time = 0;
+unsigned long ref_time_scan = 0;
+unsigned long ref_time_s = 0;
 
 int c_new = 0;
 int v_new = 0;
 char _mode;
-char c[5] = {'0','x','0','0','0'};
+char c[5] = {'1','x','0','0','0'};
 char v[2] = {'0', 'g'};
 
 char gear = 'x';
@@ -107,15 +127,16 @@ float xcal_total_store = 0;
 int prev_val_y = 0;
 int prev_val_x = 0;
 int actual_y_prev = 0;
-int min_y = 0;
-int min_x = 0;
 
 int rover_length = 73;
 
 int _iter_scan = 0;
 int _iter_speed = 0;
 int __iter = 0;
+int _iter_s = 0;
 int _iter = 0;
+int _iter_turn = 0;
+int stop_count = 1;
 
 int scan_state = 0;
 
@@ -130,7 +151,7 @@ int total_x1_distance = 0;
 int total_y1_distance = 0;
 int total_x1 = 0;
 int total_y1 = 0;
-float total = 0;
+
 
 int x=0;
 int y=0;
@@ -156,7 +177,8 @@ volatile int xydat[2];
 int tdistance = 0;
 
 String data_command[6] = {"c", "0", "0", "0", "0", "0"};
-String data_vision[6] = {"v", "0", "0", "0", "0", "0"};
+String data_vision[2] = {"v", "0"};
+String data_coord[4] = {"b","0", "0", "0"};
 
 String fixed_size(float num){
   int num_length = String(num).length();
@@ -425,107 +447,189 @@ float change_angle(float angle){
     return new_angle;
   }
 }
-bool gotocoordinate(int xx, int yy, float current_angle, float currrent_r){
+void movebycoordinate(int xx, int yy, float current_angle, float currrent_r){
   int x = xx*10;
   int y = yy*10;
   double angle = atan2(yy,xx);
   float angle_new = change_angle(angle);
-  //if(angle<0){
-  //  angle = angle+(2*PI);
-  //}
-  //  if(angle_old<0){
-  //  angle = angle_old + (2*PI);
-  //  }else if(angle_old>=0){
-  //    angle = angle_old;
-  //  }
-  float angle_deg = angle_new*(180/PI);
   float rr = sqrt(sq(xx)+sq(yy));
   float r = rr*10;
-  Serial.println("Target angle=");
-  Serial.print(angle_deg);
-  Serial.print("Target distance=");
-  Serial.print(r);
-  
   if((angle_new-0.12<current_angle)&&(angle_new+0.12>current_angle)){
-    if(r>currrent_r){
-      if(__iter==0){
-        reff_time = millis();
-        __iter=1;
-      }
-      if(millis()-reff_time < 500){
-        forward();
-      }else if(((millis()-reff_time) >= 500)&&((millis()-reff_time) <= 2000)){
-        brake();
-    
-      }else if((millis()-reff_time) > 2000){
-        __iter = 0;
-      }
-    }else if(r<=currrent_r){
-      brake();
-      }
-    }else if(angle_new-0.12>current_angle){
-      if(_iter == 0){
-        ref_time = millis();
-        Serial.println("ref_time = "+String(ref_time));
-          _iter = 1;
-      }
-  //Serial.println("_iter = "+String(_iter));
-   // Serial.println("time = "+String(millis()));
-    if((millis()-ref_time) < 500){
-      left();
-    }else if(((millis()-ref_time) >= 500)&&((millis()-ref_time) <= 2000)){
-      brake();
-    }else if((millis()-ref_time) > 2000){
-     _iter = 0;
+  if(r>currrent_r){
+    if(__iter1==0){
+      reff1_time = millis();
+      __iter1=1;
     }
-  }else if(angle_new+0.12<current_angle){
-     right();
+    if(millis()-reff1_time < 500){
+      forward();
+    }else if(((millis()-reff1_time) >= 500)&&((millis()-reff1_time) <= 2000)){
+  brake();
+  
+  }else if((millis()-reff1_time) > 2000){
+   __iter1 = 0;
+  }
+  }
+  else if(r<=currrent_r){
+    brake();
+    }
+}else if(angle_new-0.12>current_angle){
+ if(_iter1 == 0){
+    ref1_time = millis();
+      _iter1 = 1;
+  }
+  if((millis()-ref1_time) < 500){
+    left();
+  }else if(((millis()-ref1_time) >= 500)&&((millis()-ref1_time) <= 2000)){
+    brake();
+  }else if((millis()-ref_time) > 2000){
+   _iter1 = 0;
+  }
+}else if(angle_new+0.12<current_angle){
+   right();
+}
+}
+
+bool gotocoordinate(int xx, int yy, float current_angle, float currrent_r, float currentx, float currenty){
+if(stopgoto==0){
+int x = xx*10;
+int y = yy*10;
+int diff_y;
+int diff_x;
+if(startOfgoTo == 0){
+ diff_x = xx-currentx;
+ diff_y = yy-currenty;
+startOfgoTo++;
+}
+double angle = atan2(diff_y,diff_x);
+float angle_new = change_angle(angle);
+float angle_deg = angle_new*(180/PI);
+float rr = sqrt(sq(diff_x)+sq(diff_y));
+float r = rr*10;
+Serial.println("Target angle=");
+Serial.print(angle_deg);
+Serial.print("Target distance=");
+Serial.print(r);
+
+if((angle_new-0.12<current_angle)&&(angle_new+0.12>current_angle)){
+  if(r>currrent_r){
+    if(__iter==0){
+      reff_time = millis();
+      __iter=1;
+    }
+    if(millis()-reff_time < 500){
+      forward();
+    }else if(((millis()-reff_time) >= 500)&&((millis()-reff_time) <= 2000)){
+  brake();
+  
+  }else if((millis()-reff_time) > 2000){
+   __iter = 0;
+  }
+  }
+  else if(r<=currrent_r){
+    brake();
+    startOfgoTo = 0;
+    stopgoto++;
+    }
+}else if(angle_new-0.12>current_angle){
+ if(_iter == 0){
+    ref_time = millis();
+    Serial.println("ref_time = "+String(ref_time));
+      _iter = 1;
+  }
+//Serial.println("_iter = "+String(_iter));
+ // Serial.println("time = "+String(millis()));
+  if((millis()-ref_time) < 500){
+    left();
+  }else if(((millis()-ref_time) >= 500)&&((millis()-ref_time) <= 2000)){
+    brake();
+  }else if((millis()-ref_time) > 2000){
+   _iter = 0;
+  }
+}else if(angle_new+0.12<current_angle){
+   right();
+}
+
+}else{
+  brake();
   }
 }
 
 bool rover_scan_one(char _mode){
-  if((_mode == 's')&&s_0){
+  if((_mode == 's')&&(scan_state == 3)){
     brake();
     Serial.println("Scan_one = STOP");
     scan_state = 4;
     Serial.println("_mode_one = "+String(_mode));
-    delay(500);
+    s_1_int = 1;
+    delay(1000);
     return true;
-  }else if((_mode == 'g')&&s_0){
+  }else if((_mode == 'g')&&(scan_state == 3)){
+    s_1_int = 0;
     left();
     return false;
   }
 }
 
 bool rover_scan_zero(char _mode){
+  Serial.print("_iter_scan = "+String(_iter_scan));
   if(_iter_scan == 0){
     actual_x_first = abs(actual_x);
   }
-  if(abs(actual_x) >= 800 +actual_x_first){
+  if(_iter_turn == 0){
+    ref_time_scan = millis();
+  }
+  Serial.print("actual_x_first = "+String(actual_x_first));
+  if(abs(actual_x) >= 500 +actual_x_first){
     brake();
     if((_iter_scan == 1)||(_iter_scan == 2)){
       scan_state++;
       _iter_scan = 0;
     }
     Serial.println("scan_state_zero = "+String(scan_state));
-    delay(500);
+    s_0_int = 1;
+    Serial1.print(data_vision[1]);
+    delay(1000);
     return true;
   }else if((_mode == 's')&&(!s_0)){
-    brake();
-    if((prev_val_x == total_x)&&(_iter_scan == 1)){
-      theta_store = store_angle(actual_x);
-      r_store = float(actual_y);
-      xcal_total_store = xcal_total;
-      ycal_total_store = ycal_total;
-      _iter_scan = 2;
-    }
+    //if((prev_val_x == total_x)&&(_iter_scan == 1)){
+//      theta_store = store_angle(actual_x);
+//      r_store = float(actual_y);
+//      xcal_total_store = xcal_total;
+//      ycal_total_store = ycal_total;
+//      _iter_scan = 2;
+//      stop_count = 1;
+    //}
     Serial.println("Scan_zero = STOP");
     return false;
   }else{
     if((_mode == 'g')&&(!s_0)){
-      left();
-      _iter_scan = 1;
-      return false;
+      if(prev_mode == 's'){
+        brake();
+        //delay(1500);
+        if(_iter_s==0){
+          ref_time_s = millis();
+          _iter_s=1;
+        }
+        Serial.println("ref_time_s = "+String(ref_time_s));
+        Serial.println("millis = "+String(millis()));
+        if(millis()-ref_time_s <= 1500){
+          brake();
+        }else if(millis()-ref_time_s > 1500){
+          _iter_s = 0;
+          theta_store = store_angle(actual_x);
+          r_store = float(actual_y);
+          xcal_total_store = xcal_total;
+          ycal_total_store = ycal_total;
+          _iter_scan = 2;
+          left();
+        }
+        return false;
+      }else{
+        s_0_int = 0;
+        left();
+        _iter_scan = 1;
+        return false;
+      }
     }
   }
 }
@@ -551,24 +655,38 @@ void rover_manual(char _mode){
 }
 
 bool reach_forward(char _mode){
-    if((_mode == 'g')&&s_1){
-      vref = 3;
+    if((_mode == 'g')&&(scan_state == 5)){
+      //vref = 3;
       forward();
+      //delay(500);
       return false;
-    }else if((_mode == 's')&&s_1){
+    }else if((_mode == 's')&&(scan_state == 5)){
         brake();
+//        theta_store = store_angle(actual_x);
+//        r_store = float(actual_y);
+//        xcal_total_store = xcal_total;
+//        ycal_total_store = ycal_total;
         scan_state = 6;
-        theta_store = store_angle(actual_x);
-        r_store = float(actual_y);
-        xcal_total_store = xcal_total;
-        ycal_total_store = ycal_total;
+        delay(500);
         return true;
-    }else if((_mode == 'r')&&s_1){
+    }else if((_mode == 'r')&&(scan_state == 5)){
         right();
+//        delay(100);
+//      brake();
+//      delay(500);
         return false;
-    }else if((_mode == 'l')&&s_1){
+    }else if((_mode == 'l')&&(scan_state == 5)){
         left();
+//              delay(100);
+//      brake();
+//      delay(500);
         return false;
+    }else{
+      brake();
+//      delay(500);
+//      brake();
+//      delay(1000);
+      return false;
     }
 }
 

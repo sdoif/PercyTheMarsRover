@@ -41,7 +41,7 @@
             </section>
 
             <section class = 'sub-sec'> 
-                <h2>Current Trip Details</h2> 
+                <!-- <h2>Current Trip Details</h2> 
                 <table>
                     <tr>
                         <td>Distance Traveled</td> 
@@ -62,7 +62,23 @@
                         <td>Current Coordinates</td>
                         <td id='currentCoord'>(0, 0)</td> 
                     </tr>
-                </table>
+                </table> -->
+                <div class='current-trip' id='q2'>
+                    <h2>Distance Traveled</h2> 
+                    <p id='distanceTraveled'>0m</p> 
+                </div>
+                <div class='current-trip' id='q1'>
+                    <h2>Time of Trip</h2>
+                    <p id >0 mins</p>  
+                </div>
+                <div class='current-trip' id='q3'>
+                    <h2>Current Gear</h2>
+                    <p id="curr-gear">P</p> 
+                </div>
+                <div class='current-trip' id='q4'>
+                    <h2>Live Coordinates</h2>
+                    <p id='currentCoord'>(0, 0)</p> 
+                </div>
             </section>
             </div>
         </section>
@@ -154,7 +170,11 @@
             function toggleMode(){
                 const modeSwitch = document.querySelector("#switch");
                 const inputVal = document.querySelector("#speed-slider"); 
-                const keypadButton = document.querySelector(".keypad-button"); 
+                const uButton = document.querySelector("#up-key"); 
+                const lButton = document.querySelector("#left-key"); 
+                const rButton = document.querySelector("#right-key"); 
+                const dButton = document.querySelector("#up-key"); 
+                const sButton = document.querySelector("#up-key"); 
                 const speedControlDiv = document.querySelector('#speed-control-id');     
                 if(modeSwitch.checked){
                     postData("http://localhost:9000/api/mode", {mode: 1});
@@ -162,7 +182,12 @@
                     alert('SWITCHING TO AUTONOMOUS: Keypad and speed slider are now disabled. Switch back to manual to resume use')
                     // if Autonomous 
                     inputVal.disabled=true;
-                    keypadButton.disabled=true;
+                    uButton.disabled=true;
+                    lButton.disabled=true;
+                    rButton.disabled=true;
+                    dButton.disabled=true;
+                    sButton.disabled=true;
+
  
                 }else{
                     postData("http://localhost:9000/api/mode", {mode: 0});
@@ -170,7 +195,11 @@
                     alert('SWITCHING TO MANUAL: Keypad and speed slider are now enabled')
                     //if Manual
                     inputVal.disabled=false;
-                    keypadButton.disabled=false;
+                    uButton.disabled=false;
+                    lButton.disabled=false;
+                    rButton.disabled=false;
+                    dButton.disabled=false;
+                    sButton.disabled=false;
                 }
             }
 
@@ -266,7 +295,7 @@
                     let layout = { 
                         height: 275, 
                         width: 550, 
-                        paper_bgcolor: "#35499b", 
+                        paper_bgcolor: "#25242c", 
                         margin: { t: 0, b: 0 }, 
                         font: { color: "#ffebdb", family: "Roboto Mono" }
                     };
@@ -319,31 +348,6 @@
                 const _distance = document.querySelector("#distanceTraveled");
                 _distance.textContent=distance;
             }
-
-            function moveToClick(){
-                if(modeSwitch.checked==false)
-                {
-                    Plotly.d3.select(".plotly").on('click', function(d, i) {
-                    var e = Plotly.d3.event;
-                    var bg = document.getElementsByClassName('bg')[0];
-                    var x = ((e.layerX - bg.attributes['x'].value + 4) / (bg.attributes['width'].value)) * (myPlot.layout.xaxis.range[1] - myPlot.layout.xaxis.range[0]) + myPlot.layout.xaxis.range[0];
-                    var y = ((e.layerY - bg.attributes['y'].value + 4) / (bg.attributes['height'].value)) * (myPlot.layout.yaxis.range[0] - myPlot.layout.yaxis.range[1]) + myPlot.layout.yaxis.range[1]
-                    if (x.between(myPlot.layout.xaxis.range[0], myPlot.layout.xaxis.range[1]) &&
-                        y.between(myPlot.layout.yaxis.range[0], myPlot.layout.yaxis.range[1])) {
-                        Plotly.extendTraces(myPlot, {
-                        x: [
-                            [x]
-                        ],
-                        y: [
-                            [y]
-                        ]
-                        }, [3]);
-                    }
-                    });
-                }else{
-                    console.log('ERROR: Rover on Autonomous mission, await for end of mission or switch to manual'); 
-                }
-            }
             
             function updateRoverCoordinates(xCoord, yCoord){
                 // Plotly.update(graphDiv, data_update, layout_update, [, traceIndices])
@@ -359,15 +363,15 @@
 
             function addBallCoordinates(xCoord, yCoord, colorBall){
                 let newBall ={
-                x:[xCoord],
-                y:[yCoord],
-                mode: 'markers',
-                marker: {
-                    size: 15,
-                    color: `${colorBall}`
-                },
-                type: 'scatter',
-                name: `${colorBall}`,
+                    x:[xCoord],
+                    y:[yCoord],
+                    mode: 'markers',
+                    marker: {
+                        size: 15,
+                        color: `${colorBall}`
+                    },
+                    type: 'scatter',
+                    name: `${colorBall}`,
                 };
 
                 Plotly.addTraces(plotDiv, newBall);
@@ -392,6 +396,37 @@
 
             }
 
+            function ballNotification(){
+                //add notification function
+            }
+
+            async function updateUsingFromVision(url="http://localhost:9000/api/vision"){
+                let res = await fetch(url);
+                let ballData = await (res.json());
+                let _color;
+                if(ballData[ballColor]=='r'){
+                    _color = 'Red';
+                }else if(ballData[ballColor]=='g'){
+                    _color = 'Green';
+                }else if(ballData[ballColor]=='b'){
+                    _color = 'Blue';
+                }else if(ballData[ballColor]=='v'){
+                    _color = 'Violet';
+                }else if(ballData[ballColor]=='y'){
+                    _color = 'Yellow';
+                }
+                addBallCoordinates(
+                    ballData[xCoordinate],
+                    ballData[yCoordinate],
+                    _color
+                );
+            }
+
+            function moveToClick(){
+                //manual move to point on graph feature
+            } 
+
+
         </script>
 
 <!-- END OF FUNCTIONS, START OF SCRIPT -->
@@ -404,7 +439,7 @@
             
             let init_speed = 6;
 
-            let _fromCommand = setInterval( updateUsingFromCommand ,90000);
+            let _fromCommand = setInterval( updateUsingFromCommand ,5000);
 
         //  Speedometer 
             let data = [{
@@ -464,7 +499,7 @@
                 type: 'scatter'
             };
 
-            let data1 = [rover];
+            let data1 = [rover]//, virtualHeatmap];
 
             let layout1 = {
                 height: 700, 
@@ -483,6 +518,16 @@
                 data1,
                 layout1
                 );
+        
+            plotDiv.on('plotly_doubleclick', function(data){
+                if(document.querySelector("#switch").checked==false){    
+                    let xCoord2GT = data.points['x'];
+                    let yCoord2GT = data['points']['y'];
+                    console.log(xCoord2GT, yCoord2GT);
+                }else{
+                    console.log('ERROR: Rover on Autonomous mission, await for end of mission or switch to manual'); 
+                }
+            });
 
         </script>
 

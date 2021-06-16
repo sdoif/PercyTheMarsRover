@@ -61,9 +61,11 @@ void setup()
     Serial.println("Mouse cam failed to init");
     while(1);
   }  
+  
   mousecam_write_reg(11, 7);
   mousecam_write_reg(25, 126);
   mousecam_write_reg(26, 14);
+  
 }
 
 
@@ -150,11 +152,17 @@ total_y1_distance = total_y1_distance + abs(distance_y);
 total_x_distance = 10*total_x1_distance/157; //Conversion from counts per inch to mm (400 counts per inch)
 total_y_distance = 10*total_y1_distance/157; //Conversion from counts per inch to mm (400 counts per inch)
 
-total = sqrt(float((total_x_distance/10)^2)+float((total_y_distance/10)^2));
+    distance_xx = (10*distance_x/157)/10;
+    distance_yy = (10*distance_y/157)/10;
+    total_distance = fabs(distance_yy) + total_distance;
+    Serial.println("distance_x = "+String(distance_x));
+    Serial.println("distance_y = "+String(distance_y));
+    Serial.println("distance_xx = "+String(distance_xx));
+    Serial.println("distance_yy = "+String(distance_yy));
+    Serial.println("Total distance travelled =" +String(total_distance));
 
 Serial.println("Distance_x_total = " + String(total_x_distance));
 Serial.println("Distance_y_total = " + String(total_y_distance));
-Serial.println("Total = " + String(total));
 Serial.print('\n');
 
   //counter stuff
@@ -187,21 +195,19 @@ Serial.print('\n');
   }
   
   //this shows the minimum possible value y can take at the moment 
-  min_y = 208*counter_y;
-  min_x = 208*counter_x;
 
     //finding actual value of y 
   if(counter_y>0){  
     if(total_y>0){
-      actual_y = min_y + total_y;
+      actual_y = 208*counter_y + total_y;
     }else if(total_y<0){
-      actual_y = min_y + (208+total_y);
+      actual_y = 208*counter_y + (208+total_y);
     }
   }else if(counter_y<0){
     if(total_y>0){
-      actual_y = min_y - (208-total_y);
+      actual_y = 208*counter_y - (208-total_y);
     }else if(total_y<0){
-      actual_y = min_y + total_y;
+      actual_y = 208*counter_y + total_y;
     }
   }else{ 
     actual_y=total_y;
@@ -209,18 +215,18 @@ Serial.print('\n');
 
   if(counter_x>0){  
     if(total_x>0){
-      actual_x = min_x + total_x;
+      actual_x = 208*counter_x + total_x;
     }else if(total_x<0){
-      actual_x = min_x + (208+total_x);
+      actual_x = 208*counter_x + (208+total_x);
     }else{
       //for completeness
       actual_x = actual_x;
      }  
   }else if(counter_x<0){
     if(total_x>0){
-      actual_x = min_x - (208-total_x);
+      actual_x = 208*counter_x - (208-total_x);
     }else if(total_x<0){
-      actual_x = min_x + total_x;
+      actual_x = 208*counter_x + total_x;
     }else{
       //for completeness
       actual_x = actual_x;
@@ -250,13 +256,13 @@ Serial.print('\n');
 //Serial.println(counter_x);
 //Serial.print('\n');
 //
-//Serial.print('\n');
-//Serial.print("Actual y = ");
-//Serial.println(actual_y);
-//
-//Serial.print('\n');
-//Serial.print("Actual x = ");
-//Serial.println(actual_x);
+Serial.print('\n');
+Serial.print("Actual y = ");
+Serial.println(actual_y);
+
+Serial.print('\n');
+Serial.print("Actual x = ");
+Serial.println(actual_x);
 //
 //Serial.print('\n');
 //Serial.print("prev x = ");
@@ -325,59 +331,85 @@ Serial.print('\n');
   Serial.println("v[0] = "+String(v[0]));
   Serial.println("v[1] = "+String(v[1]));
   Serial.println("c[0] = "+String(c[0]));
-  
+
+  //autonomous mode finite state machine
   if(c[0] == '1'){
+    
+    //rover starts if SMPS output is close to vref so that speed is constant during motion
     if(vb >= vref - 0.2){
-     if(v[0] != '1'){
-        Serial.println("scan_state = "+String(scan_state));    
+
+     //if there are still balls to be found in the field
+     if(v[0] != '1'){   
+        Serial.println("scan_state = "+String(scan_state));
+        //iterates twice and calls the 360 scan function each time
+        //scan_state counts the number of iterations
         if(scan_state < 2){
           rover_scan_zero(v[1]);
           s_0 = rover_scan_zero(v[1]);
         }  
+
+        //sets the mode to "go" for the start of the next scan function
         if(scan_state == 2){
            v[1] = 'g';
            delay(500);
            scan_state = 3;
-        }   
+        }
+
+        //calls the scan function which finalises when rover faces desired ball
         if(scan_state == 3){
           rover_scan_one(v[1]);
           s_1 = rover_scan_one(v[1]);
         }  
+
+        //sets the mode to "go" for the start of the next function
         if(scan_state == 4){
             v[1] = 'g';
             delay(500);
             scan_state = 5;
         }    
+
+        //calls function which takes the rover to the ball it's facing
         if(scan_state ==5){
+            //corrects the position of the rover to follow a straight line
             reach_forward(v[1]);
             f = reach_forward(v[1]);
         }    
-        if((scan_state == 6)&&f){
-            scan_state = 0;
-            delay(500);
+
+        //set counter back to zero returning to intial state of the FSM
+        //loop until all the balls have been located
+        if(scan_state == 6){  
             v[1] = 'g';
+            delay(500);
+            scan_state = 0;
         }
 
     }else{
       brake();
     }
-       
+
     }else{
       brake();}
-      
+  //manual mode   
   }else if(c[0] == '0'){
     if(vb >= vref - 0.2){
       rover_manual(c[1]);
+      float angle = store_angle(actual_x);
+      xcorcur = xcoordinatefinder(actual_y_prev, actual_y, angle);
+      ycorcur = ycoordinatefinder(actual_y_prev, actual_y, angle);
+      if((testing_x != 0)||(testing_y != 0)){
+        gotocoordinate(testing_x, testing_y, angle, actual_y, xcorcur, ycorcur);
+      }
     }else{
       brake();
     }
   }
 
-  
     
   prev_val_y = total_y;
   prev_val_x = total_x;
   actual_y_prev = actual_y;
+  prev_mode = v[1];
+  Serial.println("prev_mode = "+String(prev_mode));
 
 //      Serial.println("angle = "+String(angle));
 //      Serial.println("angle_corrected = "+String(angle_corrected));
@@ -387,43 +419,48 @@ Serial.print('\n');
 //      Serial.println("cart_x = "+String(cart_x));
 //      Serial.println("cart_y = "+String(cart_y));
 
+    data_command[0] = "c";
+    data_command[1] = gear;
     data_command[2] = fixed_size(x_to_command);
     data_command[3] = fixed_size(y_to_command);
-    data_command[4] = fixed_size(total);
+    data_command[4] = fixed_size(total_distance);
     data_command[5] = fixed_size(voltage2speed(vref));
 
-    data_vision[1] = String(s_0);
-    data_vision[2] = String(s_1);
-    data_vision[3] = fixed_size(theta_store);
-    data_vision[4] = fixed_size(xcal_total_store);
-    data_vision[5] = fixed_size(ycal_total_store);
+//    data_vision[1] = String(s_0_int);
+//    data_vision[2] = String(s_1_int);
 
-    loop_counter ++;
+    data_vision[1] = String(scan_state);
 
-    if(loop_counter == 50){
-      for(int i = 0; i<6; i++){
+    data_coord[1] = fixed_size(store_angle(actual_x));
+    data_coord[2] = fixed_size(x_to_command);
+    data_coord[3] = fixed_size(y_to_command);
+    
+    Serial.print("data = ");
+    
+          for(int i = 0; i<6; i++){
+        Serial.print(data_command[i]);
         Serial1.print(data_command[i]);
         Serial1.print('/');
+        Serial.print('/');
       } 
-      for(int i = 0; i<5; i++){
+      Serial1.print("!");
+      Serial.print("!");
+
+                for(int i = 0; i<2; i++){
         Serial1.print(data_vision[i]);
-        Serial1.print('/');
+        Serial.print(data_vision[i]);
       }
-      loop_counter = 0;
-    }  
-   
+      Serial1.print("!");
+      Serial.print("!");
+     
 
-    Serial.println("data_command[0] = "+String(data_command[0]));
-    Serial.println("data_command[1] = "+String(data_command[1]));
-    Serial.println("data_command[2] = "+String(data_command[2]));
-    Serial.println("data_command[3] = "+String(data_command[3]));
-    Serial.println("data_command[4] = "+String(data_command[4]));
-    Serial.println("data_command[5] = "+String(data_command[5]));
+            for(int i = 0; i<4; i++){
+          Serial1.print(data_coord[i]);
+          Serial.print(data_coord[i]);
+          Serial1.print('/');
+          Serial.print('/');
+      }
+        Serial1.print("!");
+        Serial.println("!");
 
-    Serial.println("data_vision[0] = "+String(data_vision[0]));
-    Serial.println("data_vision[1] = "+String(data_vision[1]));
-    Serial.println("data_vision[2] = "+String(data_vision[2]));
-    Serial.println("data_vision[3] = "+String(data_vision[3]));
-    Serial.println("data_vision[4] = "+String(data_vision[4]));
-    Serial.println("data_vision[5] = "+String(data_vision[5]));
 }

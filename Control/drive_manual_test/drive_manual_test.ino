@@ -1,8 +1,6 @@
 #include <WiFi.h>
 #include <Ethernet.h>
-#include <PubSubClient.h> // mqtt stuff
-
-//setting up global variables/objects
+#include <PubSubClient.h>
 
 #define visionIn 4
 #define visionOut 2
@@ -11,26 +9,25 @@
 
 WiFiClient wificlient;
 PubSubClient mqttclient(wificlient);
-long lastMsg = 0;
-char msg[90], fromDrive[90], fromVision[20];
-char toVision[36], toCommand[54];
+
+char msg[90], fromDrive[50], toVision[36], toCommand[44], ballCoordinates[50], readVision[20];
 char toDrive[5] = {'0','x','0','0','0'};
-int value = 0;
 int bytein = 0;
 int _index = 0;
-String add;
-String correct;
-const char* serverip = "35.178.136.139"; // aws server ip
+int count;
+int endVisionMessage = 0;
+int endDriveMessage = 0;
+int visionIt = 0;
+int driveIt = 0;
+char add[3];
+const char* serverip = "18.134.3.99"; // aws server ip
 
-
-// setup always runs at the start
 void setup() {
   
     Serial.println("Start");
-    // Note the format for setting a serial port is as follows: Serial2.begin(baud-rate, protocol, RX pin, TX pin);
     Serial1.begin(115200, SERIAL_8N1, visionIn, visionOut); // setting up uart port to speak with vision
     Serial2.begin(115200, SERIAL_8N1, driveIn, driveOut); // setting up uart port to speak with drive
-    Serial.begin(115200); // sets baud rate
+    Serial.begin(115200); 
     delay(10);
     Serial.println("Connecting to wifi");
 
@@ -45,39 +42,24 @@ void setup() {
     if(!mqttclient.connect("esp32")){
       Serial.println("Client connection failed");
     }
-    delay(1000);
     if(mqttclient.subscribe("direction")){
       Serial.println("Subscribed to direction");
-    }else{
-      Serial.println("Failed subscribing");
     }
-
     if(mqttclient.subscribe("speed")){
       Serial.println("Subscribed to speed");
-    }else{
-      Serial.println("Failed subscribing");
     }
-
     if(mqttclient.subscribe("mode")){
       Serial.println("Subscribed to mode");
-    }else{
-      Serial.println("Failed mode");
     }
     
-    if(mqttclient.publish("test", "hello from esp32")){
-      Serial.println("Message sent");
-    }else{
-      Serial.println("Message failed to send");
-    }
-
 }
 
 int setupwifi()
 {
-    // We start by connecting to a WiFi network
-    WiFi.begin("Selin", "selinuygun"); // connects to wifi idk how to connect to imperial wifi as it needs authentication
+
+    WiFi.begin("Selin", "selinuygun");
     Serial.print("Waiting for WiFi... "); 
-    while(WiFi.status() != WL_CONNECTED) { // this just tries to connect to wifi i guess
+    while(WiFi.status() != WL_CONNECTED) { 
         Serial.print(".");
         delay(500);
     }
@@ -86,32 +68,26 @@ int setupwifi()
     return 0;
 }
 
-void callback(char* topic, byte* message, unsigned int length) {
+void callback(char* topic, byte* message, unsigned int _length) {
   Serial.print("Message arrived on topic: ");
   Serial.print(topic);
   Serial.print(". Message: ");
   String messageTemp;
-  for (int i = 0; i < length; i++) {
+  for (int i = 0; i < _length; i++) {
     Serial.print((char)message[i]);
     messageTemp += (char)message[i];
   }
-  Serial.println();
-  Serial.print(topic);
-  Serial.println();
+
   String _topic = String(topic);
-  //send whatever direction command we receive as its already good!
-  if(_topic=="test"){
-       Serial.print(messageTemp);
-  }else if (_topic=="mode"){
+  if (_topic == "mode"){
       toDrive[0] = messageTemp[0];
       Serial2.print("c" + String(toDrive));
       Serial.print("c" + String(toDrive));
-  }else if(_topic=="direction"){
+  }else if(_topic == "direction"){
       toDrive[1] = messageTemp[0];
       Serial2.print("c" + String(toDrive));  
       Serial.print("c" + String(toDrive));
-  }else if(_topic=="speed"){
-    Serial.println("HERE --> speed");
+  }else if(_topic == "speed"){
      toDrive[2] = messageTemp[0];
      toDrive[3] = messageTemp[1];
      toDrive[4] = messageTemp[2];
@@ -122,13 +98,10 @@ void callback(char* topic, byte* message, unsigned int length) {
 }
 
 void reconnect() {
-  // Loop until we're reconnected
   while (!mqttclient.connected()) {
     Serial.print("Attempting MQTT connection...");
-    // Attempt to connect
     if (mqttclient.connect("esp32")) {
       Serial.println("Connected to Broker");
-      // Subscribe
       Serial.println("Subscribing to Topics");
       mqttclient.subscribe("direction");
       mqttclient.subscribe("speed");
@@ -138,7 +111,6 @@ void reconnect() {
       Serial.print("failed, rc=");
       Serial.print(mqttclient.state());
       Serial.println(" try again in 3 seconds");
-      // Wait 3 seconds before retrying
       delay(3000);
     }
   }
@@ -147,6 +119,17 @@ void reconnect() {
 void clearmsg(){
   for(int i = 0; i<20; i++){
     msg[i] = NULL;
+  }
+}
+
+void clearReadVision(){
+  for(int i = 0; i < 20; i++)
+  readVision[i] = NULL;
+}
+
+void clearFromDrive(){
+  for(int i = 0; i < 50; i++){
+    fromDrive[i] = NULL;
   }
 }
 
@@ -163,76 +146,88 @@ void loop() {
   
   mqttclient.loop();
 
-  if(Serial2.available() > 89){
 
-      for(int i = 0; i < 90 ; i++){
-        bytein = Serial2.read();
-        msg[i] = char(bytein);
+  if(Serial2.available()){
+    char readchar;
+    while(Serial2.available()){
+      readchar = Serial2.read();
+      if(readchar == '!'){
+        endDriveMessage = 1;
+        driveIt = 0;
+        break;
       }
-
-    add = "";
-
-    for(int i = 0; i < 2; i++){
-      for(int i = 0; i<90; i++){
-        add = add + msg[i];
-      }
+      fromDrive[driveIt] = readchar;
+      driveIt++;
     }
 
-    Serial.println("add = " + add);
-    
-    _index = add.indexOf('c');
+    if(endDriveMessage){
       
-    correct = "";
-    for(int i = _index; i < _index + 90; i++){
-      correct = correct + add[i];
-    }
 
-    Serial.println("correct = " + correct);
+      Serial.print("From Drive: ");
+      Serial.println(fromDrive);
+      
+      if(fromDrive[0] == 'c'){
+        mqttclient.publish("drive", fromDrive, 50);
+      }else if(fromDrive[0] == 'v'){
+        Serial.print(fromDrive);
+        //Serial1.print(fromDrive[0]);
+        Serial1.print(fromDrive[1]);
+        //Serial1.print(fromDrive[2]);
 
-    for(int i = 1; i < 54; i++){
-      toCommand[i] = correct[i];
+      }else if(fromDrive[0] == 'b'){
+        mqttclient.publish("ball", fromDrive, 50);
+      }
+      clearFromDrive();
+      endDriveMessage = 0;
     }
-    for(int i = 54; i < 80; i++){
-      toVision[i-54] = correct[i];
-    }
-
-    
-    for(int i = 1; i<54; i++){
-      Serial.print(toCommand[i]);
-    }
-    Serial.println();
-    byte buffer[54];
-    for(int i = 0; i < 54; i++){
-      buffer[i] = byte(toCommand[i]);
-    }
-    mqttclient.publish("drive", buffer, 54);
-    Serial1.print(toVision);
-    Serial.print("toVision = "+String(toVision));
   }
 
 
   if(Serial1.available()){
-    int k = 0;
+    char readChar;
+    Serial.print("hi");
+  
     while(Serial1.available()){
-      bytein = Serial1.read();
-      fromVision[k] = char(bytein);
-      k++;
+      readChar = Serial1.read();
+      Serial.print("Char from Vision");
+      Serial.println(readChar);
+      if(readChar == '!'){
+        endVisionMessage = 1;
+        visionIt = 0;
+        break;
+      }
+      readVision[visionIt] = readChar;
+      visionIt++;
     }
-    Serial.print("Received from vision: ");
-    Serial.println(fromVision);
-    Serial2.print("v" + String(fromVision));
-    
-  }
 
-  if(Serial.available()){
-    int i = 0;
-    while(Serial.available()){
-      bytein = Serial.read();
-      msg[i] = char(bytein);
-      i++;
-    }
-    mqttclient.publish("test", msg);
-    clearmsg();
-  }
+    if(endVisionMessage){
+      
 
+      if(readVision[1] == 'c'){
+        mqttclient.publish("vision", readVision, 20);
+      }else if((readVision[1] == 'v')||(readVision[0] == 'v')){
+        for(int i = 0; i < 20; i++){
+          if(readVision[i] == 'v'){
+            add[0] = readVision[i];
+            count = 1;
+          }else if( ((readVision[i] == '0') || (readVision[i] == '1')) && (count == 1) ){
+            add[1] = readVision[i];
+            count = 2;
+          }else if(((readVision[i] == 'g')||(readVision[i] == 's')||(readVision[i] == 'r')||(readVision[i] == 'l'))&&(count == 2)){
+            add[2] = readVision[i];
+            Serial2.print(add);
+            Serial.println("from vision ="+String(add));
+            break;
+          }else{
+            count = 0;
+          }
+        }
+        
+        //Serial2.print(readVision); 
+      }
+
+      clearReadVision();
+      endVisionMessage = 0;
+    } 
+  }
 }
