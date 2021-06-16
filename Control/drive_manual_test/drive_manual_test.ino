@@ -9,6 +9,7 @@
 
 WiFiClient wificlient;
 PubSubClient mqttclient(wificlient);
+
 char msg[90], fromDrive[50], toVision[36], toCommand[44], ballCoordinates[50], readVision[20];
 char toDrive[5] = {'0','x','0','0','0'};
 int bytein = 0;
@@ -55,6 +56,7 @@ void setup() {
 
 int setupwifi()
 {
+
     WiFi.begin("Selin", "selinuygun");
     Serial.print("Waiting for WiFi... "); 
     while(WiFi.status() != WL_CONNECTED) { 
@@ -144,6 +146,7 @@ void loop() {
   
   mqttclient.loop();
 
+
   if(Serial2.available()){
     char readchar;
     while(Serial2.available()){
@@ -159,6 +162,7 @@ void loop() {
 
     if(endDriveMessage){
       
+
       Serial.print("From Drive: ");
       Serial.println(fromDrive);
       
@@ -177,6 +181,7 @@ void loop() {
       endDriveMessage = 0;
     }
   }
+
 
   if(Serial1.available()){
     char readChar;  
