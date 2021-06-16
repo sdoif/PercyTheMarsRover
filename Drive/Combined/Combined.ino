@@ -337,56 +337,57 @@ Serial.println(actual_x);
     
     //rover starts if SMPS output is close to vref so that speed is constant during motion
     if(vb >= vref - 0.2){
-
-     //if there are still balls to be found in the field
-     if(v[0] != '1'){   
-      
-        //iterates twice and calls the 360 scan function each time
-        //scan_state counts the number of iterations
-        if(scan_state < 2){
-          rover_scan_zero(v[1]);
-          s_0 = rover_scan_zero(v[1]);
-        }  
-
-        //sets the mode to "go" for the start of the next scan function
-        if(scan_state == 2){
-           v[1] = 'g';
-           delay(500);
-           scan_state = 3;
-        }
-
-        //calls the scan function which finalises when rover faces desired ball
-        if(scan_state == 3){
-          rover_scan_one(v[1]);
-          s_1 = rover_scan_one(v[1]);
-        }  
-
-        //sets the mode to "go" for the start of the next function
-        if(scan_state == 4){
-            v[1] = 'g';
-            delay(500);
-            scan_state = 5;
-        }    
-
-        //calls function which takes the rover to the ball it's facing
-        if(scan_state ==5){
-            //corrects the position of the rover to follow a straight line
-            reach_forward(v[1]);
-            f = reach_forward(v[1]);
-        }    
-
-        //set counter back to zero returning to intial state of the FSM
-        //loop until all the balls have been located
-        if((scan_state == 6)&&f){  
-            scan_state = 0;
-            delay(500);
-            v[1] = 'g';
-        }
-
-    }else{
-      brake();
-    }
-       
+//
+//     //if there are still balls to be found in the field
+//     if(v[0] != '1'){   
+//        Serial.println("scan_state = "+String(scan_state));
+//        //iterates twice and calls the 360 scan function each time
+//        //scan_state counts the number of iterations
+//        if(scan_state < 2){
+//          rover_scan_zero(v[1]);
+//          s_0 = rover_scan_zero(v[1]);
+//        }  
+//
+//        //sets the mode to "go" for the start of the next scan function
+//        if(scan_state == 2){
+//           v[1] = 'g';
+//           delay(500);
+//           scan_state = 3;
+//        }
+//
+//        //calls the scan function which finalises when rover faces desired ball
+//        if(scan_state == 3){
+//          rover_scan_one(v[1]);
+//          s_1 = rover_scan_one(v[1]);
+//        }  
+//
+//        //sets the mode to "go" for the start of the next function
+//        if(scan_state == 4){
+//            v[1] = 'g';
+//            delay(500);
+//            scan_state = 5;
+//        }    
+//
+//        //calls function which takes the rover to the ball it's facing
+//        if(scan_state ==5){
+//            //corrects the position of the rover to follow a straight line
+//            reach_forward(v[1]);
+//            f = reach_forward(v[1]);
+//        }    
+//
+//        //set counter back to zero returning to intial state of the FSM
+//        //loop until all the balls have been located
+//        if((scan_state == 6)&&f){  
+//            v[1] = 'g';
+//            delay(500);
+//            scan_state = 0;
+//        }
+//
+//    }else{
+//      brake();
+//    }
+       scan_state = 5;
+       reach_forward(v[1]);
     }else{
       brake();}
   //manual mode   
@@ -434,7 +435,9 @@ Serial.println(actual_x);
     data_coord[1] = fixed_size(store_angle(actual_x));
     data_coord[2] = fixed_size(x_to_command);
     data_coord[3] = fixed_size(y_to_command);
-
+    
+    Serial.print("data = ");
+    
           for(int i = 0; i<6; i++){
         Serial.print(data_command[i]);
         Serial1.print(data_command[i]);
@@ -459,12 +462,6 @@ Serial.println(actual_x);
           Serial.print('/');
       }
         Serial1.print("!");
-        Serial.print("!");
+        Serial.println("!");
 
-  //if((loop_counter % 5) == 0){
-
-
-  //}
-  
-  loop_counter++;
 }

@@ -112,7 +112,7 @@ int c_new = 0;
 int v_new = 0;
 char _mode;
 char c[5] = {'1','x','0','0','0'};
-char v[2] = {'0', 'g'};
+char v[2] = {'0', '0'};
 
 char gear = 'x';
 
@@ -610,9 +610,11 @@ bool rover_scan_zero(char _mode){
           ref_time_s = millis();
           _iter_s=1;
         }
-        if(millis()-ref_time_s < 1500){
+        Serial.println("ref_time_s = "+String(ref_time_s));
+        Serial.println("millis = "+String(millis()));
+        if(millis()-ref_time_s <= 1500){
           brake();
-        }else{
+        }else if(millis()-ref_time_s > 1500){
           _iter_s = 0;
           theta_store = store_angle(actual_x);
           r_store = float(actual_y);
@@ -653,25 +655,38 @@ void rover_manual(char _mode){
 }
 
 bool reach_forward(char _mode){
-    if((_mode == 'g')&&s_1){
-      vref = 3;
+    if((_mode == 'g')&&(scan_state == 5)){
+      //vref = 3;
       forward();
+      //delay(500);
       return false;
-    }else if((_mode == 's')&&s_1){
+    }else if((_mode == 's')&&(scan_state == 5)){
         brake();
-        scan_state = 6;
-        theta_store = store_angle(actual_x);
-        r_store = float(actual_y);
-        xcal_total_store = xcal_total;
-        ycal_total_store = ycal_total;
-        delay(1000);
+//        theta_store = store_angle(actual_x);
+//        r_store = float(actual_y);
+//        xcal_total_store = xcal_total;
+//        ycal_total_store = ycal_total;
+        //scan_state = 6;
+        delay(500);
         return true;
-    }else if((_mode == 'r')&&s_1){
+    }else if((_mode == 'r')&&(scan_state == 5)){
         right();
+//        delay(100);
+//      brake();
+//      delay(500);
         return false;
-    }else if((_mode == 'l')&&s_1){
+    }else if((_mode == 'l')&&(scan_state == 5)){
         left();
+//              delay(100);
+//      brake();
+//      delay(500);
         return false;
+    }else{
+      brake();
+//      delay(500);
+//      brake();
+//      delay(1000);
+      return false;
     }
 }
 
