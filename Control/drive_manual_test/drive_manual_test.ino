@@ -50,7 +50,7 @@ void setup() {
     if(mqttclient.subscribe("mode")){
       Serial.println("Subscribed to mode");
     }
-    
+
 }
 
 int setupwifi()
@@ -179,12 +179,10 @@ void loop() {
   }
 
   if(Serial1.available()){
-    char readChar;
-    Serial.print("hi");
-  
+    char readChar;  
     while(Serial1.available()){
       readChar = Serial1.read();
-      Serial.print("Char from Vision");
+      Serial.print("Char from Vision ");
       Serial.println(readChar);
       if(readChar == '!'){
         endVisionMessage = 1;
