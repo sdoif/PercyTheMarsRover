@@ -1,3 +1,11 @@
+///*
+//  * Program written by Yue Zhu (yue.zhu18@imperial.ac.uk) in July 2020.
+//  * pin6 is PWM output at 62.5kHz.
+//  * duty-cycle saturation is set as 2% - 98%
+//  * Control frequency is set as 1.25kHz. 
+// */
+
+
 #ifndef functions_h
 #define functions_h
 
@@ -107,7 +115,6 @@ unsigned long reff1_time = 0;
 unsigned long ref1_time = 0;
 unsigned long ref_time_scan = 0;
 unsigned long ref_time_s = 0;
-unsigned long ref_time_state = 0;
 
 int c_new = 0;
 int v_new = 0;
@@ -138,7 +145,6 @@ int _iter_s = 0;
 int _iter = 0;
 int _iter_turn = 0;
 int stop_count = 1;
-int _iter_state = 0;
 
 int scan_state = 0;
 
@@ -592,7 +598,7 @@ bool rover_scan_zero(char _mode){
     Serial1.print(data_vision[1]);
     delay(1000);
     return true;
-  }else if((_mode == 's')&&(!s_0)){
+  }else if((_mode == 's')&&(s_0_int == 0)){
     //if((prev_val_x == total_x)&&(_iter_scan == 1)){
 //      theta_store = store_angle(actual_x);
 //      r_store = float(actual_y);
@@ -604,7 +610,7 @@ bool rover_scan_zero(char _mode){
     Serial.println("Scan_zero = STOP");
     return false;
   }else{
-    if((_mode == 'g')&&(!s_0)){
+    if((_mode == 'g')&&(s_0_int == 0)){
       if(prev_mode == 's'){
         brake();
         //delay(1500);

@@ -1,11 +1,9 @@
-/*
- * Program written by Yue Zhu (yue.zhu18@imperial.ac.uk) in July 2020.
- * pin6 is PWM output at 62.5kHz.
- * duty-cycle saturation is set as 2% - 98%
- * Control frequency is set as 1.25kHz. 
-*/
-
-
+///*
+//  * Program written by Yue Zhu (yue.zhu18@imperial.ac.uk) in July 2020.
+//  * pin6 is PWM output at 62.5kHz.
+//  * duty-cycle saturation is set as 2% - 98%
+//  * Control frequency is set as 1.25kHz. 
+// */
 
 #include "SPI.h"
 #include "functions.h"
@@ -299,6 +297,9 @@ Serial.println(actual_x);
 //     }
 //   }
 
+  prev_mode = v[1];
+  Serial.println("prev_mode = "+String(prev_mode));
+
   if(Serial1.available() > 0){
     char _modenew = Serial1.read();
     if(_mode!=_modenew){
@@ -355,6 +356,9 @@ Serial.println(actual_x);
         if(scan_state < 2){
           rover_scan_zero(v[1]);
           s_0 = rover_scan_zero(v[1]);
+          if((scan_state == 1)||(scan_state == 0)){
+            s_0_int = 0;
+          }
         }  
 
         //sets the mode to "go" for the start of the next scan function
@@ -389,17 +393,7 @@ Serial.println(actual_x);
         if(scan_state == 6){  
             v[1] = 'g';
             delay(500);
-            if(_iter_state==0){
-              ref_time_state = millis();
-              _iter_state=1;
-            }
-            if(millis()-ref_time_s <= 1500){
-              back();
-            }else if(millis()-ref_time_s > 1500){
-              brake();
-              _iter_state = 0;
-              scan_state = 0;
-            }
+            scan_state = 0;
         }
 
     }else{
@@ -427,8 +421,7 @@ Serial.println(actual_x);
   prev_val_y = total_y;
   prev_val_x = total_x;
   actual_y_prev = actual_y;
-  prev_mode = v[1];
-  Serial.println("prev_mode = "+String(prev_mode));
+
 
 //      Serial.println("angle = "+String(angle));
 //      Serial.println("angle_corrected = "+String(angle_corrected));
