@@ -41,28 +41,6 @@
             </section>
 
             <section class = 'sub-sec'> 
-                <!-- <h2>Current Trip Details</h2> 
-                <table>
-                    <tr>
-                        <td>Distance Traveled</td> 
-                        <td id='distanceTraveled'>0m</td> 
-                    </tr>
-
-                    <tr>
-                        <td>Time of Current Trip</td>
-                        <td>0 mins</td>  
-                    </tr>
-
-                    <tr>
-                        <td>Current Gear</td>
-                        <td id="curr-gear">P</td> 
-                    </tr>
-
-                    <tr>
-                        <td>Current Coordinates</td>
-                        <td id='currentCoord'>(0, 0)</td> 
-                    </tr>
-                </table> -->
                 <div class='current-trip' id='q2'>
                     <h2>Distance Traveled</h2> 
                     <p id='distanceTraveled'>0m</p> 
@@ -135,19 +113,6 @@
                 </div>
             </div>
 
-            <!-- <div class = 'target'>
-                <select id="target-select">
-                    <option value="">--Please choose an option--</option>
-                    <option value="dog">Red</option>
-                    <option value="cat">Green</option>
-                    <option value="hamster">Yellow</option>
-                    <option value="parrot">Parrot</option>
-                    <option value="spider">Spider</option>
-                    <option value="goldfish">Goldfish</option>
-                </select>
-            </div> -->
-
-
 
         </section>
 
@@ -180,20 +145,18 @@
                     postData("http://localhost:9000/api/mode", {mode: 1});
                     console.log('Switched mode to: Autonomous');
                     //alert('SWITCHING TO AUTONOMOUS: Keypad and speed slider are now disabled. Switch back to manual to resume use')
-                    // if Autonomous 
+                    // if Autonomous, disable manual controls
                     inputVal.disabled=true;
                     uButton.disabled=true;
                     lButton.disabled=true;
                     rButton.disabled=true;
                     dButton.disabled=true;
                     sButton.disabled=true;
-
- 
                 }else{
                     postData("http://localhost:9000/api/mode", {mode: 0});
                     console.log('Switched mode to: Manual');
                     //alert('SWITCHING TO MANUAL: Keypad and speed slider are now enabled')
-                    //if Manual
+                    //if Manual, enable manual controls
                     inputVal.disabled=false;
                     uButton.disabled=false;
                     lButton.disabled=false;
