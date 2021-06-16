@@ -112,7 +112,7 @@ int c_new = 0;
 int v_new = 0;
 char _mode;
 char c[5] = {'1','x','0','0','0'};
-char v[2] = {'0', '0'};
+char v[2] = {'0', 'g'};
 
 char gear = 'x';
 
@@ -579,7 +579,7 @@ bool rover_scan_zero(char _mode){
     ref_time_scan = millis();
   }
   Serial.print("actual_x_first = "+String(actual_x_first));
-  if(abs(actual_x) >= 610 +actual_x_first){
+  if(abs(actual_x) >= 500 +actual_x_first){
     brake();
     if((_iter_scan == 1)||(_iter_scan == 2)){
       scan_state++;
@@ -666,7 +666,7 @@ bool reach_forward(char _mode){
 //        r_store = float(actual_y);
 //        xcal_total_store = xcal_total;
 //        ycal_total_store = ycal_total;
-        //scan_state = 6;
+        scan_state = 6;
         delay(500);
         return true;
     }else if((_mode == 'r')&&(scan_state == 5)){
