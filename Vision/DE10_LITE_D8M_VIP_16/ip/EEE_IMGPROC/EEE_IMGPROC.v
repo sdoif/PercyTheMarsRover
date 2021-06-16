@@ -123,98 +123,77 @@ end
 // https://docs.opencv.org/3.4/de/d25/imgproc_color_conversions.html
 wire [7:0] h, s, v;
 wire [7:0] min;
-wire [7:0] s_temp, v_temp, h_temp;
+//wire [7:0] s_temp, v_temp, h_temp;
 
-// not divided by 255
-assign v_temp = (blurred_red >= blurred_green && blurred_red >= blurred_blue) ? blurred_red
+// range 0 - 255
+assign v = (blurred_red >= blurred_green && blurred_red >= blurred_blue) ? blurred_red
 				: (blurred_green >= blurred_red && blurred_green >= blurred_blue) ? blurred_green
 				: (blurred_blue >= blurred_red && blurred_blue >= blurred_green) ? blurred_blue
 				: 0;
-	
-assign v = v_temp; // *100/255; // scale to percent
 
-// not divided by 255
+// range 0 - 255
 assign min = blurred_red <= blurred_green && blurred_red <= blurred_blue ? blurred_red
 				: blurred_green <= blurred_red && blurred_green <= blurred_blue ? blurred_green
 				: blurred_blue <= blurred_red && blurred_blue <= blurred_green ? blurred_blue
 				: 0;
 
-// scaled up by 255
-assign s_temp = v_temp != 0 ? 255*(v_temp - min)/v_temp
-					: 0;
-						
-assign s = s_temp; // *100/255; // scaling to percentage
-						
+// range 0 - 255
+assign s = v != 0 ? 255*(v - min)/v
+				: 0;
+												
 // v_temp and the colours are not scaled down
-assign h_temp = (blurred_red == blurred_green && blurred_green == blurred_blue) ? 0
-			: v_temp == blurred_red ? //60*(blurred_green - blurred_blue)/(v_temp - min) // if V == R
-					blurred_green >= blurred_blue ? 60*(blurred_green - blurred_blue)/(v_temp - min) // if g-b is positive, dont add 360
-					: (360*(v_temp-min) + 60*(blurred_green - blurred_blue))/(v_temp - min) // if negative, add 360
-			: v_temp == blurred_green ? (120*(v_temp - min) + 60*(blurred_blue - blurred_red))/(v_temp - min)
-			: v_temp == blurred_blue ?	(240*(v_temp - min) + 60*(blurred_red - blurred_green))/(v_temp - min)
+assign h = (blurred_red == blurred_green && blurred_green == blurred_blue) ? 0
+			: v == blurred_red ?
+					blurred_green >= blurred_blue ? 60*(blurred_green - blurred_blue)/(v - min) // if g-b is positive, dont add 360
+															: (360*(v - min) + 60*(blurred_green - blurred_blue))/(v - min) // if negative, add 360
+			: v == blurred_green ? (120*(v - min) + 60*(blurred_blue - blurred_red))/(v - min)
+			: v == blurred_blue ? (240*(v - min) + 60*(blurred_red - blurred_green))/(v - min)
 			: 0;
-				
-assign h = h_temp *1/2; // H correction to fit colourmap
+			
 // --------------------- Colour detection (HSV) ---------------------
 
 wire red_detect, green_detect, blue_detect, violet_detect, yellow_detect, border_detect;
 
-// 	Original HSV ranges - based on images
-// red_ = (h > 12 && h < 48 && s > 42 && v > 40) ? 1 : 0;
-// green = (h > 145 && h < 175 && s > 45 && v < 85 && v > 20) ? 1 : 0;
-// blue = (h > 190 && h < 240 && s > 70 && v > 25 && v < 75) ? 1 : 0;
-// violet =  ((h > 330 || h < 30) && s > 10 && s < 60 && v < 80 && v > 20) ? 1 : 0;
-// yellow = (h > 55 && h < 85 && s > 25 && s < 75 && v > 40) ? 1 : 0;
-
-// New HSV ranges based on colourmap : https://stackoverflow.com/questions/47483951/how-to-define-a-threshold-value-to-detect-only-green-colour-objects-in-an-image
-//might be better to scale up the values on the colourmap
-//	All have default limits stopping low s and high v values to stop picking up pure white - do the same for black
-//assign red_det = ((h > 165 && s > 10 && s < 150 && v > 10 && v < 245) || (h < 15 && s > 160 && v > 102 && v < 230)) ? 1 : 0; // good - acquire a better range, taking away the lower hue range to avoid overlap with purple
-
-
-//assign red_detect = (x >= 210 && x <= 430) && ((h > 170 || h < 25) && s > 149 && s < 232 && v > 125 && v <= 200) ? 1 // changed max v from 245 to 200
-//						: ( (x < 210 || x > 430) && (h > 170 || h < 15) && s > 75 && s < 161 && v > 100 && v < 200) ? 1 // 235 -> 161
-//						: 0;
-
-//assign red_detect = ((h > 170 || h < 15) && s > 75 && s < 232 && v > 100 && v <= 200) ? 1 : 0;
-// new floor values
+// TODO - Multiply hue values by 2 so that they're in the 0 - 360 range
+//	------ HSV ranges for Skempton ------
+/*
 assign red_detect = ((h > 170 || h < 15) && s > 125 && s < 232 && v > 60 && v <= 200) ? 1 : 0;
-// Could remove the upper hue range
-// Decreased lower value limit
-
-//assign blue_detect = (h > 90 && h < 120 && s > 76 && s < 195 && v > 25 && v < 128) ? 1 : 0; // good - check previous commits for recent values
 //	----  day time values ---
 assign blue_detect = (h > 95 && h < 120 && s > 76 && s < 210 && v > 25 && v < 100) ? 1 : 0; // good - check previous commits for recent values
 assign green_detect = (h > 55 && h < 85 && s > 100 && s < 180 && v > 35 && v < 100) ? 1 : 0; // good (h > 115 && h < 135 && s > 200 && v > 115 && v < 135)
 // ---- end of day time values
-//assign green_detect = (h > 50 && h < 80 && s > 75 && s < 200 && v > 50 && v < 100) ? 1 : 0; // good (h > 115 && h < 135 && s > 200 && v > 115 && v < 135)
 
 // ---- night time values ----
 //assign blue_detect = (h > 95 && h < 120 && s > 5 && s < 245 && v > 5 && v < 100) ? 1 : 0; // good - check previous commits for recent values
 //assign green_detect = (h > 55 && h < 85 && s > 45 && s < 225 && v > 25 && v < 100) ? 1 : 0; // good (h > 115 && h < 135 && s > 200 && v > 115 && v < 135)
-
 // ---- end of night time values ----
 
-//assign violet_detect =  (h < 15 && s > 80 && s < 150 && v > 75 && v <= 125) ? 1 : 0;
-								// (x >= 210 && x <= 430 && h < 15 && s > 80 && s < 150 && v > 75 && v <= 125) ? 1 // central third
-								//: ( (x < 210 || x > 430) && h > 9 && h < 17 && s > 160 && s < 235 && v > 88 && v < 200) ? 1 // left and right
-								// : (x < 210 || x > 430) ? 1 // set everything in the right and left side to violet
-								//: ( x > 430 && ) ? 1// right third
-								//: 0;
-
-// (h < 25 && s > 80 && s < 160 && v > 50 && v <= 125) ? 1 : 0;// ((h < 20  && s > 89 && s < 170 && v > 64 && v < 128) || (h > 160 && s > 10 && s < 115 && v > 154 && v < 245)) ? 1 : 0; // bad
-//assign violet_detect = 0;
 assign yellow_detect = (h > 25 && h < 45 && s > 100 && s < 160 && v > 110) ? 1 : 0; // good - needs adjusting?
-// removed upper value limit
+*/
 
-// ignore pixels at the borders and those in the upper half
-// width : 0 - 639, height - 479
+//	------ HSV ranges for floor 4 ------
+// day
+//assign red_detect = (h < 28 && s > 180 && s < 243 && v > 125) ? 1 : 0;
+assign green_detect = (h > 85 && h < 175 && s > 82 && s < 178 && v > 35 && v < 120) ? 1 : 0;
+//assign blue_detect = (h > 190 && h < 240 && s > 7 && s < 135 && v > 20 && v < 85) ? 1 : 0; // good - check previous commits for recent values
+//assign yellow_detect = (h > 35 && h < 65 && s > 150 && s < 242 && v > 150) ? 1 : 0;
+
+// night
+//assign red_detect = (h < 28 && s > 180 && s < 243 && v > 125) ? 1 : 0;
+//assign green_detect = (h > 85 && h < 180 && s > 75 && s < 185 && v > 35 && v < 145) ? 1 : 0;
+//assign blue_detect = (h > 145 && h < 240 && s > 7 && v > 5 && v < 65) ? 1 : 0; // good - check previous commits for recent values
+assign yellow_detect = (h > 35 && h < 65 && s > 150 && s < 242 && v > 150) ? 1 : 0;
+
+
+// ------ HSV ranges for the library ------
+assign red_detect = (h < 45 && s > 180 && s < 243 && v > 125) ? 1 : 0;
+assign blue_detect = (h > 175 && h < 240 && s > 7 && s < 180 && v > 5 && v < 160) ? 1 : 0; // good - check previous commits for recent values
+
+// pixels to ignore
+// width : 0 - 639, height : 0 - 479
 assign border_detect = (x <= 20 || x >= 620) || (y <= 250); 
 
 // works well for blue : ((h > 165 || h < 15) && s > 65) ? 1 : 0; for non-scaled h
-
-// red = ((h > 165 && s > 10 && s < 150 && v > 10 && v < 245) || (h < 15 && s > 160 && v > 102 && v < 230)) ? 1 : 0; // good - acquire a better range, taking away the lower hue range to avoid overlap with purple
-// violet =  (h < 20 && s > 76 && s < 160 && v < 192 && v > 50) ? 1 : 0; // bad
 
 
 // ------------------ Highlight detected areas -------------------
