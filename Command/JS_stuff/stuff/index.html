@@ -27,8 +27,8 @@
                 <div class="battery">
                     <div class="battery-shell"><div id="battery-level"></div></div>
                     <div class="battery-lid"></div>
-                    <p id='battery-percent'> &#9735;50% </p>
-                    <p id='battery-ttl'> 29 mins until full </p>
+                    <p id='battery-percent'> <span id = 'cnc'>&#9735;</span><span id='pc-val'>0</span></p>
+                    <p id='battery-ttl'> <span id='time-till'> 40</span>mins<span id='time-state'> until full </span> </p>
                 </div>
             </section>
             
@@ -41,35 +41,13 @@
             </section>
 
             <section class = 'sub-sec'> 
-                <!-- <h2>Current Trip Details</h2> 
-                <table>
-                    <tr>
-                        <td>Distance Traveled</td> 
-                        <td id='distanceTraveled'>0m</td> 
-                    </tr>
-
-                    <tr>
-                        <td>Time of Current Trip</td>
-                        <td>0 mins</td>  
-                    </tr>
-
-                    <tr>
-                        <td>Current Gear</td>
-                        <td id="curr-gear">P</td> 
-                    </tr>
-
-                    <tr>
-                        <td>Current Coordinates</td>
-                        <td id='currentCoord'>(0, 0)</td> 
-                    </tr>
-                </table> -->
                 <div class='current-trip' id='q2'>
                     <h2>Distance Traveled</h2> 
                     <p id='distanceTraveled'>0m</p> 
                 </div>
                 <div class='current-trip' id='q1'>
                     <h2>Time of Trip</h2>
-                    <p id >0 mins</p>  
+                    <p><span id = 'time'>0</span> mins</p>  
                 </div>
                 <div class='current-trip' id='q3'>
                     <h2>Current Gear</h2>
@@ -77,7 +55,7 @@
                 </div>
                 <div class='current-trip' id='q4'>
                     <h2>Live Coordinates</h2>
-                    <p id='currentCoord'>(0, 0)</p> 
+                    <p id='currentCoord'>(<span id='x-coord'>0</span>, <span id='y-coord'>0</span>)</p> 
                 </div>
             </section>
             </div>
@@ -116,12 +94,12 @@
 
                 <div class = 'speed-control' id='speed-control-id'>
                     <div class="slider" id="curr-val">
-                        <span id="curr-speed-text">Speed (cm/s) :&nbsp;<span id="curr-speed-val">6.0</span></span>
+                        <span id="curr-speed-text">Speed (cm/s) :&nbsp;<span id="curr-speed-val">0</span></span>
                     </div>
                     <div class="slider" id="acc-slider">
-                        <div id="min-slider-val">6.0 </div>
-                        <input type="range" min="6.0" max="16.5" step="0.1" value="6.0" id = 'speed-slider' oninput="updateSpeed();">
-                        <div id="max-slider-val"> 16.5</div>
+                        <div id="min-slider-val">0 </div>
+                        <input type="range" min="0.0" max="16.0" step="0.1" value="0.0" id = 'speed-slider' oninput="updateSpeed();">
+                        <div id="max-slider-val"> 16</div>
                     </div>
                 </div>
 
@@ -135,406 +113,32 @@
                 </div>
             </div>
 
-            <!-- <div class = 'target'>
-                <select id="target-select">
-                    <option value="">--Please choose an option--</option>
-                    <option value="dog">Red</option>
-                    <option value="cat">Green</option>
-                    <option value="hamster">Yellow</option>
-                    <option value="parrot">Parrot</option>
-                    <option value="spider">Spider</option>
-                    <option value="goldfish">Goldfish</option>
-                </select>
-            </div> -->
-
-
 
         </section>
 
-        <script>
-            //function definitions
-
-            async function postData(url = '', data = {}) {
-                console.log("Going to send: ", JSON.stringify(data));
-                const response = await fetch(url, {
-                    method: 'POST', 
-                    headers: {
-                    'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data) // body dt to match header dt
-                });
-                let _res = response.json()
-                return _res; // parses JSON response into native JavaScript objects
-            }
-
-            function toggleMode(){
-                const modeSwitch = document.querySelector("#switch");
-                const inputVal = document.querySelector("#speed-slider"); 
-                const uButton = document.querySelector("#up-key"); 
-                const lButton = document.querySelector("#left-key"); 
-                const rButton = document.querySelector("#right-key"); 
-                const dButton = document.querySelector("#up-key"); 
-                const sButton = document.querySelector("#up-key"); 
-                const speedControlDiv = document.querySelector('#speed-control-id');     
-                if(modeSwitch.checked){
-                    postData("http://localhost:9000/api/mode", {mode: 1});
-                    console.log('Switched mode to: Autonomous');
-                    alert('SWITCHING TO AUTONOMOUS: Keypad and speed slider are now disabled. Switch back to manual to resume use')
-                    // if Autonomous 
-                    inputVal.disabled=true;
-                    uButton.disabled=true;
-                    lButton.disabled=true;
-                    rButton.disabled=true;
-                    dButton.disabled=true;
-                    sButton.disabled=true;
-
- 
-                }else{
-                    postData("http://localhost:9000/api/mode", {mode: 0});
-                    console.log('Switched mode to: Manual');
-                    alert('SWITCHING TO MANUAL: Keypad and speed slider are now enabled')
-                    //if Manual
-                    inputVal.disabled=false;
-                    uButton.disabled=false;
-                    lButton.disabled=false;
-                    rButton.disabled=false;
-                    dButton.disabled=false;
-                    sButton.disabled=false;
-                }
-            }
-
-            function updateDirection(keyId=''){
-                const modeSwitch = document.querySelector("#switch");
-                if(modeSwitch.checked==false){
-
-                    const currGear = document.querySelector("#curr-gear");
-                    const key = document.querySelector('#'+keyId);
-
-                    if(keyId=='up-key'){
-                        currGear.textContent='D'; 
-                        postData("http://localhost:9000/api/direction", {direction: 'w'});
-
-                    }else if(keyId=='left-key'){
-                        currGear.textContent='RL'; 
-                        postData("http://localhost:9000/api/direction", {direction: 'a'});
-                        
-                    }else if(keyId=='stop-key'){
-                        currGear.textContent='P'; 
-                        postData("http://localhost:9000/api/direction", {direction: 'x'});
-                        
-                    }else if(keyId=='right-key'){
-                        currGear.textContent='RR'; 
-                        postData("http://localhost:9000/api/direction", {direction: 'd'});
-                        
-                    }else if(keyId=='down-key'){
-                        currGear.textContent='R'; 
-                        postData("http://localhost:9000/api/direction", {direction: 's'});
-                        
-                    }else{
-                        console.log('Invalid key id')
-                    }
-                }else{
-                    alert('ERROR: Rover on Autonomous mode, switch to manual to send direction command');
-                }
-                
-            }
-
-            function updateDirectionAuto(keyId=''){
-                const modeSwitch = document.querySelector("#switch");
-                if(modeSwitch.checked==true){
-
-                    const currGear = document.querySelector("#curr-gear");
-
-                    if(keyId=='w'){
-                        currGear.textContent='D'; 
-
-                    }else if(keyId=='a'){
-                        currGear.textContent='RL'; 
-                        
-                    }else if(keyId=='x'){
-                        currGear.textContent='P'; 
-                        
-                    }else if(keyId=='d'){
-                        currGear.textContent='RR'; 
-                        
-                    }else if(keyId=='s'){
-                        currGear.textContent='R'; 
-                        
-                    }else{
-                        console.log('Invalid key id')
-                    }
-                }else{
-                    console.log('ERROR? Not meant to receive dir status!');
-                }
-                
-            }
-
-            function updateSpeed(){
-                const modeSwitch = document.querySelector("#switch");
-                if(modeSwitch.checked==false){
-                    const displayCurrVal = document.querySelector('#curr-speed-val');
-                    const inputVal = document.querySelector("#speed-slider");
-                    displayCurrVal.textContent = inputVal.value;
-                    let _speed = inputVal.value;
-
-                    postData("http://localhost:9000/api/speed", {speed: (_speed)});
-
-                    data = [{
-                        domain: { x: [0, 1], y: [0, 1] },
-                        value: _speed,
-                        type: "indicator",
-                        mode: "gauge+number",
-                        gauge:{
-                            axis: { range: [null, 18]},
-                            bar: { color: (_speed<10? '#3BF014' : _speed<15? '#FFFF00' : '#FF0000')},
-                            borderwidth: 3,
-                            bordercolor: "#ffebdb"
-                            }
-                    }];
-
-                    let layout = { 
-                        height: 275, 
-                        width: 550, 
-                        paper_bgcolor: "#25242c", 
-                        margin: { t: 0, b: 0 }, 
-                        font: { color: "#ffebdb", family: "Roboto Mono" }
-                    };
-
-                    // Making use of plotly's extensive API for a more lightweight way than replotting the graph
-                    Plotly.react('speedometer', data, layout);
-                    //console.log(inputVal.disabled);
-                }else{       
-                    alert('ERROR: Rover on Autonomous mode, switch to manual to apply changes');
-                }
-            }
-
-            function updateSpeedAuto(_speed){
-                const modeSwitch = document.querySelector("#switch");
-                if(modeSwitch.checked==true){
-                    const displayCurrVal = document.querySelector('#curr-speed-val');
-                    const inputVal = document.querySelector("#speed-slider");
-                    displayCurrVal.textContent = _speed;
-                    inputVal.value = _speed;
-
-                    data = [{
-                        domain: { x: [0, 1], y: [0, 1] },
-                        value: _speed,
-                        type: "indicator",
-                        mode: "gauge+number",
-                        gauge:{
-                            axis: { range: [null, 18]},
-                            bar: { color: (_speed<10? '#3BF014' : _speed<15? '#FFFF00' : '#FF0000')},
-                            borderwidth: 3,
-                            bordercolor: "#ffebdb"
-                            }
-                    }];
-
-                    let layout = { 
-                        height: 275, 
-                        width: 550, 
-                        paper_bgcolor: "#25242c", 
-                        margin: { t: 0, b: 0 }, 
-                        font: { color: "#ffebdb", family: "Roboto Mono" }
-                    };
-
-                    // Making use of plotly's extensive API for a more lightweight way than replotting the graph
-                    Plotly.react('speedometer', data, layout);
-                }else{       
-                    console.log('ERROR: Auto update speed called in manual mode');
-                }
-            }
-
-            function updateDistanceTraveled(distance){
-                const _distance = document.querySelector("#distanceTraveled");
-                _distance.textContent=distance;
-            }
+        <script type='text/javascript' src='./main.js'>
             
-            function updateRoverCoordinates(xCoord, yCoord){
-                // Plotly.update(graphDiv, data_update, layout_update, [, traceIndices])
+        </script>
 
-                //update the layout and a single trace
-                var dataUpdate = {'x': [[xCoord]], 'y': [[yCoord]]}
-                //console.log(dataUpdate)
-                //console.log(plotDiv)
-                Plotly.update(plotDiv, dataUpdate,{} ,[0])
+        <script>
 
-                const currCoord = document.querySelector('#currentCoord');
+            function sendSemiAutonomousCommand(xyCoord){
+                postData("http://localhost:9000/api/semiAuto", {mode: 2, coordinates: xyCoord});
             }
+            plotDiv.on('plotly_click', function(data){
+                clickedCoordinates = {xCoord: data.points[0].x, 
+                                      yCoord: data.points[0].y};
+                sendSemiAutonomousCommand(clickedCoordinates);
 
-            function addBallCoordinates(xCoord, yCoord, colorBall){
-                let newBall ={
-                    x:[xCoord],
-                    y:[yCoord],
-                    mode: 'markers',
-                    marker: {
-                        size: 15,
-                        color: `${colorBall}`
-                    },
-                    type: 'scatter',
-                    name: `${colorBall}`,
-                };
-
-                Plotly.addTraces(plotDiv, newBall);
-            }
-
-            async function fetchData(url=''){
-                let res = await fetch(url);
-                let data = await (res.json());
-                let _data = data
-                return (_data);
-
-            }
-
-            async function updateUsingFromCommand(url="http://localhost:9000/api/roverStats"){
-                let res = await fetch(url);
-                let roverData = await (res.json());
-                updateDirectionAuto(roverData['gear']);
-                updateRoverCoordinates(roverData['xCoordinate'],roverData['yCoordinate']);
-                updateDistanceTraveled(roverData['distanceTravelled']);
-                updateSpeedAuto(roverData['speed']);
-
-
-            }
-
-            function ballNotification(){
-                //add notification function
-            }
-
-            async function updateUsingFromVision(url="http://localhost:9000/api/vision"){
-                let res = await fetch(url);
-                let ballData = await (res.json());
-                let _color;
-                if(ballData[ballColor]=='r'){
-                    _color = 'Red';
-                }else if(ballData[ballColor]=='g'){
-                    _color = 'Green';
-                }else if(ballData[ballColor]=='b'){
-                    _color = 'Blue';
-                }else if(ballData[ballColor]=='v'){
-                    _color = 'Violet';
-                }else if(ballData[ballColor]=='y'){
-                    _color = 'Yellow';
-                }
-                addBallCoordinates(
-                    ballData[xCoordinate],
-                    ballData[yCoordinate],
-                    _color
-                );
-            }
-
-            function moveToClick(){
-                //manual move to point on graph feature
-            } 
-
+            });
 
         </script>
 
 <!-- END OF FUNCTIONS, START OF SCRIPT -->
 
         <script>
-            const HOST = "localhost";
-            const PORT = 9000;
-            const URL = "http://"+HOST+":"+PORT;
-            //const recieved = fetchData("http://localhost:9000/api/test")
-            
-            let init_speed = 6;
-
-            let _fromCommand = setInterval( updateUsingFromCommand ,5000);
-
-        //  Speedometer 
-            let data = [{
-            domain: { x: [0, 1], y: [0, 1] },
-            value: init_speed,
-            type: "indicator",
-            mode: "gauge+number",
-            gauge:{
-                axis: { range: [null, 18]},
-                bar: { color: '#3BF014'},
-                borderwidth: 3,
-                bordercolor: "#ffebdb"
-                }
-            }];
-
-            let layout = { 
-                height: 275, 
-                width: 550, 
-                paper_bgcolor: "#25242c", 
-                margin: { t: 0, b: 0 }, 
-                font: { color: "#ffebdb", family: "Roboto Mono" }
-            };
-            Plotly.newPlot('speedometer', data, layout);
-
-        //  graphing stuff
-            let plotDiv = document.getElementById('map')
-            
-            let rover ={
-                x:[0],
-                y:[0],
-                mode: 'markers',
-                marker: {
-                    size: 25,
-                    color: 'black'
-                },
-                type: 'scatter',
-                name: 'Rover'
-            };
-
-            let redBall ={
-                x:[-4],
-                y:[-7],
-                mode: 'markers',
-                marker: {
-                    size: 15
-                },
-                type: 'scatter'
-            };
-
-            let blueBall ={
-                x:[6],
-                y:[8],
-                mode: 'markers',
-                marker: {
-                    size: 15
-                },
-                type: 'scatter'
-            };
-
-            let data1 = [rover]//, virtualHeatmap];
-
-            let layout1 = {
-                height: 700, 
-                paper_bgcolor: "#ffebd9",
-                plot_bgcolor: "#ffebdb",
-                xaxis: {
-                    autorange: true
-                },
-                yaxis: {
-                    autorange: true
-                }
-            };
-
-            Plotly.newPlot( 
-                plotDiv, 
-                data1,
-                layout1
-                );
-        
-            plotDiv.on('plotly_doubleclick', function(data){
-                if(document.querySelector("#switch").checked==false){    
-                    let xCoord2GT = data.points['x'];
-                    let yCoord2GT = data['points']['y'];
-                    console.log(xCoord2GT, yCoord2GT);
-                }else{
-                    console.log('ERROR: Rover on Autonomous mission, await for end of mission or switch to manual'); 
-                }
-            });
 
         </script>
-
-        <audio autoplay loop>
-            <source src = "Source/FILTERED_HIGHLIGHTS_-_Sol16RoverDriveHighlights.mp3" type = "audio/mp3">
-        </audio>
-
 
     </body>
 
