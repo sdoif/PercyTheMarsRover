@@ -352,11 +352,7 @@ Serial.println(actual_x);
     xcorcur = xcoordinatefinder(actual_y_prev, actual_y, angle);
     ycorcur = ycoordinatefinder(actual_y_prev, actual_y, angle);
     
-//  if(loop_ite==0){
-//    actual_y_prev = actual_y;
-//  }else{
-//    
-//  }
+
   actual_y_prev = actual_y;
   //gotocoordinate(testing_x, testing_y, angle, actual_y);
   Serial.println("ACTUAL Y=");
@@ -365,7 +361,6 @@ Serial.println(actual_x);
   Serial.print(actual_y_prev);
   gotocoordinate(testing_x, testing_y, angle, actual_y, xcorcur, ycorcur);
   
-  //loop_ite++;
   
   
 }
