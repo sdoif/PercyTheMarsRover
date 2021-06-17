@@ -72,7 +72,13 @@ app.use( (req,res,next) =>{
 });
 
 app.get('/', (req, res) => {
-
+let ballStatus={
+    color: '',
+    distance: 0,
+    ballX: 0,
+    ballY: 0,
+    count: 0
+}
     res.sendFile('./views/index.html', { root: __dirname });
     console.log(req.url);
 });
@@ -90,13 +96,12 @@ app.get('/api/test', (req, res) => {
 //     soc INTEGER,
 //     ttf INTEGER
 //     );
-let sql = `SELECT soc, ttf FROM charging
+let sql_query = `SELECT soc, ttf FROM charging
            WHERE time = ?;`;
-
 
 app.get('/api/energyStatus', (req, res) => {
     if(timeCounter<3063){
-        db.all(sql, [timeCounter], (err,row) => {
+        db.all(sql_query, [timeCounter], (err,row) => {
             if(err){
                 console.log(err.message);
             }
