@@ -9,23 +9,25 @@
 
 WiFiClient wificlient;
 PubSubClient mqttclient(wificlient);
+
 char msg[90], fromDrive[50], toVision[36], toCommand[44], ballCoordinates[50], readVision[20];
 char toDrive[5] = {'0','x','0','0','0'};
 int bytein = 0;
 int _index = 0;
+int count;
 int endVisionMessage = 0;
 int endDriveMessage = 0;
 int visionIt = 0;
 int driveIt = 0;
-String add, correct;
+char add[3];
 const char* serverip = "18.134.3.99"; // aws server ip
 
 void setup() {
   
     Serial.println("Start");
-    Serial1.begin(115200, SERIAL_8N1, visionIn, visionOut); 
-    Serial2.begin(115200, SERIAL_8N1, driveIn, driveOut);
-    Serial.begin(115200);
+    Serial1.begin(115200, SERIAL_8N1, visionIn, visionOut); // setting up uart port to speak with vision
+    Serial2.begin(115200, SERIAL_8N1, driveIn, driveOut); // setting up uart port to speak with drive
+    Serial.begin(115200); 
     delay(10);
     Serial.println("Connecting to wifi");
 
@@ -40,40 +42,24 @@ void setup() {
     if(!mqttclient.connect("esp32")){
       Serial.println("Client connection failed");
     }
-
-    delay(10);
-
     if(mqttclient.subscribe("direction")){
       Serial.println("Subscribed to direction");
-    }else{
-      Serial.println("Failed subscribing");
     }
-
     if(mqttclient.subscribe("speed")){
       Serial.println("Subscribed to speed");
-    }else{
-      Serial.println("Failed subscribing");
     }
-
     if(mqttclient.subscribe("mode")){
       Serial.println("Subscribed to mode");
-    }else{
-      Serial.println("Failed mode");
-    }
-    
-    if(mqttclient.publish("test", "hello from esp32")){
-      Serial.println("Message sent");
-    }else{
-      Serial.println("Message failed to send");
     }
 
 }
 
 int setupwifi()
 {
+
     WiFi.begin("Selin", "selinuygun");
     Serial.print("Waiting for WiFi... "); 
-    while(WiFi.status() != WL_CONNECTED) {
+    while(WiFi.status() != WL_CONNECTED) { 
         Serial.print(".");
         delay(500);
     }
@@ -91,14 +77,9 @@ void callback(char* topic, byte* message, unsigned int _length) {
     Serial.print((char)message[i]);
     messageTemp += (char)message[i];
   }
-  Serial.println();
-  Serial.print(topic);
-  Serial.println();
+
   String _topic = String(topic);
-  //send whatever direction command we receive as its already good!
-  if(_topic == "test"){
-       Serial.print(messageTemp);
-  }else if (_topic == "mode"){
+  if (_topic == "mode"){
       toDrive[0] = messageTemp[0];
       Serial2.print("c" + String(toDrive));
       Serial.print("c" + String(toDrive));
@@ -165,6 +146,7 @@ void loop() {
   
   mqttclient.loop();
 
+
   if(Serial2.available()){
     char readchar;
     while(Serial2.available()){
@@ -180,6 +162,7 @@ void loop() {
 
     if(endDriveMessage){
       
+
       Serial.print("From Drive: ");
       Serial.println(fromDrive);
       
@@ -199,13 +182,12 @@ void loop() {
     }
   }
 
+
   if(Serial1.available()){
-    char readChar;
-    Serial.print("hi");
-  
+    char readChar;  
     while(Serial1.available()){
       readChar = Serial1.read();
-      Serial.print("Char from Vision");
+      Serial.print("Char from Vision ");
       Serial.println(readChar);
       if(readChar == '!'){
         endVisionMessage = 1;
@@ -217,14 +199,29 @@ void loop() {
     }
 
     if(endVisionMessage){
-
-      Serial.print("Received from vision: ");
-      Serial.println(readVision);
+      
 
       if(readVision[1] == 'c'){
         mqttclient.publish("vision", readVision, 20);
       }else if((readVision[1] == 'v')||(readVision[0] == 'v')){
-        Serial2.print(readVision);
+        for(int i = 0; i < 20; i++){
+          if(readVision[i] == 'v'){
+            add[0] = readVision[i];
+            count = 1;
+          }else if( ((readVision[i] == '0') || (readVision[i] == '1')) && (count == 1) ){
+            add[1] = readVision[i];
+            count = 2;
+          }else if(((readVision[i] == 'g')||(readVision[i] == 's')||(readVision[i] == 'r')||(readVision[i] == 'l'))&&(count == 2)){
+            add[2] = readVision[i];
+            Serial2.print(add);
+            Serial.println("from vision ="+String(add));
+            break;
+          }else{
+            count = 0;
+          }
+        }
+        
+        //Serial2.print(readVision); 
       }
 
       clearReadVision();

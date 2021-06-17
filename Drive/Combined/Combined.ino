@@ -1,3 +1,10 @@
+///*
+//  * Program written by Yue Zhu (yue.zhu18@imperial.ac.uk) in July 2020.
+//  * pin6 is PWM output at 62.5kHz.
+//  * duty-cycle saturation is set as 2% - 98%
+//  * Control frequency is set as 1.25kHz. 
+// */
+
 #include "SPI.h"
 #include "functions.h"
 #include <Wire.h>
@@ -290,6 +297,9 @@ Serial.println(actual_x);
 //     }
 //   }
 
+  prev_mode = v[1];
+  Serial.println("prev_mode = "+String(prev_mode));
+
   if(Serial1.available() > 0){
     char _modenew = Serial1.read();
     if(_mode!=_modenew){
@@ -340,12 +350,15 @@ Serial.println(actual_x);
 
      //if there are still balls to be found in the field
      if(v[0] != '1'){   
-      
+        Serial.println("scan_state = "+String(scan_state));
         //iterates twice and calls the 360 scan function each time
         //scan_state counts the number of iterations
         if(scan_state < 2){
           rover_scan_zero(v[1]);
           s_0 = rover_scan_zero(v[1]);
+          if((scan_state == 1)||(scan_state == 0)){
+            s_0_int = 0;
+          }
         }  
 
         //sets the mode to "go" for the start of the next scan function
@@ -377,16 +390,16 @@ Serial.println(actual_x);
 
         //set counter back to zero returning to intial state of the FSM
         //loop until all the balls have been located
-        if((scan_state == 6)&&f){  
-            scan_state = 0;
-            delay(500);
+        if(scan_state == 6){  
             v[1] = 'g';
+            delay(500);
+            scan_state = 0;
         }
 
     }else{
       brake();
     }
-       
+
     }else{
       brake();}
   //manual mode   
@@ -408,8 +421,7 @@ Serial.println(actual_x);
   prev_val_y = total_y;
   prev_val_x = total_x;
   actual_y_prev = actual_y;
-  prev_mode = v[1];
-  Serial.println("prev_mode = "+String(prev_mode));
+
 
 //      Serial.println("angle = "+String(angle));
 //      Serial.println("angle_corrected = "+String(angle_corrected));
@@ -434,7 +446,9 @@ Serial.println(actual_x);
     data_coord[1] = fixed_size(store_angle(actual_x));
     data_coord[2] = fixed_size(x_to_command);
     data_coord[3] = fixed_size(y_to_command);
-
+    
+    Serial.print("data = ");
+    
           for(int i = 0; i<6; i++){
         Serial.print(data_command[i]);
         Serial1.print(data_command[i]);
@@ -459,12 +473,6 @@ Serial.println(actual_x);
           Serial.print('/');
       }
         Serial1.print("!");
-        Serial.print("!");
+        Serial.println("!");
 
-  //if((loop_counter % 5) == 0){
-
-
-  //}
-  
-  loop_counter++;
 }

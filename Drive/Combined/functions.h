@@ -1,3 +1,11 @@
+///*
+//  * Program written by Yue Zhu (yue.zhu18@imperial.ac.uk) in July 2020.
+//  * pin6 is PWM output at 62.5kHz.
+//  * duty-cycle saturation is set as 2% - 98%
+//  * Control frequency is set as 1.25kHz.
+// */
+
+
 #ifndef functions_h
 #define functions_h
 
@@ -203,7 +211,7 @@ int mousecam_init()
 {
   pinMode(PIN_MOUSECAM_RESET,OUTPUT);
   pinMode(PIN_MOUSECAM_CS,OUTPUT);
-  
+
   digitalWrite(PIN_MOUSECAM_CS,HIGH);
 
   // turn on sensitive mode
@@ -218,7 +226,7 @@ int mousecam_read_reg(int reg)
   SPI.transfer(reg);
   delayMicroseconds(75);
   int ret = SPI.transfer(0xff);
-  digitalWrite(PIN_MOUSECAM_CS,HIGH); 
+  digitalWrite(PIN_MOUSECAM_CS,HIGH);
   delayMicroseconds(1);
   return ret;
 }
@@ -245,7 +253,7 @@ void mousecam_read_motion(struct MD *p)
   p->shutter =  SPI.transfer(0xff)<<8;
   p->shutter |=  SPI.transfer(0xff);
   p->max_pix =  SPI.transfer(0xff);
-  digitalWrite(PIN_MOUSECAM_CS,HIGH); 
+  digitalWrite(PIN_MOUSECAM_CS,HIGH);
   delayMicroseconds(5);
 }
 
@@ -264,7 +272,7 @@ float saturation( float sat_input, float uplim, float lowlim){ // Saturatio func
 }
 
 void pwm_modulate(float pwm_input){ // PWM function
-  analogWrite(6,(int)(255-pwm_input*255)); 
+  analogWrite(6,(int)(255-pwm_input*255));
 }
 
 // This is a PID controller for the voltage
@@ -273,7 +281,7 @@ float pidv( float pid_input){
   float e_integration;
   e0v = pid_input;
   e_integration = e0v;
- 
+
   //anti-windup, if last-time pid output reaches the limitation, this time there won't be any intergrations.
   if(u1v >= uv_max) {
     e_integration = 0;
@@ -286,7 +294,7 @@ float pidv( float pid_input){
 
   //output limitation
   saturation(u0v,uv_max,uv_min);
-  
+
   u1v = u0v; //update last time's control output
   e2v = e1v; //update last last time's error
   e1v = e0v; // update last time's error
@@ -299,20 +307,20 @@ float pidi(float pid_input){
   float e_integration;
   e0i = pid_input;
   e_integration=e0i;
-  
+
   //anti-windup
   if(u1i >= ui_max){
     e_integration = 0;
   } else if (u1i <= ui_min) {
     e_integration = 0;
   }
-  
+
   delta_ui = kpi*(e0i-e1i) + kii*Ts*e_integration + kdi/Ts*(e0i-2*e1i+e2i); //incremental PID programming avoids integrations.
   u0i = u1i + delta_ui;  //this time's control output
 
   //output limitation
   saturation(u0i,ui_max,ui_min);
-  
+
   u1i = u0i; //update last time's control output
   e2i = e1i; //update last last time's error
   e1i = e0i; // update last time's error
@@ -332,7 +340,7 @@ float voltage2speed (float v){
 void sampling(){
 
   // Make the initial sampling operations for the circuit measurements
-  
+
   sensorValue0 = analogRead(A0); //sample Vb
   if(c[0] == '0'){
     vref = speed2voltage(_speed.toFloat());
@@ -345,9 +353,9 @@ void sampling(){
   current_mA = ina219.getCurrent_mA(); // sample the inductor current (via the sensor chip)
 
   // Process the values so they are a bit more usable/readable
-  // The analogRead process gives a value between 0 and 1023 
+  // The analogRead process gives a value between 0 and 1023
   // representing a voltage between 0 and the analogue reference which is 4.096V
-  
+
   vb = sensorValue0 * (4.096 / 1023.0); // Convert the Vb sensor reading to volts
   sensorValue2 = vref * (1023.0 / 4.096);
   //vref = sensorValue2 * (4.096 / 1023.0); // Convert the Vref sensor reading to volts
@@ -358,7 +366,7 @@ void sampling(){
   // For open loop control the duty cycle reference is calculated from the sensor
   // differently from the Vref, this time scaled between zero and 1.
   // The boost duty cycle needs to be saturated with a 0.33 minimum to prevent high output voltages
-  
+
   if (Boost_mode == 1){
     iL = -current_mA/1000.0;
     dutyref = saturation(sensorValue2 * (1.0 / 1023.0),0.99,0.33);
@@ -366,7 +374,7 @@ void sampling(){
     iL = current_mA/1000.0;
     dutyref = sensorValue2 * (1.0 / 1023.0);
   }
-  
+
 }
 
 void back(){
@@ -427,7 +435,7 @@ float xcoordinatefinder(float old_r, float new_r, float angle){
     xcal_total = xcal_total + xcal;
     Serial.print("x coordinate of rover = ");
     Serial.println(xcal_total);
-    return xcal_total/10; 
+    return xcal_total/10;
 }
 
 float ycoordinatefinder(float old_r, float new_r, float angle){
@@ -435,7 +443,7 @@ float ycoordinatefinder(float old_r, float new_r, float angle){
     ycal_total = ycal_total + ycal;
     Serial.print("y coordinate of rover = ");
     Serial.println(ycal_total);
-    return ycal_total/10; 
+    return ycal_total/10;
 }
 
 float change_angle(float angle){
@@ -464,7 +472,7 @@ void movebycoordinate(int xx, int yy, float current_angle, float currrent_r){
       forward();
     }else if(((millis()-reff1_time) >= 500)&&((millis()-reff1_time) <= 2000)){
   brake();
-  
+
   }else if((millis()-reff1_time) > 2000){
    __iter1 = 0;
   }
@@ -520,7 +528,7 @@ if((angle_new-0.12<current_angle)&&(angle_new+0.12>current_angle)){
       forward();
     }else if(((millis()-reff_time) >= 500)&&((millis()-reff_time) <= 2000)){
   brake();
-  
+
   }else if((millis()-reff_time) > 2000){
    __iter = 0;
   }
@@ -579,7 +587,7 @@ bool rover_scan_zero(char _mode){
     ref_time_scan = millis();
   }
   Serial.print("actual_x_first = "+String(actual_x_first));
-  if(abs(actual_x) >= 610 +actual_x_first){
+  if(abs(actual_x) >= 500 +actual_x_first){
     brake();
     if((_iter_scan == 1)||(_iter_scan == 2)){
       scan_state++;
@@ -590,7 +598,7 @@ bool rover_scan_zero(char _mode){
     Serial1.print(data_vision[1]);
     delay(1000);
     return true;
-  }else if((_mode == 's')&&(!s_0)){
+  }else if((_mode == 's')&&(s_0_int == 0)){
     //if((prev_val_x == total_x)&&(_iter_scan == 1)){
 //      theta_store = store_angle(actual_x);
 //      r_store = float(actual_y);
@@ -602,7 +610,7 @@ bool rover_scan_zero(char _mode){
     Serial.println("Scan_zero = STOP");
     return false;
   }else{
-    if((_mode == 'g')&&(!s_0)){
+    if((_mode == 'g')&&(s_0_int == 0)){
       if(prev_mode == 's'){
         brake();
         //delay(1500);
@@ -610,9 +618,11 @@ bool rover_scan_zero(char _mode){
           ref_time_s = millis();
           _iter_s=1;
         }
-        if(millis()-ref_time_s < 1500){
+        Serial.println("ref_time_s = "+String(ref_time_s));
+        Serial.println("millis = "+String(millis()));
+        if(millis()-ref_time_s <= 1500){
           brake();
-        }else{
+        }else if(millis()-ref_time_s > 1500){
           _iter_s = 0;
           theta_store = store_angle(actual_x);
           r_store = float(actual_y);
@@ -635,7 +645,7 @@ bool rover_scan_zero(char _mode){
 void rover_manual(char _mode){
   if (_mode == 'w') {
       forward();
-  }  
+  }
   //rotating clockwise
   if (_mode == 'd') {
     right();
@@ -646,32 +656,45 @@ void rover_manual(char _mode){
   //rotating anticlockwise
   if (_mode == 'a') {
     left();
-  } 
+  }
   if(_mode == 'x'){
     brake();
   }
 }
 
 bool reach_forward(char _mode){
-    if((_mode == 'g')&&s_1){
-      vref = 3;
+    if((_mode == 'g')&&(scan_state == 5)){
+      //vref = 3;
       forward();
+      //delay(500);
       return false;
-    }else if((_mode == 's')&&s_1){
+    }else if((_mode == 's')&&(scan_state == 5)){
         brake();
+//        theta_store = store_angle(actual_x);
+//        r_store = float(actual_y);
+//        xcal_total_store = xcal_total;
+//        ycal_total_store = ycal_total;
         scan_state = 6;
-        theta_store = store_angle(actual_x);
-        r_store = float(actual_y);
-        xcal_total_store = xcal_total;
-        ycal_total_store = ycal_total;
-        delay(1000);
+        delay(500);
         return true;
-    }else if((_mode == 'r')&&s_1){
+    }else if((_mode == 'r')&&(scan_state == 5)){
         right();
+//        delay(100);
+//      brake();
+//      delay(500);
         return false;
-    }else if((_mode == 'l')&&s_1){
+    }else if((_mode == 'l')&&(scan_state == 5)){
         left();
+//              delay(100);
+//      brake();
+//      delay(500);
         return false;
+    }else{
+      brake();
+//      delay(500);
+//      brake();
+//      delay(1000);
+      return false;
     }
 }
 
@@ -680,4 +703,4 @@ bool reach_forward(char _mode){
 //String data_command[6] = {"c", gear, fixed_size(total_x), fixed_size(total_y), fixed_size(total), fixed_size(_speed.toFloat())};
 //String data_vision[5] = {"v", String(rover_scan_zero(v[1])), String(rover_scan_one(v[1])), fixed_size(theta_store), fixed_size(r_store)};
 
-#endif 
+#endif
