@@ -465,15 +465,13 @@ if((angle_new-0.12<current_angle)&&(angle_new+0.12>current_angle)){
     if(__iter==0){
       reff_time = millis();
       __iter=1;
-    }
-    if(millis()-reff_time < 500){
+    }if(millis()-reff_time < 500){
       forward();
     }else if(((millis()-reff_time) >= 500)&&((millis()-reff_time) <= 2000)){
   brake();
-  
   }else if((millis()-reff_time) > 2000){
    __iter = 0;
-  }
+  }  
   }
   else if(r<=currrent_r){
     brake();
@@ -483,11 +481,8 @@ if((angle_new-0.12<current_angle)&&(angle_new+0.12>current_angle)){
 }else if(angle_new-0.12>current_angle){
  if(_iter == 0){
     ref_time = millis();
-    Serial.println("ref_time = "+String(ref_time));
       _iter = 1;
   }
-//Serial.println("_iter = "+String(_iter));
- // Serial.println("time = "+String(millis()));
   if((millis()-ref_time) < 500){
     left();
   }else if(((millis()-ref_time) >= 500)&&((millis()-ref_time) <= 2000)){
