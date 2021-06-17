@@ -1,4 +1,3 @@
-// Creating the module block for the image processor
 module EEE_IMGPROC(
 	//		Labelling all signals that this block uses - inputs and outputs; we determine which they are after
 
@@ -43,30 +42,29 @@ input	reset_n;
 input							s_chipselect;
 input							s_read;
 input							s_write;
-output	reg	[31:0]	s_readdata;
-input	[31:0]				s_writedata;
+output	reg	[31:0]				s_readdata;
+input	[31:0]					s_writedata;
 input	[2:0]					s_address;
 
 
 // streaming sink
-input	[23:0]            	sink_data;
-input								sink_valid;
+input	[23:0]            		sink_data;
+input							sink_valid;
 output							sink_ready;
-input								sink_sop;
-input								sink_eop;
+input							sink_sop;
+input							sink_eop;
 
 // streaming source
-output	[23:0]			  	   source_data;
-output								source_valid;
-input									source_ready;
-output								source_sop;
-output								source_eop;
+output	[23:0]			  	   	source_data;
+output							source_valid;
+input							source_ready;
+output							source_sop;
+output							source_eop;
 
 // conduit export
-input                         mode;
+input                         	mode;
 
 ////////////////////////////////////////////////////////////////////////
-//
 
 //		Setting parameters - values permanently tied to a variable
 //	Width of the frames captured by the camera in pixels
@@ -75,6 +73,7 @@ parameter IMAGE_W = 11'd640;
 parameter IMAGE_H = 11'd480;
 parameter MESSAGE_BUF_MAX = 256;
 parameter MSG_INTERVAL = 6;
+
 // Boundary box colours
 parameter BB_COL_DEFAULT = 24'h00ff00;
 parameter R_BB_COL_DEFAULT = 24'hff7575;
@@ -86,6 +85,7 @@ parameter Y_BB_COL_DEFAULT = 24'hf9ff92;
 // Wires for the RGB components of the pixel we are currently looking at
 wire [7:0] red, green, blue;
 wire [7:0] grey;
+
 //	The output colour channels which the camera outputs through the VGA cable
 wire [7:0]   red_out, green_out, blue_out;
 
@@ -95,13 +95,12 @@ wire [7:0]   red_out, green_out, blue_out;
 wire         sop, eop, in_valid, out_ready;
 ////////////////////////////////////////////////////////////////////////
 
-// ----------------------- Mean Filtering -----------------------
+// ----------------------- Gaussian Filtering -----------------------
 
 reg [23:0] blurred_image; // variable to store the blurred pixel
 reg [23:0] pixels_preblur [0:2]; // array of 3 pixels, each of size 24 bits
 
 reg [7:0] blurred_red, blurred_blue, blurred_green;
-
 
 always@(posedge clk) begin
 	// form an array of the previous 3 pixels
@@ -118,34 +117,34 @@ always@(posedge clk) begin
 	blurred_blue <= (7*pixels_preblur[0][7:0] + 26*pixels_preblur[1][7:0] + 41*blue)/74;
 end
 
+// ----------------------- End of Gaussian Filtering -----------------------
 
 // ----------------------- Mapping RGB to HSV -----------------------
 // https://docs.opencv.org/3.4/de/d25/imgproc_color_conversions.html
 wire [7:0] h, s, v;
 wire [7:0] min;
-//wire [7:0] s_temp, v_temp, h_temp;
 
 // range 0 - 255
 assign v = (blurred_red >= blurred_green && blurred_red >= blurred_blue) ? blurred_red
-				: (blurred_green >= blurred_red && blurred_green >= blurred_blue) ? blurred_green
-				: (blurred_blue >= blurred_red && blurred_blue >= blurred_green) ? blurred_blue
-				: 0;
+			: (blurred_green >= blurred_red && blurred_green >= blurred_blue) ? blurred_green
+			: (blurred_blue >= blurred_red && blurred_blue >= blurred_green) ? blurred_blue
+			: 0;
 
 // range 0 - 255
 assign min = blurred_red <= blurred_green && blurred_red <= blurred_blue ? blurred_red
-				: blurred_green <= blurred_red && blurred_green <= blurred_blue ? blurred_green
-				: blurred_blue <= blurred_red && blurred_blue <= blurred_green ? blurred_blue
-				: 0;
+			: blurred_green <= blurred_red && blurred_green <= blurred_blue ? blurred_green
+			: blurred_blue <= blurred_red && blurred_blue <= blurred_green ? blurred_blue
+			: 0;
 
 // range 0 - 255
 assign s = v != 0 ? 255*(v - min)/v
-				: 0;
+			: 0;
 												
 // v_temp and the colours are not scaled down
 assign h = (blurred_red == blurred_green && blurred_green == blurred_blue) ? 0
 			: v == blurred_red ?
-					blurred_green >= blurred_blue ? 60*(blurred_green - blurred_blue)/(v - min) // if g-b is positive, dont add 360
-															: (360*(v - min) + 60*(blurred_green - blurred_blue))/(v - min) // if negative, add 360
+				blurred_green >= blurred_blue ? 60*(blurred_green - blurred_blue)/(v - min) // if g-b is positive, dont add 360
+								: (360*(v - min) + 60*(blurred_green - blurred_blue))/(v - min) // if negative, add 360
 			: v == blurred_green ? (120*(v - min) + 60*(blurred_blue - blurred_red))/(v - min)
 			: v == blurred_blue ? (240*(v - min) + 60*(blurred_red - blurred_green))/(v - min)
 			: 0;
@@ -154,21 +153,18 @@ assign h = (blurred_red == blurred_green && blurred_green == blurred_blue) ? 0
 
 wire red_detect, green_detect, blue_detect, violet_detect, yellow_detect, border_detect;
 
-// TODO - Multiply hue values by 2 so that they're in the 0 - 360 range
 //	------ HSV ranges for Skempton ------
 /*
-assign red_detect = ((h > 170 || h < 15) && s > 125 && s < 232 && v > 60 && v <= 200) ? 1 : 0;
-//	----  day time values ---
-assign blue_detect = (h > 95 && h < 120 && s > 76 && s < 210 && v > 25 && v < 100) ? 1 : 0; // good - check previous commits for recent values
-assign green_detect = (h > 55 && h < 85 && s > 100 && s < 180 && v > 35 && v < 100) ? 1 : 0; // good (h > 115 && h < 135 && s > 200 && v > 115 && v < 135)
-// ---- end of day time values
+assign red_detect = ((h > 340 || h < 30) && s > 125 && s < 232 && v > 60 && v <= 200) ? 1 : 0;
+assign yellow_detect = (h > 50 && h < 90 && s > 100 && s < 160 && v > 110) ? 1 : 0;
 
-// ---- night time values ----
-//assign blue_detect = (h > 95 && h < 120 && s > 5 && s < 245 && v > 5 && v < 100) ? 1 : 0; // good - check previous commits for recent values
-//assign green_detect = (h > 55 && h < 85 && s > 45 && s < 225 && v > 25 && v < 100) ? 1 : 0; // good (h > 115 && h < 135 && s > 200 && v > 115 && v < 135)
-// ---- end of night time values ----
+//	day
+assign blue_detect = (h > 190 && h < 240 && s > 76 && s < 210 && v > 25 && v < 100) ? 1 : 0;
+assign green_detect = (h > 110 && h < 170 && s > 100 && s < 180 && v > 35 && v < 100) ? 1 : 0; 
 
-assign yellow_detect = (h > 25 && h < 45 && s > 100 && s < 160 && v > 110) ? 1 : 0; // good - needs adjusting?
+// night
+//assign blue_detect = (h > 190 && h < 240 && s > 5 && s < 245 && v > 5 && v < 100) ? 1 : 0; 
+//assign green_detect = (h > 110 && h < 170 && s > 45 && s < 225 && v > 25 && v < 100) ? 1 : 0; 
 */
 
 //	------ HSV ranges for floor 4 ------
@@ -193,19 +189,17 @@ assign blue_detect = (h > 175 && h < 240 && s > 7 && s < 180 && v > 5 && v < 160
 // width : 0 - 639, height : 0 - 479
 assign border_detect = (x <= 20 || x >= 620) || (y <= 250); 
 
-// works well for blue : ((h > 165 || h < 15) && s > 65) ? 1 : 0; for non-scaled h
-
-
 // ------------------ Highlight detected areas -------------------
 //	24 bit value which stores the concatenated 8-bit RGB values together for each colour 
 wire [23:0] red_high, green_high, blue_high, violet_high, yellow_high, black;
 
 assign grey = blurred_green[7:1] + blurred_red[7:2] + blurred_blue[7:2]; //Grey = green/2 + red/4 + blue/4
 assign black = 24'h0;
-wire [23:0] background; // variable storing what we want to fill the background colour with (colours not detected)
+// variable storing what we want to fill the background colour with (colours not detected)
+wire [23:0] background;
 
 assign background = black;
-//black;
+// black;
 // {grey, grey, grey}
 
 assign red_high  =  {8'hff, 8'h0, 8'h01};
@@ -233,30 +227,12 @@ assign new_image = border_detect ? background
 //	To filter, we must store the previous x new_image values and process them accordingly unless there is
 //		a method of accessing the pixels seperately.
 
-//	Storing the previous 3 pixel values
-
+//	Storing the previous 6 pixel values
 reg [23:0] pixels [0:5];
-//reg [15:0] pixels_hue [0:4];
 integer i, j;
 
-//reg [15:0] smallest_hue, largest_hue;
-//reg smallest_hue_index, largest_hue_index, median_hue_index;
-//
-//reg [15:0] temp;
 reg [23:0] filtered_image; // variable to store the filtered pixel
-
-// update each term in the array at each clock edge
-/*
-
-		Pixel values
-	red_high  =  {8'hff, 8'h0, 8'h01}; h = 360, s = 100, v = 100
-	green_high  =  {8'h0, 8'hff, 8'h0}; h = 120, s = 100, v = 100
-	blue_high  =  {8'h0, 8'h0, 8'hff}; h = 240, s = 100, v = 100
-	violet_high  =  {8'h8e, 8'h15, 8'h96}; h = 296, s = 86, v = 58.8
-	yellow_high  =  {8'hed, 8'hff, 8'h6f}; h = 68, 56.5, v = 100
-	black = 24'h0;
-*/
-reg counter;
+reg counter; // counter to keep track of how many background pixels have appeared
 
 always@(posedge clk) begin
 	// move values down the filter array to make space for the current pixel
@@ -267,102 +243,22 @@ always@(posedge clk) begin
 	// append the current pixel to the array
 	pixels[5] = new_image;
 
-	for (i = 0; i < 5; i = i+1) begin
+	// iterate through the previous 6 pixels and number how many times background appears
+	for (i = 0; i < 6; i = i+1) begin
 		if (pixels[i] == background) begin
 			counter = counter + 1;
 		end
 	end
 	
+	// if the background pixel appears 2 or more times, replace the current pixel
+	//		with the background pixel
 	if (counter >= 2) begin
 		filtered_image = background;
 	end else begin
 		filtered_image = new_image;
 	end
-/*
-	// 		Calculate the median of the pixels - based on hue
-	// 	Finding the hue of each pixel
-	for (i = 0; i < 3; i = i+1) begin
-		if (pixels[i] == red_high) begin
-			pixels_hue[i] = 360;
-		end else if (pixels[i] == green_high) begin
-			pixels_hue[i] = 120;
-		end else if (pixels[i] == blue_high) begin
-			pixels_hue[i] = 240;
-//		end else if (pixels[i] == violet_high) begin
-//			pixels_hue[i] = 296;
-		end else if (pixels[i] == yellow_high) begin
-			pixels_hue[i] = 68;
-		end else if (pixels[i] == background) begin
-			pixels_hue[i] = 0;
-		end else begin
-			pixels_hue[i] = 0;
-		end
-	end
-	
-/
-	// 	Forming the sorted array based on the hue using bubble sort - very inefficient, was just for functionality
-	//	Can improve the sorting algorithm used in the future
-	for (i = 0; i < 5; i = i+1) begin
-		// might be able to change j < 3 to j < 3 - i, check OneNote
-		for (j = 0; j < 4; j = j+1) begin
-			if (pixels_hue[j] > pixels_hue[j+1]) begin
-				// swap them in the array
-				temp = pixels_hue[j];
-				pixels_hue[j] = pixels_hue[j+1];
-				pixels_hue[j+1] = temp;
-				// larger value now swapped so that it is at the larger index
-			end
-		end
-	end
-/
 
-	//		Forming the sorted array just by finding the smallest and largest values - much more efficient - O(n)
-
-	smallest_hue <= pixels_hue[0];
-	largest_hue <= pixels_hue[0];
-	smallest_hue_index <= 0;
-	largest_hue_index <= 0;
-
-	for (i = 1; i < 3; i = i+1) begin
-		if (pixels_hue[i] < smallest_hue) begin
-			smallest_hue <= pixels_hue[i];
-			smallest_hue_index <= i;
-		end else if (pixels_hue[i] > largest_hue) begin
-			largest_hue <= pixels_hue[i];
-			largest_hue_index <= i;
-		end else begin
-		end
-	end
-	
-	if ((smallest_hue_index == 0 && largest_hue_index == 1) || (smallest_hue_index == 1 && largest_hue_index == 0)) begin
-		median_hue_index = 2;
-	end else if ((smallest_hue_index == 0 && largest_hue_index == 2) || (smallest_hue_index == 2 && largest_hue_index == 0)) begin
-		median_hue_index = 1;
-	end else if ((smallest_hue_index == 1 && largest_hue_index == 2) || (smallest_hue_index == 2 && largest_hue_index == 1)) begin
-		median_hue_index = 0;
-	end else begin
-		median_hue_index = 1;
-	end
-
-	//		Selecting the median value as the pixel and converting back to RGB
-	//	Replace median_hue_index with 1 if using bubble sort function
-	//median_hue_index = 1;
-	if (pixels_hue[median_hue_index] == 360) begin // select red
-		filtered_image = red_high;
-	end else if (pixels_hue[median_hue_index] == 120) begin // select green
-		filtered_image = green_high;
-	end else if (pixels_hue[median_hue_index] == 240) begin // select blue
-		filtered_image = blue_high;
-//	end else if (pixels_hue[median_hue_index] == 296) begin // select violet
-//		filtered_image = violet_high;
-	end else if (pixels_hue[median_hue_index] == 68) begin // select yellow
-		filtered_image = yellow_high;
-	end else if (pixels_hue[median_hue_index] == 0) begin // select black
-		filtered_image = background;
-	end else begin
-		filtered_image = background;
-	end
-*/
+	counter = 0;
 end
 
 //	---------- End of Filtering ----------
@@ -434,9 +330,9 @@ always@(posedge clk) begin
 	end
 end
 
-//Find first and last pixels of each colour
+//Find outermost pixels of each colour
 always@(posedge clk) begin
-		// update bounding boxes for each box post filtering
+		// update bounding boxes coordinates for each box post filtering
 	if (filtered_image == red_high & in_valid) begin
 		if (x < r_xmin) r_xmin <= x; // continually update x_min, x_max, y_min and y_max if the current red pixel
 		if (x > r_xmax) r_xmax <= x;	// 	is beyond the bounds of the current frame
@@ -502,7 +398,7 @@ end
 //		what the actual minimum and maximum values
 
 //	Variable storing what message type we are sending to the processor
-reg [3:0] msg_state; // need 16 states overall for all 5 balls, should be 4 bits
+reg [3:0] msg_state; // need 16 states overall for all 5 balls
 // storing the coordinates of the left, right, top and bottom positions of the boundary box in registers
 reg [10:0] r_left, r_right, r_top, r_bottom;
 reg [10:0] g_left, g_right, g_top, g_bottom;
@@ -578,63 +474,63 @@ always@(*) begin	//Write words to FIFO as state machine advances
 			msg_buf_wr = 1'b0;
 		end
 		4'b0001: begin
-			msg_buf_in = `RED_BOX_MSG_ID;	//Message ID
+			msg_buf_in = `RED_BOX_MSG_ID;	// Red message ID
 			msg_buf_wr = 1'b1;
 		end
 		4'b0010: begin
-			msg_buf_in = {5'b0, r_xmin, 5'b0, r_ymin};	//Bottom left coordinate
+			msg_buf_in = {5'b0, r_xmin, 5'b0, r_ymin};	// Bottom left coordinate
 			msg_buf_wr = 1'b1;
 		end
 		4'b0011: begin
-			msg_buf_in = {5'b0, r_xmax, 5'b0, r_ymax}; //Top right coordinate
+			msg_buf_in = {5'b0, r_xmax, 5'b0, r_ymax}; // Top right coordinate
 			msg_buf_wr = 1'b1;
 		end
 		4'b0100: begin
-			msg_buf_in = `GREEN_BOX_MSG_ID;	//Message ID
+			msg_buf_in = `GREEN_BOX_MSG_ID;	// Green message ID
 			msg_buf_wr = 1'b1;
 		end
 		4'b0101: begin
-			msg_buf_in = {5'b0, g_xmin, 5'b0, g_ymin};	//Bottom left coordinate
+			msg_buf_in = {5'b0, g_xmin, 5'b0, g_ymin};	// Bottom left coordinate
 			msg_buf_wr = 1'b1;
 		end
 		4'b0110: begin
-			msg_buf_in = {5'b0, g_xmax, 5'b0, g_ymax}; //Top right coordinate
+			msg_buf_in = {5'b0, g_xmax, 5'b0, g_ymax}; // Top right coordinate
 			msg_buf_wr = 1'b1;
 		end
 		4'b0111: begin
-			msg_buf_in = `BLUE_BOX_MSG_ID;	//Message ID
+			msg_buf_in = `BLUE_BOX_MSG_ID;	// Blue message ID
 			msg_buf_wr = 1'b1;
 		end
 		4'b1000: begin
-			msg_buf_in = {5'b0, b_xmin, 5'b0, b_ymin};	//Bottom left coordinate
+			msg_buf_in = {5'b0, b_xmin, 5'b0, b_ymin};	// Bottom left coordinate
 			msg_buf_wr = 1'b1;
 		end
 		4'b1001: begin
-			msg_buf_in = {5'b0, b_xmax, 5'b0, b_ymax}; //Top right coordinate
+			msg_buf_in = {5'b0, b_xmax, 5'b0, b_ymax}; // Top right coordinate
 			msg_buf_wr = 1'b1;
 		end
 		4'b1010: begin
-			msg_buf_in = `VIOLET_BOX_MSG_ID;	//Message ID
+			msg_buf_in = `VIOLET_BOX_MSG_ID;	// Violet message ID
 			msg_buf_wr = 1'b1;
 		end
 		4'b1011: begin
-			msg_buf_in = {5'b0, v_xmin, 5'b0, v_ymin};	//Bottom left coordinate
+			msg_buf_in = {5'b0, v_xmin, 5'b0, v_ymin};	// Bottom left coordinate
 			msg_buf_wr = 1'b1;
 		end
 		4'b1100: begin
-			msg_buf_in = {5'b0, v_xmax, 5'b0, v_ymax}; //Top right coordinate
+			msg_buf_in = {5'b0, v_xmax, 5'b0, v_ymax}; // Top right coordinate
 			msg_buf_wr = 1'b1;
 		end
 		4'b1101: begin
-			msg_buf_in = `YELLOW_BOX_MSG_ID;	//Message ID
+			msg_buf_in = `YELLOW_BOX_MSG_ID;	// Yellow message ID
 			msg_buf_wr = 1'b1;
 		end
 		4'b1110: begin
-			msg_buf_in = {5'b0, y_xmin, 5'b0, y_ymin};	//Bottom left coordinate
+			msg_buf_in = {5'b0, y_xmin, 5'b0, y_ymin};	// Bottom left coordinate
 			msg_buf_wr = 1'b1;
 		end
 		4'b1111: begin
-			msg_buf_in = {5'b0, y_xmax, 5'b0, y_ymax}; //Top right coordinate
+			msg_buf_in = {5'b0, y_xmax, 5'b0, y_ymax}; // Top right coordinate
 			msg_buf_wr = 1'b1;
 		end
 	endcase
