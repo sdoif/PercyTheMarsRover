@@ -1,3 +1,5 @@
+// Variant of main.c solely testing the go_towards() function
+
 #include <stdio.h>
 #include <string.h>
 #include "system.h"
