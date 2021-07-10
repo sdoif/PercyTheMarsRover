@@ -2,6 +2,14 @@
 
 This repository contains the files required to operate each subsystem of Group 5's end of 2nd year group project titled PercyTheMarsRover. The software operates with the rover hardware provided by Imperial College London's EE department.
 
+## Collaborators
+Salman Dhaif (sdoif)
+Nelson Da Silva (NDS19)
+Kaius Conway-Lai (kc319)
+Selin Uygun (su519)
+Cem Yilmaz (cy1719)
+Batuhan Çınar (bc1719)
+
 This project is broken down into 6 subsystems as indicated by the folder structure : Command, Control, Drive, Energy, Integration, Vision, each operating on a specific section of the Mars Rover. These subsystems operate together to form a rover capable of autonomous and manual motion with object detection where the target objects are 5 different coloured ping pong balls. 
 
 ![Task subsystem, image provided by Imperial's EE Department](https://github.com/sdoif/PercyTheMarsRover/blob/main/subsystems.png?raw=true)
